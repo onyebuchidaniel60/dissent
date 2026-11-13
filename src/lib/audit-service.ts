@@ -204,6 +204,31 @@ export async function listAudits(principal: ApiPrincipal, limit = 20) {
     .limit(Math.min(Math.max(limit, 1), 50));
 }
 
+export async function listWorkspaceAudits(workspaceId: string, limit = 10) {
+  return getDb()
+    .select({
+      id: audits.id,
+      publicAuditId: audits.publicAuditId,
+      status: audits.status,
+      verdict: audits.verdict,
+      createdAt: audits.createdAt,
+      updatedAt: audits.updatedAt,
+      committedAt: audits.committedAt,
+      fundedAt: audits.fundedAt,
+      completedAt: audits.completedAt,
+      rationale: theses.rationale,
+      assetId: theses.assetId,
+      symbol: theses.symbol,
+      action: theses.action,
+      executionVenue: theses.executionVenue,
+    })
+    .from(audits)
+    .leftJoin(theses, eq(theses.auditId, audits.id))
+    .where(eq(audits.workspaceId, workspaceId))
+    .orderBy(desc(audits.createdAt))
+    .limit(Math.min(Math.max(limit, 1), 50));
+}
+
 export async function getOwnedAudit(principal: ApiPrincipal, auditId: string) {
   const [audit] = await getDb()
     .select()

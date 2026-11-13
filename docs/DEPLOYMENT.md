@@ -35,7 +35,7 @@ Set these on the Render service. Values come from the shell/secret store and mus
 | `NEAR_RPC_URL` | Yes | `https://rpc.testnet.near.org` |
 | `NEAR_DEPLOYER_ACCOUNT_ID` | Yes | `dissent-demo.testnet` |
 | `NEAR_REGISTRY_ACCOUNT_ID` | Phase 3 | `registry.dissent-demo.testnet` |
-| `NEAR_ESCROW_ACCOUNT_ID` | Phase 3 | `escrow.dissent-demo.testnet` |
+| `NEAR_ESCROW_ACCOUNT_ID` | Phase 3 | `registry.dissent-demo.testnet`; escrow logic is a module in the registry contract. `escrow.dissent-demo.testnet` is reserved but unused. |
 | `OPENROUTER_API_KEY` | Yes | Primary inference provider |
 | `GROQ_API_KEY` | Yes | A02 only |
 | `ELEVENLABS_API_KEY` | Demo | Voiceover only; not used by the app runtime |

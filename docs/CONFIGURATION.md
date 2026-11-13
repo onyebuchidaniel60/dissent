@@ -18,7 +18,7 @@ All secrets are server-only. The authoritative template is [`.env.example`](../.
 | `NEAR_DEPLOYER_ACCOUNT_ID` | Yes | Server config | Testnet deployer identity |
 | `NEAR_DEPLOYER_KEY` | Phase 3 | Secret manager only | Testnet deployer key; never prompt/tool context |
 | `NEAR_REGISTRY_ACCOUNT_ID` | Phase 3 | Server config | Deployed registry contract |
-| `NEAR_ESCROW_ACCOUNT_ID` | Phase 3 | Server config | Deployed escrow contract |
+| `NEAR_ESCROW_ACCOUNT_ID` | Phase 3 | Server config | Set to the registry account; escrow logic is a module in the registry contract |
 | `NEAR_RELAYER_ACCOUNT_ID` | If relayer used | Server config | Approved backend relayer |
 | `NEAR_RELAYER_KEY` | If relayer used | Secret manager only | Testnet-only relayer key |
 | `NEAR_CLIENT_SIGNING_MODE` | Yes | Server config | `AGENT_SUPPLIED_TX` for deterministic E2E |

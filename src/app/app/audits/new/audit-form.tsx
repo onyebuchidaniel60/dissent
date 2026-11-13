@@ -31,6 +31,20 @@ type Preview = {
   conditionsPayload: string;
 };
 
+type CreatedDraft = {
+  audit_id: string;
+  public_audit_id: string;
+  status: string;
+  thesis_hash: string;
+  conditions_hash: string;
+  policy_hash: string;
+  commitment: {
+    contractId: string | null;
+    method: string;
+    args: Record<string, string>;
+  };
+};
+
 const DEFAULT_CONDITIONS: ConditionDraft[] = [
   {
     condition_id: "FC-001",
@@ -86,6 +100,8 @@ export function NewAuditForm() {
   const [conditions, setConditions] = useState<ConditionDraft[]>(DEFAULT_CONDITIONS);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [preview, setPreview] = useState<Preview | null>(null);
+  const [created, setCreated] = useState<CreatedDraft | null>(null);
+  const [creating, setCreating] = useState(false);
   const [status, setStatus] = useState<string>("");
 
   function updateCondition(index: number, patch: Partial<ConditionDraft>) {
@@ -203,6 +219,62 @@ export function NewAuditForm() {
     );
   }
 
+  async function createDraft() {
+    const nextErrors = validate();
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      setStatus("Local validation found issues. Fix the highlighted fields.");
+      return;
+    }
+
+    setCreating(true);
+    setStatus("");
+    try {
+      const response = await fetch("/api/v1/ui/audits/prepare", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "idempotency-key": crypto.randomUUID(),
+        },
+        body: JSON.stringify({
+          thesis: {
+            asset: { chain: "near", asset_id: asset.trim(), symbol: unit === "NEAR" ? "NEAR" : null },
+            action,
+            direction: null,
+            rationale: rationale.trim(),
+            position: { amount: amount.trim(), unit: unit.trim(), notional_usd: null },
+            time_horizon: { value: Number(horizon), unit: horizonUnit },
+            execution_venue: venue.trim(),
+          },
+          conditions: conditions.map((condition) => ({
+            condition_id: condition.condition_id.trim(),
+            description: condition.description.trim(),
+            metric: condition.metric.trim(),
+            operator: condition.operator,
+            threshold: condition.threshold.trim(),
+            unit: condition.unit.trim(),
+            evaluation_window: { value: 1, unit: horizonUnit },
+            severity: condition.severity,
+          })),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          response.status === 401
+            ? "Connect a wallet session before creating a draft."
+            : data?.error?.message ?? "Could not create the draft.",
+        );
+      }
+      setCreated(data as CreatedDraft);
+      setStatus("Draft created through the session-authenticated console API.");
+    } catch (cause) {
+      setStatus(cause instanceof Error ? cause.message : "Could not create the draft.");
+    } finally {
+      setCreating(false);
+    }
+  }
+
   function resetForm() {
     setTitle("NEAR / USDC liquidity provision");
     setAsset("NEAR / USDC");
@@ -218,6 +290,7 @@ export function NewAuditForm() {
     setConditions(DEFAULT_CONDITIONS);
     setErrors({});
     setPreview(null);
+    setCreated(null);
     setStatus("");
   }
 
@@ -515,9 +588,18 @@ export function NewAuditForm() {
         </section>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button type="submit" className="button button--primary">
+          <button type="submit" className="button button--ghost">
             <Hash size={15} aria-hidden="true" />
             Validate & preview hashes
+          </button>
+          <button
+            type="button"
+            className="button button--primary"
+            onClick={createDraft}
+            disabled={creating}
+          >
+            <ShieldCheck size={15} aria-hidden="true" />
+            {creating ? "Creating draft…" : "Create draft in console"}
           </button>
           <button type="button" className="button button--ghost" onClick={resetForm}>
             Reset draft
@@ -569,8 +651,8 @@ export function NewAuditForm() {
             <div className="mt-5 notice notice--warn">
               <LockKeyhole size={15} aria-hidden="true" />
               <span>
-                This checkpoint does not submit anything. There is no API call, wallet signature or
-                on-chain transaction from this form.
+                Validating previews hashes locally. Creating a draft calls the session-authenticated
+                console API, but does not sign a wallet transaction, commit conditions or move funds.
               </span>
             </div>
           </div>
@@ -618,6 +700,43 @@ export function NewAuditForm() {
             )}
           </div>
         </section>
+
+        {created ? (
+          <section className="panel panel--glow">
+            <div className="panel-header">
+              <div>
+                <h2 className="panel-title">Draft created</h2>
+                <p className="panel-subtitle">
+                  Stored in the demo workspace with canonical RFC 8785 hashes.
+                </p>
+              </div>
+              <span className="tag tag--ok">{created.status}</span>
+            </div>
+            <div className="panel-body">
+              <div className="stack-md">
+                <div className="hash-box">
+                  <span className="hash-label">Audit ID</span>
+                  <span className="hash-value">{created.audit_id}</span>
+                  <span className="hash-label mt-2">Public audit ID</span>
+                  <span className="hash-value">{created.public_audit_id}</span>
+                </div>
+                <div className="hash-box">
+                  <span className="hash-label">Thesis hash (server)</span>
+                  <span className="hash-value">{created.thesis_hash}</span>
+                  <span className="hash-label mt-2">Conditions hash (server)</span>
+                  <span className="hash-value">{created.conditions_hash}</span>
+                </div>
+                <div className="notice notice--info">
+                  <LockKeyhole size={15} aria-hidden="true" />
+                  <span>
+                    Next: sign <span className="mono">commit_audit</span> with the client wallet.
+                    The commitment must be final before funding or attacker dispatch.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         <section className="panel panel--raised">
           <div className="panel-body">

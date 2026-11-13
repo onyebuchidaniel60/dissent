@@ -524,6 +524,7 @@ export async function reviewAndAdjudicate(auditId: string): Promise<{
       },
     });
     await tx.insert(certificates).values({
+      id: certificateId,
       auditId,
       certificateHash,
       canonicalizationVersion: "RFC8785-v1",

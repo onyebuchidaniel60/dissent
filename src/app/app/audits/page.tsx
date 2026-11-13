@@ -4,7 +4,10 @@ import { ArrowRight, Filter, Plus, Search, X } from "lucide-react";
 import { FixtureBadge } from "@/components/fixture-badge";
 import { PageHeader, Panel } from "@/components/ui";
 import { StatusPill } from "@/components/status-pill";
+import { getWalletSession } from "@/lib/auth";
+import { listWorkspaceAudits } from "@/lib/audit-service";
 import { DEMO_AUDITS, type AuditStatus } from "@/lib/demo-data";
+import { getWorkspaceForAccount } from "@/lib/workspace";
 
 const STATUS_OPTIONS: Array<{ value: "ALL" | AuditStatus; label: string }> = [
   { value: "ALL", label: "All statuses" },
@@ -21,6 +24,10 @@ export default async function AuditsPage({
 }: {
   searchParams: Promise<{ status?: string; q?: string }>;
 }) {
+  const session = await getWalletSession();
+  const workspace = session ? await getWorkspaceForAccount(session.accountId) : null;
+  const liveAudits = workspace ? await listWorkspaceAudits(workspace.workspaceId, 10) : [];
+
   const params = await searchParams;
   const status = params.status && params.status !== "ALL" ? params.status : "ALL";
   const query = (params.q ?? "").trim().toLowerCase();
@@ -54,8 +61,67 @@ export default async function AuditsPage({
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <FixtureBadge />
-        <span className="tag tag--muted">{audits.length} records</span>
+        <span className="tag tag--muted">{audits.length} fixture records</span>
+        {workspace ? <span className="tag tag--ok">{liveAudits.length} live workspace records</span> : null}
       </div>
+
+      {liveAudits.length > 0 ? (
+        <div className="mb-4">
+          <Panel
+            title="Live workspace audits"
+            subtitle="Session-scoped records created through the API or console."
+            action={<span className="tag tag--ok">live</span>}
+            bodyClassName=""
+          >
+            <div className="table-wrap">
+              <table className="data-table">
+                <caption className="sr-only">Live workspace audits</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Audit</th>
+                    <th scope="col">State</th>
+                    <th scope="col">Verdict</th>
+                    <th scope="col">Updated</th>
+                    <th scope="col">Open</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {liveAudits.map((audit) => (
+                    <tr key={audit.id}>
+                      <td data-label="Audit">
+                        <div className="table-primary">
+                          <Link href={`/app/audits/${audit.id}`}>
+                            {(audit.rationale ?? "Untitled audit").slice(0, 70)}
+                          </Link>
+                          <span>
+                            {audit.publicAuditId} · {audit.symbol ?? audit.assetId ?? "NEAR"}
+                          </span>
+                        </div>
+                      </td>
+                      <td data-label="State">
+                        <StatusPill status={audit.status} />
+                      </td>
+                      <td data-label="Verdict">
+                        {audit.verdict ? <StatusPill status={audit.verdict} /> : <span className="mono text-[10px] text-muted-2">Pending</span>}
+                      </td>
+                      <td data-label="Updated">
+                        <span className="mono text-[10px] text-muted-2">
+                          {audit.updatedAt.toISOString().slice(0, 16).replace("T", " ")} UTC
+                        </span>
+                      </td>
+                      <td data-label="Open">
+                        <Link href={`/app/audits/${audit.id}`} className="text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
+                          Open
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Panel>
+        </div>
+      ) : null}
 
       <Panel
         title="Filter the ledger"
