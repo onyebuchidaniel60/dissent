@@ -5,7 +5,9 @@
 ## 1. Architecture decisions
 
 ### 1.1 Shape
-A modular monolith plus a dedicated background worker. One TypeScript codebase, one PostgreSQL database, a Postgres-backed durable job queue, and a small Rust NEAR contract workspace. Do not split into microservices for the hackathon.
+A modular monolith with an **in-process pg-boss runner**. One TypeScript codebase, one PostgreSQL database, a Postgres-backed durable job queue, and a small Rust NEAR contract workspace. Do not split into microservices for the hackathon.
+
+**Phase 1 operator revision (C2):** the preview runs on a Render free Web Service, which does not provide a background worker. pg-boss starts inside the Next.js process. This is a deployment adaptation, not a change to the domain state machine or queue contracts.
 
 ### 1.2 Concrete stack
 
@@ -19,26 +21,26 @@ A modular monolith plus a dedicated background worker. One TypeScript codebase, 
 | Validation | Zod + JSON Schema Draft 2020-12 validator | Request/output validation and cross-field checks |
 | Database | PostgreSQL 16+ | Primary durable store, JSONB output snapshots, audit/event records |
 | ORM/migrations | Drizzle ORM + drizzle-kit | Typed queries and explicit migrations |
-| Queue | pg-boss (Postgres-backed) | Durable attacker/evidence/adjudication jobs; bounded retries |
-| AI providers | Official OpenAI SDK, official Anthropic SDK, `@nearai/inference-sdk` | Provider adapters and attested NEAR AI calls |
-| NEAR app integration | `near-api-js`/wallet selector or current official NEAR JS SDK selected at intake | Wallet transaction construction, RPC verification, contract calls |
+| Queue | pg-boss (Postgres-backed, in-process) | Durable attacker/evidence/adjudication jobs; bounded retries |
+| AI providers | One generic OpenAI-compatible adapter; OpenRouter primary, Groq secondary | Provider calls, token buckets, retries and cost attribution. No OpenAI/Anthropic SDKs. |
+| NEAR app integration | Official NEAR wallet-selector packages plus the current supported NEAR JS SDK | Wallet transaction construction, signed-nonce sessions, RPC verification, contract calls |
 | Smart contracts | Rust + `near-sdk` | Commitment/certificate registry and testnet bounty escrow |
 | Contract tests | `near-workspaces` / sandbox plus Rust unit tests | Local contract testing and testnet integration |
 | Unit/integration tests | Vitest | Domain logic, adapters, API and database tests |
 | E2E | Playwright | Browser journeys and demo recording |
 | Logging | Pino structured logs | Audit operations and worker diagnostics |
 | Error monitoring | Sentry optional; disabled until credentials/consent | Operational error reporting |
-| Deployment | Docker; Railway web + worker + managed PostgreSQL as the default target | One project, separate web/worker processes, preview/staging |
+| Deployment | Docker; Render free Web Service + Neon free PostgreSQL as the preview target | One web process with an in-process runner; no separate worker on the free plan |
 
 Versions are pinned in lockfiles at implementation time. The agent must not install `latest` in production or silently upgrade dependencies. If the current maintained NEAR SDK conflicts with the workspace, record the incompatibility and choose the closest supported SDK release without changing the architecture.
 
 ### 1.3 Why this stack
 - A modular monolith keeps business rules in one versioned TypeScript package and reduces integration overhead.
 - PostgreSQL is already required for durable audits and provides a simple queue backend; Redis is unnecessary.
-- A dedicated worker prevents long-running model and evidence jobs from tying up HTTP requests.
-- Direct vendor SDKs preserve access to provider-specific structured output, rate-limit and attestation features.
+- The in-process runner is a free-tier accommodation: it avoids a second Render service while preserving pg-boss job uniqueness, retries and durable state. Long jobs are bounded and concurrency is capped so the web event loop remains responsive.
+- A single OpenAI-compatible adapter avoids two vendor SDKs while preserving per-provider base URLs, token buckets and structured output validation. Provider-specific features are handled through explicit request options, not a second abstraction.
 - The Rust contract is intentionally small; AI reasoning stays off-chain.
-- Railway is the default deployment target because it can host the web process, worker process, and Postgres under one operational project. If the operator lacks a Railway account/credits, do not silently substitute a paid host; deploy locally or use an operator-approved equivalent during intake.
+- Render free + Neon free is the only authorized preview target. There is no paid hosting, paid TTS or card-backed service. If the free service is unavailable, continue locally and record the preview blocker; do not silently substitute a paid host.
 
 ## 2. Logical architecture
 
@@ -120,40 +122,46 @@ Use `pg-boss` with queues:
 
 Unique keys: `(audit_id, attacker_id, run_generation)` for attacker run; `(audit_id, evidence_id, verification_generation)` for evidence; `(audit_id, policy_version)` for adjudication; `finding_id + payout_generation` for settlement. Queue handlers must be idempotent. Exponential backoff is bounded; no infinite retries. Max attacker retries: 2 schema-repair retries + 1 complete rerun, all configurable and recorded.
 
-Concurrency defaults: maximum 8 parallel attackers per audit, maximum 2 concurrent audits in demo; provider-specific rate limits apply. These are configuration defaults, not promises of provider capacity.
+Concurrency defaults for the free Render instance: **maximum 3 parallel attackers per audit**, **maximum 1 concurrent audit**, and a pg-boss pool of 2 connections. Provider-specific token buckets still apply. These are hard config defaults for the 512 MB process, not promises of provider capacity.
+
+**In-process runner:** `src/instrumentation.ts` starts pg-boss on server boot when `DATABASE_URL_DIRECT` or `DATABASE_URL` is present. If the pooled Neon URL cannot acquire advisory locks, the queue uses the direct URL; this is recorded in `docs/DEPLOYMENT.md`. A queue failure does not make `/healthz` fail. `/readyz` checks the database independently.
 
 ## 6. Model architecture
 
-Provider family requirements: at least three distinct families across at least two vendors, with at least one open-weight model served in NEAR AI Cloud TEE. Baseline assignment:
+Provider requirements: at least three distinct model families across at least two inference vendors, with at least one open-weight attacker. The TEE sub-clause is **formally waived** under the operator's zero-new-spend constraint (C4). The waiver is recorded in the certificate and must never be rendered as a TEE badge.
 
-| Attacker | Primary provider family | Rationale |
-|---|---|---|
-| A01 Liquidity / Execution | OpenAI GPT family | Execution and arithmetic/tool analysis |
-| A02 Asset Safety | Anthropic Claude family | Contract and permission threat review |
-| A03 Logic / Coherence | OpenAI GPT family, distinct role prompt | Logical consistency |
-| A04 Correlation / Portfolio | Anthropic Claude family | Exposure interaction |
-| A05 Thesis Inversion | NEAR AI Cloud open-weight Qwen family | Independent inversion; attested TEE |
-| A06 Data Provenance | NEAR AI Cloud open-weight GLM family | Source comparison, distinct open-weight family |
-| A07 Timing / MEV | OpenAI GPT family | Execution window and transaction path |
-| A08 Base Rate | Anthropic Claude family | Historical prior analysis |
+**Pinned roster (2026-11-13.1, `config/model_assignments.json`):**
 
-Exact model IDs and versions are resolved during operator intake from available credentials/catalogue and frozen in `model_assignments.json`. A provider fallback is allowed only if it preserves minimum family/vendor diversity and is explicitly recorded; otherwise audit cannot return `TRADE`.
+| Attacker | Provider | Model | Family | Rationale |
+|---|---|---|---|---|
+| A01 Liquidity / Execution | OpenRouter | `z-ai/glm-5.3-flash` | GLM | Execution and arithmetic/tool analysis; routed through `near-ai`, no attestation claim |
+| A02 Asset Safety | Groq | `openai/gpt-oss-120b` | GPT-OSS | Contract and permission threat review; free tier, open weight |
+| A03 Logic / Coherence | OpenRouter | `google/gemini-2.5-flash` | Gemini | Logical consistency |
+| A04 Correlation / Portfolio | OpenRouter | `nvidia/nemotron-3-ultra-550b-a55b:free` | Nemotron | Exposure interaction; free slug |
+| A05 Thesis Inversion | OpenRouter | `qwen/qwen3.8-27b` | Qwen | Independent inversion; paid but within the $0.50 ledger |
+| A06 Data Provenance | OpenRouter | `baidu/ernie-5.5-flash-preview:free` | ERNIE | Source comparison; free slug |
+| A07 Timing / MEV | OpenRouter | `cohere/north-mini-code:free` | North | Execution window and transaction path; free slug |
+| A08 Base Rate | OpenRouter | `particle-ai/particle-1:free` | Particle | Historical prior analysis; free slug |
 
-Use official vendor SDKs. Structured output is validated with Zod and JSON Schema. Model self-reported `provider`, `model_id`, time, confidence and evidence hash are not trusted; the orchestrator overwrites provenance fields from the actual invocation record. Temperature changes do not count as model diversity.
+All eight attackers use distinct model families across two inference vendors (OpenRouter + Groq), and A02 is open-weight. Several operator-preferred slugs were absent from the live catalogue; substitutions are recorded with a reason in the assignment file. A provider fallback is allowed only if it preserves the family/vendor gate and is explicitly recorded; otherwise the audit cannot return `TRADE`.
 
-NEAR AI Cloud is integrated with the official inference SDK where possible. Verify deployment attestation before model use and response signature after each inference. Store attestation report hash, signer identity, model identifier, verification result and signed receipt reference. A plain response from an OpenAI-compatible base URL is not sufficient proof of TEE execution.
+Use one generic OpenAI-compatible adapter with configurable base URL. Structured output is validated with Zod and JSON Schema. Model self-reported `provider`, `model_id`, time, confidence and evidence hash are not trusted; the orchestrator overwrites provenance fields from the actual invocation record. Temperature changes do not count as model diversity.
+
+**TEE waiver:** the direct NEAR AI API is not authorized and the OpenRouter `near-ai` route is not an attested gateway. Set `TEE_VERIFICATION_ENABLED=false`, `TEE_STATUS=WAIVED_BUDGET_CONSTRAINT`, write `tee_verifications` rows with `result=WAIVED` and `reason=TEE_VERIFICATION_DISABLED` when the schema is implemented, and disclose the waiver in the demo narration, README and certificate. Do not display a TEE badge.
 
 ## 7. Evidence/data architecture
 
 ### Source adapters
 - **NEAR canonical RPC / FastNear RPC:** canonical account state, contract views, block and receipt inspection.
 - **FastNear API / Transactions API:** indexed balances, staking, token holdings and execution history.
-- **Pikespeak:** optional account/transfer/history/DeFi-position adapter; API credentials and quotas required.
-- **NearBlocks:** optional independent transaction/explorer adapter; verify current API endpoint and credentials during intake.
-- **RedStone NEAR connector:** candidate oracle adapter for signed data packages; verify token/feed coverage and production readiness before relying on it.
-- **Pyth:** disabled by default for NEAR. Pyth documentation states Pyth Core no longer supports NEAR from 26 Aug 2026; enable only after a separately verified working deployment and explicit adapter test.
-- **Market-data fallback:** independent external market data endpoint may provide a comparison observation but must be identified as market data, not described as a NEAR oracle.
+- **NearBlocks:** independent transaction/explorer adapter. The public API is used with documented rate limits; an API key is optional and not present in the preview.
+- **Pikespeak:** skipped at intake; no credential is available.
+- **RedStone NEAR connector:** skipped at intake; no feed/key was confirmed.
+- **Pyth:** disabled. Pyth documentation states Pyth Core no longer supports NEAR from 26 Aug 2026. Do not enable it without a separately verified maintained deployment and explicit adapter test.
+- **Market-data fallback:** on-chain Ref Finance pool state is the second price observation for the NEAR/USDC demo asset. It must be identified as on-chain venue state, not an independent oracle.
 - **mcp-near-defi:** optional research tool only; do not make the core audit depend on it until its package/API behavior is smoke-tested. Implement adapter interfaces directly where possible.
+
+**Phase 1 intake decision:** at least two adapters must be live for the demo. FastNEAR public RPC and NearBlocks public API are the baseline; the Ref Finance pool read is a derived venue observation. Read-only NEAR mainnet market data is allowed while all contract transactions remain testnet-only.
 
 Source diversity is per attacker and per claim. Each run logs sources actually queried. A different source name does not prove independence if the sources ultimately derive from the same upstream provider.
 
@@ -193,29 +201,32 @@ Webhooks are deferred. Polling endpoint is sufficient and avoids outbound-URL/SS
 
 - Client machine auth: opaque API keys generated with cryptographically secure randomness; display secret once; store SHA-256/HMAC hash only, prefix, scopes, client/workspace, created/last-used/revoked timestamps. Support rotation and revocation.
 - Client scopes: `audit:create`, `audit:read:own`, `certificate:read:own`. Keys cannot list all clients or access another client's audit.
-- Human operator auth: Better Auth (email/password or magic link depending on provider configured) with secure HTTP-only sessions; no open public signup. First admin provisioned by one-time CLI command or verified invitation.
-- RBAC: `OWNER`, `OPERATOR`, `READ_ONLY`; separate service principals for workers.
+- Human operator auth: **NEAR Wallet Selector + signed-nonce session**. The user connects a wallet, signs a server-issued single-use nonce (≤5 minutes), the server verifies the signature against the account access key through NEAR RPC, and sets an HttpOnly, SameSite=Lax, Secure session cookie (8-hour expiry). No email/password, magic link, password reset or public signup. Logout clears the cookie and invalidates the server-side session.
+- Admin/operator role: server-side allowlist of wallet account IDs (`ADMIN_WALLET_ADDRESSES`). A connected address outside the allowlist receives 403 on operator routes. A wallet address in a request body is never trusted.
+- Client-agent auth remains opaque API keys with the scopes above. The `users` table is replaced by a wallet-session table keyed by account ID + session ID; no emails or passwords are stored.
 - Every record query is scoped by client/workspace at the service/database layer; UI hiding is not authorization.
 - Public verify endpoint returns only explicitly public certificate data and no thesis preimage, client identifiers, portfolio or raw evidence.
 
 ## 10. UI structure
 
-Reference image(s) are not attached in the current handoff; mark them **required at operator intake**. Phase 1 skeleton uses a neutral, accessible temporary style and real route structure; final visual implementation happens only after core E2E gate and direct inspection of supplied references.
+**Reference assets received:** `design/dissent-reference1.webp` (2048×1536) and `design/dissent-reference2.webp` (2018×12858), recorded in `REFERENCE_ASSETS.md`. They establish a near-black canvas, deep crimson glow, oversized wide display type, red primary accent, thin bordered panels, a 12-column/1520px grid and a dense dashboard split. No ShibaNex branding, copy, mascot or trade dress may be copied; the visual language is adapted to Dissent content.
 
-Routes:
+Routes (UI_UX_SPEC governs):
 - `/` — product landing/overview, clear security model and demo entry.
 - `/app` — dashboard summary (recent audits, status counts, provider/chain health).
-- `/app/audits/new` — thesis + structured failure conditions wizard.
-- `/app/audits/[auditId]` — audit timeline and live progress.
-- `/app/audits/[auditId]/certificate` — certificate view: verdict, coverage, findings, dissent, verification.
+- `/app/audits` — filterable audit ledger.
+- `/app/audits/new` — thesis + structured failure conditions draft.
+- `/app/audits/[id]` — audit timeline and live progress.
+- `/app/audits/[id]/results` — verdict, coverage, findings, dissent and gate trace.
+- `/app/certificates/[id]` — certificate detail.
 - `/verify/[certificateId]` — public redacted certificate integrity page.
 - `/app/attackers` — eight attacker roster, role and model provenance.
 - `/app/reputation` — historical quality metrics.
-- `/admin/providers` — connection/model/adapter health; secrets never displayed.
-- `/admin/audits` — audit search and safe recovery actions.
-- `/docs` — docs landing or verified external docs destination.
+- `/app/settings/api-keys` — scoped key issuance/revocation (Phase 2).
+- `/operator`, `/operator/providers`, `/operator/audits/[id]` — operator control plane.
+- `/docs` — implementation and trust-boundary documentation.
 
-Navigation: Overview, Audits, Attackers, Reputation; admin-only System/Providers. Footer: verified Documentation and public GitHub links only, plus appropriate contact/privacy/terms destinations. No placeholder `href="#"`, inert controls or fake metrics. Responsive: desktop workbench first, tablet stacked panels, mobile read-only result and simplified creation. Accessibility: semantic headings, labels, keyboard navigation, visible focus, contrast, live-region progress announcements, reduced-motion support.
+Navigation: Overview, Audits, Attackers, Reputation; admin-only Operator/Providers. Footer: verified Documentation and public GitHub links only. No placeholder `href="#"`, inert controls or fake metrics. Responsive: desktop workbench first, tablet stacked panels, mobile read-only result and simplified creation. The coverage table scrolls horizontally; the data table transforms into labelled mobile rows. Accessibility: semantic headings, labels, keyboard navigation, visible focus, contrast, live-region progress announcements, reduced-motion support.
 
 ## 11. Security architecture
 
@@ -231,7 +242,7 @@ Controls:
 - Prompt injection defense: retrieved content is quoted as untrusted data; no instructions from evidence can alter system rules/tools.
 - Tool capability allowlists per attacker; no shell, filesystem, arbitrary SQL, wallet signing, secrets access or model-to-model communication.
 - Per-run context isolation; DB row-level scoping in services; separate run namespaces; sealed output until all jobs close.
-- TEE deployment and response signature verification; failed verification blocks `TRADE`.
+- TEE deployment and response signature verification are **waived** under C4. No TEE badge is rendered; the certificate records `WAIVED_BUDGET_CONSTRAINT`. The model-family, vendor and open-weight gates remain enforced.
 - Job idempotency, unique constraints, immutable audit events, bounded retry.
 - On-chain contract role checks, one-time IDs, amount caps, escrow accounting, no admin arbitrary withdraw in normal path; multisig/timelock required for mainnet production.
 - No live trading executor in MVP; any non-TRADE or failed audit blocks any future executor.
@@ -239,7 +250,11 @@ Controls:
 
 ## 12. Deployment
 
-Docker images: `web` (Next.js) and `worker` (pg-boss processor) from one repository; Postgres managed service. Default target Railway. Separate development, protected preview/staging, and production environments with distinct database/provider keys. Preview uses synthetic data and testnet only. Do not reuse production data/credentials. Preview must be stable, access-protected if it exposes non-public audit data, and updated at verified checkpoints. Record deployed URL and immutable Git commit SHA in `AI_HANDOFF.md`.
+**Preview:** one Render free Web Service running Next.js with an in-process pg-boss runner, plus a Neon free PostgreSQL database. No Render Postgres (30-day expiry) and no separate worker service. Build `pnpm install && pnpm build`; start `pnpm start`; health `/healthz`; readiness `/readyz`. `DATABASE_URL` is pooled; pg-boss uses `DATABASE_URL_DIRECT` to avoid PgBouncer advisory-lock issues. If direct is unavailable, append `uselibpqcompat=true&sslmode=require` to the pooled URL and document the result.
+
+The free instance has 512 MB RAM and spins down after ~15 minutes idle; first request can take ~50 seconds. Concurrency is capped at one audit and three parallel attackers. An external `cron-job.org` ping hits `/healthz` every 10 minutes. The preview is publicly reachable by design for judges and contains synthetic data only; do not set a preview password.
+
+Separate development, preview/staging and production environments use distinct database/provider keys. Preview uses synthetic data and testnet only. Do not reuse production data/credentials. Record the deployed URL, deployed commit SHA and cron URL in `AI_HANDOFF.md`.
 
 No production deployment or mainnet contract transaction without explicit operator authorization recorded in `OPERATOR_INTAKE.md`.
 
@@ -254,3 +269,4 @@ Pino JSON logs with `request_id`, `audit_id`, `run_id`, job ID, provider, model,
 - NEAR Intents signed-intent (NEP-413) path is incompatible with a Function Call Key because the signing standard requires the owner's full-access key. Do not give such a key to the execution agent. A later vault design must use a standard quote/deposit path the vault can authorize, with destination/amount/expiry checks, or a different venue.
 - 1Click is mainnet-only; it has no testnet. Do not use it as a hackathon integration test dependency.
 - Pyth Core NEAR feed is disabled unless a currently maintained contract/feed is verified.
+- TEE attestation is deferred and **waived** for the zero-new-spend build (`WAIVED_BUDGET_CONSTRAINT`). Re-enable only with a direct, authorized NEAR AI Cloud account, current verification tooling and a fresh operator decision. Do not display a TEE badge until then.

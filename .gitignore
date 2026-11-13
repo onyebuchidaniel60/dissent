@@ -13,3 +13,9 @@ test-results/
 /demo/*.mp4
 /demo/*.wav
 /demo/*.m4a
+/demo/frames/
+*.tsbuildinfo
+.render/
+.agents/
+skills-lock.json
+

@@ -1,22 +1,56 @@
 # Setup Guide
 
-This repository is a planning handoff until Phase 1 initializes the application. Do not expect app source files yet.
+This repository is in Phase 1: route-complete skeleton and preview deployment. Application services beyond the shell are labelled and will be wired in later phases. Do not treat fixture data as live output.
 
-## Prerequisites (to be confirmed/pinned during intake)
-- Node.js 22 LTS (or a currently supported LTS explicitly pinned in `.nvmrc`).
-- pnpm version pinned in `packageManager`.
-- Rust toolchain pinned via `rust-toolchain.toml` for NEAR contracts.
-- PostgreSQL 16+ for local development and pg-boss.
-- Docker, Playwright browser dependencies, NEAR Sandbox/near-workspaces.
-- Provider credentials only after operator-approved budgets are recorded.
+## Prerequisites
 
-## Initial setup after Phase 0
-1. Copy `.env.example` to `.env.local`; never commit the real file.
-2. Start local PostgreSQL using the approved compose profile.
-3. Install dependencies with the pinned pnpm lockfile.
-4. Apply Drizzle migrations.
-5. Run contract unit tests and local Sandbox tests.
-6. Start web and worker processes separately.
-7. Seed synthetic data only. Do not import production portfolio data to preview.
+- Node.js 22 LTS, pinned in `.nvmrc`.
+- pnpm `10.34.5`, pinned in `packageManager`.
+- PostgreSQL 16+ locally, or a dedicated Neon branch.
+- Docker for local services and contract sandbox tests.
+- Playwright browser dependencies.
+- Rust toolchain and `near-cli-rs` for Phase 3 contract work.
+- Provider credentials only after the intake budget and scopes are recorded.
 
-Commands are implementation outputs and must be documented in `README.md` after the repository is inspected. The agent must not invent commands that do not exist.
+## First setup
+
+```bash
+pnpm install
+cp .env.example .env.local
+# fill DATABASE_URL, DATABASE_URL_DIRECT, AUTH_SECRET, provider keys locally
+pnpm dev
+```
+
+Never commit `.env.local`. The repository `.gitignore` excludes it. Verify:
+
+```bash
+git status --short | grep env.local   # must return nothing
+```
+
+## Database
+
+The preview uses Neon PostgreSQL. For local development, create a PostgreSQL database and set both `DATABASE_URL` and `DATABASE_URL_DIRECT`. The in-process pg-boss runner creates its own `pgboss` schema on first boot. Phase 2 adds Drizzle migrations; do not assume the application tables exist yet.
+
+## Health checks
+
+```bash
+curl -i http://localhost:3000/healthz
+curl -i http://localhost:3000/readyz
+```
+
+`/healthz` must pass without a database. `/readyz` returns 503 when the database is unavailable.
+
+## Tests
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm build
+```
+
+Playwright E2E is added with the functional journeys in Phase 6.
+
+## Deployment
+
+See [`DEPLOYMENT.md`](DEPLOYMENT.md). The preview target is Render free + Neon free. No production or mainnet action is authorized.

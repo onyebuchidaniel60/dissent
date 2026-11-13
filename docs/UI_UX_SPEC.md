@@ -97,7 +97,7 @@ Every async component must support loading, empty, success, error, stale/degrade
 
 ## 6. Reference-image procedure
 
-Current asset register: `../REFERENCE_ASSETS.md` (reference still missing). During Phase 0, operator must attach at least one image and confirm rights. At start of Phase 7 run `npx skills add benjitaylor/skills --skill stageshow`, inspect/use instructions, optionally discover additional trusted UI skills, record exact paths and design observations in `DESIGN_NOTES.md`, then implement the real UI. Do not create mockups or ask for mockup approval.
+Current asset register: `../REFERENCE_ASSETS.md`. Two operator-supplied, operator-owned references are received and inspected: `design/dissent-reference1.webp` (2048×1536) and `design/dissent-reference2.webp` (2018×12858). The visual language is adapted to Dissent; ShibaNex branding, copy, mascot and trade dress are not copied. At the start of Phase 7, re-read the references, run `npx skills add benjitaylor/skills --skill stageshow` if not already installed, record exact paths and design observations in `DESIGN_NOTES.md`, and implement the real UI. Do not create mockups or ask for mockup approval.
 
 ## 7. UI acceptance criteria
 
@@ -108,4 +108,4 @@ Current asset register: `../REFERENCE_ASSETS.md` (reference still missing). Duri
 - Public verification never reveals private fields.
 - Desktop/mobile/keyboard tests pass.
 - No dead controls, `href="#"`, placeholder external URLs or unlabelled status badges.
-- Final visual UI references are documented; if user hasn't supplied asset, Phase 7 remains blocked rather than fabricated.
+- Final visual UI references are documented in `REFERENCE_ASSETS.md`; no reference is fabricated.

@@ -15,6 +15,19 @@ No mainnet payment, live trading, client asset custody or real bounty obligation
 - `fund_audit` must attach the exact quoted amount; underpayment/overpayment/expired/reused quotes are rejected.
 - Backend waits for confirmed contract state before dispatching attacker jobs.
 
+### Preview configuration (2026-11-13)
+
+- Fixed audit fee: `0.1 NEAR` (`100000000000000000000000` yoctoNEAR).
+- Split: 80% bounty pool (`0.08 NEAR`), 20% protocol reserve (`0.02 NEAR`).
+- Quote expiry: `900` seconds.
+- Base bounty unit: `0.001 NEAR`.
+- Per-finding cap: `0.01 NEAR`.
+- Per-attacker cap: `0.02 NEAR`.
+- Per-audit pool cap: the funded 80% pool. The remaining pool cap is enforced last, so the sum of allocations can never exceed the funded amount even when individual caps are higher.
+- Settlement recipient: one allowlisted testnet account, `payout.dissent-demo.testnet`, with internal per-attacker accounting. If callback recovery cannot be safely tested, use accounting-only allocations and do not transfer funds.
+
+All amounts are integer yoctoNEAR. No mainnet value is involved.
+
 ## 3. Compute cost accounting
 
 - Provider usage is charged to Dissent's API/provider accounts unless a vendor explicitly supports separate sub-account billing.

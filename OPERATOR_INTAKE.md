@@ -36,6 +36,66 @@
 | TTS | Check free Google AI TTS availability; use only within free quota/terms, otherwise use a genuinely free permitted fallback | Pending verification | Required task; Google credential optional | No paid usage without explicit budget/authorization |
 | Publicity | Permission to publish repository and post demo on X; account identity | Missing | Required for external publication | Never post or change repo visibility without approval |
 
+## Completed intake record — 2026-11-13
+
+**Status:** PASS. No unresolved critical input. The operator answered the consolidated intake in one round. Secret values are not recorded here; only references and validation status.
+
+### Constraints and authority
+
+| Area | Recorded decision |
+|---|---|
+| New spend | `$0.00`. No card charges, paid hosting, paid TTS or auto-billing trials. |
+| Inference budget | Pre-purchased OpenRouter credit only. Remaining at intake: `$7.747`. Per-audit ceiling: `$0.50`. |
+| Hosting | Render free Web Service + Neon free PostgreSQL. No Render Postgres. No Railway. |
+| Production | **Not authorized.** Preview only. |
+| Mainnet | **Not authorized.** No mainnet transaction. |
+| Repository | Public, `main`, MIT. Write access verified (GitHub ADMIN). |
+| Git identity | `trurntt <onyebuchidaniel60@gmail.com>`. |
+| Publicity | Repo is public. Prepare demo assets only; do not post to X. |
+| TEE | `WAIVED_BUDGET_CONSTRAINT` (C4). No TEE badge; disclosure required. |
+| Model vendors | OpenRouter primary + Groq secondary. One OpenAI-compatible adapter. No OpenAI/Anthropic SDKs. |
+| Human auth | NEAR Wallet Selector + signed-nonce session only. No email/password or Better Auth. |
+| Admin gate | Server-side allowlist `ADMIN_WALLET_ADDRESSES`; current value is the operator testnet account. |
+| Demo client | `demo-client.testnet`; agent-supplied signed transaction for deterministic E2E. |
+| Testnet deployer | `dissent-demo.testnet`; registry `registry.dissent-demo.testnet`; escrow `escrow.dissent-demo.testnet`; payout `payout.dissent-demo.testnet`. |
+| RPC | `https://rpc.testnet.near.org` primary; `https://free.rpc.fastnear.com` fallback. |
+| Testnet economics | Fee `0.1 NEAR`; 80/20 bounty/reserve; quote expiry `900s`; caps in `docs/ECONOMICS_SPEC.md`. |
+| Data adapters | FastNEAR public RPC + NearBlocks public API. Pikespeak and RedStone skipped. Demo asset NEAR/USDC on Ref Finance. Read-only mainnet market data allowed. |
+| Data/privacy | Synthetic demo data only. 30-day retention for private payloads/evidence. |
+| Demo | Audience: NEAR Hackathon judges, AI-agent developers, DeFi operators. Pronunciation: “dih-SENT”. Output `demo/`. ElevenLabs voice ID supplied via `ELEVENLABS_VOICE_ID`. |
+| UI references | `design/dissent-reference1.webp` (2048×1536) and `design/dissent-reference2.webp` (2018×12858); operator-owned, inspected, mapped in `REFERENCE_ASSETS.md`. |
+
+### Credential validation (values never printed)
+
+| Credential | Validation |
+|---|---|
+| OpenRouter | PASS — `/key` and `/credits`; 436 models; selected slugs exercised. |
+| Groq | PASS — `/models`; `openai/gpt-oss-120b` present; completion exercised with an explicit User-Agent. |
+| Render | PASS — owner/service list; free web service created. |
+| Neon | PASS — pooled and direct `select 1`. |
+| ElevenLabs | PASS — voice metadata and free-tier subscription (10,000 characters). |
+| NEAR testnet RPC | PASS — `status` 200. |
+| FastNEAR public RPC | PASS — `status` 200. |
+| NearBlocks API | PASS — public `stats` 200. |
+
+### Document conflicts resolved
+
+1. `commit_audit` is authoritative; UI may say “Commit conditions”.
+2. `docs/API_SPEC.md` governs REST routes.
+3. `docs/UI_UX_SPEC.md` governs UI routes.
+4. Escrow/funding is required; accounting-only fallback is allowed if the transfer path cannot be safely tested.
+5. `DISSENT_IMPLEMENTATION_BLUEPRINT.md` is non-authoritative and left untouched.
+6. Attacker schema revision 1.1 / payload 1.0 needs no ruling.
+7. Missing `.env.example` variables were added in Phase 1.
+
+### Resulting deviations (documented, not hidden)
+
+- TEE attestation waived under C4; recorded in `AGENTS.md`, `ARCHITECTURE.md`, `README.md` and the certificate UI.
+- Render free + Neon free replaces Railway; pg-boss runs in-process with reduced concurrency.
+- OpenRouter + Groq replace direct OpenAI/Anthropic; one generic adapter is used.
+- Better Auth is removed; wallet-selector + signed-nonce sessions are the only human auth.
+- Some preferred model slugs were absent from the live catalogue; substitutions preserve distinct families and are recorded in `config/model_assignments.json`.
+
 ## Intake completion rules
 1. Read all existing repository/environment data first and do not ask for known items.
 2. Ask one consolidated set of unresolved critical questions; clearly separate optional choices.

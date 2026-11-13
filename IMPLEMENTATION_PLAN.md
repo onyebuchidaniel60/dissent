@@ -19,7 +19,7 @@ Tasks:
 4. Verify repository write access, Git remote, branch policy and public/private status.
 5. Verify provider credentials, model IDs, current quotas, API rate limits and cost ceiling without printing secret values.
 6. Verify NEAR testnet account, deploy key, registry contract account, client signing approach, RPC access, and payout account IDs if testnet bounty transfer is included.
-7. Verify Railway access/credits or mark preview as blocked; verify Postgres and environment secret injection.
+7. Verify Render free Web Service + Neon free PostgreSQL access or mark preview as blocked; verify environment secret injection. Record the in-process pg-boss adaptation.
 8. Record permitted actions and prohibited actions, especially mainnet, live funds, production deployment, destructive operations and paid services.
 9. Confirm the three-family/two-vendor/open-weight TEE path can be exercised. Check actual per-response attestation verification, not only a successful API response.
 10. Resolve any missing critical item in one consolidated response. Use documented safe defaults for non-critical preferences.
@@ -50,11 +50,11 @@ Tasks:
 Tasks:
 - Add PostgreSQL schema and migrations for clients, users, API keys, audits, theses, conditions, commitments, attacker runs, findings, evidence, events, certificates, policies, reputation and bounty records.
 - Add Drizzle typed repositories and transaction helpers.
-- Add Better Auth operator sessions; provision first admin through safe one-time command.
+- Add NEAR Wallet Selector + signed-nonce operator sessions; enforce the `ADMIN_WALLET_ADDRESSES` allowlist server-side. No email/password or Better Auth.
 - Add scoped API-key auth for client agents; store hashes only.
 - Add client/workspace authorization checks and tests for IDOR.
 - Add Pino redacted logging, health/readiness endpoints and request IDs.
-- Add pg-boss worker process and queue bootstrap.
+- Add in-process pg-boss bootstrap (no separate worker service on Render free) and a test job claim.
 
 **Acceptance:** migrations run on an empty DB; session and API key auth work; cross-client reads/writes are denied; worker starts and claims a test job; secrets do not appear in logs.
 
@@ -68,8 +68,8 @@ Tasks:
 - Implement commitment transaction payload generation and receipt verification; implement fixed testnet fee quote, `fund_audit` receipt verification, and gate dispatch on both commitment and fee funding.
 - Implement NEAR registry contract and local sandbox tests; deploy testnet only under granted authority.
 - Implement source adapter interfaces and at least two working data routes for demo evidence.
-- Implement model-provider adapter interface and actual capability check for OpenAI, Anthropic and NEAR AI Cloud.
-- Implement NEAR AI deployment attestation and response signature verification.
+- Implement one generic OpenAI-compatible provider adapter with per-provider base URL, token bucket and capability check for OpenRouter and Groq.
+- Record the TEE waiver (`WAIVED_BUDGET_CONSTRAINT`); do not implement or claim NEAR AI attestation in this build. Preserve the `tee_verifications` schema for future re-enablement.
 
 **Acceptance:** known canonical hash test vectors pass; no attacker job before confirmed commitment and fee funding; wrong signer/hash/contract/method/fee rejected; TEE unverified model request cannot count toward a `TRADE`-eligible audit; source adapters record raw payload hash and retrieval metadata.
 
@@ -156,8 +156,8 @@ Tasks:
 Tasks:
 - Use Playwright to record deterministic demo data in a clean browser profile.
 - Narrate commitment → eight attackers → divergence/invalid test/Section B → evidence verification → verdict/coverage/dissent → NEAR certificate → bounty record.
-- Check availability, free tier, credentials, terms and quotas for Google AI voice/TTS. Do not assume free unlimited use or spend without authority.
-- Use a genuinely free permitted fallback TTS if Google option unavailable; document substitution.
+- Use the operator-supplied ElevenLabs voice ID for every segment. Do not substitute a default voice or incur new TTS spend.
+- Add royalty-free background music at approximately −20 dB under the voice; document the track, artist, source URL and license.
 - Synchronize narration with visible actions, add captions where feasible, redact secrets/private URLs/personal data.
 - Render and review full video; verify audio and video playback and duration <=180 seconds.
 - Run full unit/integration/E2E/security suite and contract tests; scan secrets/dependencies.

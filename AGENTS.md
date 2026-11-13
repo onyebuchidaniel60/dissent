@@ -21,7 +21,7 @@ Where documents appear inconsistent, `PROJECT_SPEC.md` and `ARCHITECTURE.md` gov
 - Attackers see the thesis and committed failure conditions; they never see sibling outputs, adjudicator state or prior verdicts.
 - Section A assesses every committed condition exactly once; Section B searches beyond conditions and must be justified if empty.
 - `INVALID_TEST` is a first-class condition status.
-- Minimum three distinct model families across at least two vendors; at least one open-weight model in NEAR AI Cloud TEE with verified attestation/signature.
+- Minimum three distinct model families across at least two vendors; at least one open-weight model. **Documented deviation (2026-11-13, C4):** the NEAR AI Cloud TEE sub-clause is `WAIVED_BUDGET_CONSTRAINT` under the operator's zero-new-spend constraint. Do not display a TEE badge or claim confidential inference. The family, vendor and open-weight gates remain enforced.
 - Evidence re-fetch and Sycophancy review precede adjudication.
 - No majority voting. Final policy is deterministic and versioned.
 - Verdicts are `TRADE`, `REFUSE`, `ABSTAIN`; failure/incomplete coverage never becomes `NOT_HIT`.
@@ -72,7 +72,7 @@ All control affordances must work. Complete loading/empty/validation/error/succe
 ## Documentation and demo
 Maintain a useful README and docs for setup, configuration, testing, deployment, troubleshooting, API, data model, security and operator guidance. Use verified destinations for Documentation/GitHub/footer links; never expose a private repo.
 
-Produce a <=180-second final demo (target 90–150 seconds) using Playwright and deterministic demo data. Check current free Google AI voice/TTS availability, quota, terms and credentials. Do not incur costs without approval. Use a genuinely free permitted fallback if needed. Synchronize narration to visible behavior, caption where feasible, redact secrets/private URLs/personal data, render and review full playback and duration. Save video, narration script and production notes.
+Produce a <=180-second final demo (target 90–150 seconds) using Playwright and deterministic demo data. Use the operator-supplied ElevenLabs voice ID for every segment; do not substitute a default voice and do not incur new TTS spend. Add royalty-free background music at approximately −20 dB under the voice with documented source/license. Synchronize narration to visible behavior, burn in captions where feasible, redact secrets/private URLs/personal data, render and review full playback and duration. Save video, narration script and production notes.
 
 ## Git, handoff and logs
 Use small meaningful commits. At each checkpoint update:
