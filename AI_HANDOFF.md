@@ -4,7 +4,7 @@
 **Current phase:** Phase 9 checkpoint — live testnet audit, evidence review, certificate anchoring, bounty accounting, session-scoped UI drafts, owner/operator live views, E2E checks and a reviewed 100-second demo are delivered. Wallet-driven commit/fund UI remains the main incomplete UI journey.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
-**Deployed app commit:** `366b967` (app shell + overflow fix); the Phase 2–5 backend and live-verifier commits are pending this deployment.
+**Deployed app commit:** `cf2b663` (`feat: finalize live UI surfaces and deliver reviewed demo`).
 **Production/mainnet authority:** **not granted**. No mainnet transaction, production release or external posting is authorized.
 
 ## Live testnet artifacts
@@ -17,7 +17,7 @@
 - **Certificate anchor transaction:** `6G7Yd3uvZozLC9SbXtNW5jxFetV4TLqgTMFxN76MmYJF`
 - **Verdict:** `TRADE`. All eight runs completed, both material conditions were evaluable, all five evidence refs re-fetched as `VERIFIED`, divergence was `0`, and all review/non-contradiction gates passed.
 - **Bounty accounting:** 7 accepted-finding allocations totaling `0.025 NEAR` recorded on testnet; no payout claim executed.
-- **Public verify:** `https://dissent-web.onrender.com/verify/96426c09-87ec-4641-94ed-4edf0b7b34f1` (available after the next deployment).
+- **Public verify:** `https://dissent-web.onrender.com/verify/96426c09-87ec-4641-94ed-4edf0b7b34f1` (live).
 
 An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-depth evidence was unavailable and a preimage-hash bug produced a false contradiction. The bug is fixed in `src/lib/evidence/service.ts`; the earlier anchored certificate is retained unchanged as an immutable test artifact.
 
@@ -144,7 +144,7 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 - Music: Kevin MacLeod — “Floating Cities”, CC BY 4.0, attributed in README and production notes.
 - Captions: burned in, max two lines; sampled review at 5s/30s/55s/75s.
 - E2E: 3 Playwright tests pass against both local and deployed preview.
-- Preview deploy for the latest UI/queue changes is pending the final commit.
+- Preview deploy: `cf2b663` live at `https://dissent-web.onrender.com`; health/readiness and the three E2E checks pass.
 
 ## Next task
 
