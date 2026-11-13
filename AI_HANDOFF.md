@@ -4,7 +4,7 @@
 **Current phase:** Phase 1 complete — route-complete skeletal frontend, in-process queue and live preview deployed.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
-**Deployed app commit:** `c6e6d93` (`docs: record Phase 1 preview evidence and keep-alive fallback`)
+**Deployed app commit:** `366b967` (`docs: record Phase 1 preview evidence and keep-alive fallback`)
 **Render service:** `srv-dbrgdr3bc2fs73d0oi5g` (`dissent-web`, free web service, Oregon)
 **Production/mainnet authority:** **not granted**. No mainnet transaction, production release or external posting is authorized.
 
