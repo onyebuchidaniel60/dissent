@@ -81,7 +81,7 @@ Key variables:
 
 ## Model diversity
 
-The pinned roster is recorded in [`config/model_assignments.json`](config/model_assignments.json). All eight attackers use distinct model families across OpenRouter and Groq, with one open-weight model (`openai/gpt-oss-120b` on Groq). The OpenRouter catalogue changes; substitutions are recorded with a reason and may never silently collapse the family/vendor gate.
+The pinned roster is recorded in [`config/model_assignments.json`](config/model_assignments.json). The roster currently spans seven distinct model families across OpenRouter and Groq, with one open-weight model (`openai/gpt-oss-120b` on Groq). A06 and A07 share the Flint family as a documented free-model availability substitution; the family/vendor gate still passes. The OpenRouter catalogue changes; substitutions are recorded with a reason and may never silently collapse the family/vendor gate.
 
 **Groq free-tier note:** A02's 200K TPD limit is the binding constraint — roughly two audits per day. The adapter uses a per-provider token bucket so one audit cannot exhaust the daily quota.
 
@@ -96,6 +96,17 @@ The pinned roster is recorded in [`config/model_assignments.json`](config/model_
 ## TEE waiver
 
 The frozen decision requires at least one open-weight model in a NEAR AI Cloud TEE with verified attestation and response signatures. The direct NEAR AI API is not authorized under the zero-new-spend constraint. OpenRouter's `near-ai` route is not an attested gateway, so the TEE sub-clause is recorded as `WAIVED_BUDGET_CONSTRAINT`. No TEE badge is rendered. The model-family, vendor and open-weight gates are still enforced. This deviation is recorded in [`ARCHITECTURE.md`](ARCHITECTURE.md), [`AI_HANDOFF.md`](AI_HANDOFF.md) and [`docs/BUILD_LOG.md`](docs/BUILD_LOG.md).
+
+## Live testnet record
+
+A real testnet audit has been committed, funded, attacked by all eight specialists, reviewed and anchored:
+
+- Public verifier: `https://dissent-web.onrender.com/verify/f7783fa3-a71e-49ae-ab06-4ca5ac1b7670`
+- Verdict: `ABSTAIN` — executable pool-depth evidence was unavailable; missing data was not converted into `NOT_HIT`.
+- Certificate hash: `092e94db24d81e4d9cdb62c16269add73d9b82a18d166d70b6e6054b41e4e4d6`
+- Registry transaction: `BRajqZsAKZPt96BrbFy7y1BRKeLyaE9vymnq2mQFqkkN`
+
+This is a development audit; the UI fixture set remains separately labelled.
 
 ## Deployment
 

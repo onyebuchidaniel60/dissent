@@ -86,7 +86,7 @@ export default function OperatorProvidersPage() {
         <Panel
           title="Pinned attacker assignments"
           subtitle="Every substitution is recorded with the selection reason."
-          action={<span className="tag tag--muted">8 families</span>}
+          action={<span className="tag tag--muted">7 families</span>}
           bodyClassName=""
         >
           <div className="table-wrap">
@@ -155,7 +155,7 @@ export default function OperatorProvidersPage() {
             <div className="mt-4 grid grid-cols-2 gap-2">
               <div className="rounded-xl border border-line bg-white/[0.02] p-3">
                 <p className="small-caps text-muted-2">Families</p>
-                <p className="mt-1 font-display text-xl font-bold">8</p>
+                <p className="mt-1 font-display text-xl font-bold">7</p>
               </div>
               <div className="rounded-xl border border-line bg-white/[0.02] p-3">
                 <p className="small-caps text-muted-2">Vendors</p>

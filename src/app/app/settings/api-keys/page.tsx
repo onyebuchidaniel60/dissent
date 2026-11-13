@@ -18,14 +18,14 @@ export default function ApiKeysPage() {
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <FixtureBadge />
-        <span className="tag tag--warn">Wallet gate · Phase 2</span>
+        <span className="tag tag--ok">Wallet gate active</span>
         <span className="tag tag--muted">No key is displayed here</span>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_0.8fr]">
         <Panel
           title="API credentials"
-          subtitle="Issuance, rotation and revocation arrive with the identity service in Phase 2."
+          subtitle="Issuance is operator-CLI driven; plaintext is shown once and only a hash is stored."
         >
           <div className="empty-state">
             <span className="empty-icon">

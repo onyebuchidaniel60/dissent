@@ -1,0 +1,1 @@
+ALTER TABLE "condition_assessments" ADD COLUMN "evidence_refs" jsonb DEFAULT '[]'::jsonb NOT NULL;

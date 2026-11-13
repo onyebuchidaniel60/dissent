@@ -19,12 +19,23 @@
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "provision:admin": "tsx scripts/provision-admin.ts"
+    "provision:client": "tsx scripts/provision-client.ts"
   },
   "dependencies": {
+    "@near-wallet-selector/core": "10.1.4",
+    "@near-wallet-selector/modal-ui": "10.1.4",
+    "@near-wallet-selector/my-near-wallet": "10.1.4",
+    "@near-wallet-selector/nightly": "10.1.4",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "borsh": "2.0.0",
+    "bs58": "6.0.0",
+    "buffer": "6.0.3",
+    "canonicalize": "5.1.0",
     "clsx": "2.1.1",
     "drizzle-orm": "0.45.4",
     "lucide-react": "1.72.0",
+    "near-api-js": "7.5.3",
     "next": "16.4.6",
     "pg": "8.23.1",
     "pg-boss": "12.38.2",
@@ -33,10 +44,14 @@
     "react-dom": "19.3.1",
     "server-only": "0.0.1",
     "tailwind-merge": "3.7.0",
+    "tweetnacl": "1.0.3",
     "zod": "4.6.7"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "secp256k1"
+    ]
   },
   "devDependencies": {
     "@playwright/test": "1.65.0",
@@ -48,6 +63,7 @@
     "drizzle-kit": "0.31.11",
     "eslint": "9.39.5",
     "eslint-config-next": "16.4.6",
+    "near-cli-rs": "0.31.1",
     "prettier": "3.10.1",
     "tailwindcss": "4.3.5",
     "tsx": "4.23.15",

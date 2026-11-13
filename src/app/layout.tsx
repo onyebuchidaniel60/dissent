@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SITE } from "@/lib/site";
 
+import "@near-wallet-selector/modal-ui/styles.css";
 import "./globals.css";
 
 const display = Orbitron({

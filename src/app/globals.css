@@ -1650,6 +1650,29 @@ textarea {
   margin-top: 18px;
 }
 
+.wallet-toast {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 90;
+  display: flex;
+  max-width: min(420px, calc(100vw - 36px));
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  padding: 12px 12px 12px 14px;
+  color: var(--ink);
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.55);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.wallet-toast button {
+  margin-left: auto;
+}
+
 .skeleton {
   position: relative;
   overflow: hidden;

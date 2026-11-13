@@ -55,6 +55,51 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - **Cost:** $0 new spend; OpenRouter remaining $7.74699; test calls ~$0.00006.
 - **Known issues:** TEE waived; later-phase functionality explicitly labelled; Render cold start; pg SSL-mode deprecation warning.
 
+## Phase 2 — data, identity and auth
+
+- Added 27-table Drizzle schema and migrations `0000`–`0005`; applied to Neon.
+- Added wallet sessions, auth nonces, workspace members, scoped API keys, audit/thesis/condition/commitment/funding/run/evidence/finding/review/certificate/bounty tables.
+- Implemented NEAR Wallet Selector + NEP-413 signed-nonce auth:
+  - nonce creation, signature/access-key verification, HttpOnly session cookie, logout.
+  - Real testnet signature verification with `demo-client`/deployer key: PASS.
+  - Operator allowlist gate: unauthenticated gate, allowlisted operator surface verified.
+- API keys: HMAC-SHA256 at rest, scoped key auth, tenant-scoped audit reads.
+  - `pnpm provision:client` provisioned `Demo Client` and a demo key (plaintext only in `.env.local`).
+  - Prepare/list: PASS. Idempotent replay: PASS. Missing key: 401. Cross-tenant read: 404.
+- In-process pg-boss runner starts on Node boot; heartbeat and audit.dispatch worker registered.
+
+## Phase 3 — canonical domain, NEAR contract and adapters
+
+- RFC 8785 canonicalization + SHA-256; Zod thesis/condition validation.
+- `POST /api/v1/audits/prepare` created audit `08939501-b745-407e-8899-7b886ce4e213` with hashes and `commit_audit` args.
+- Rust `DissentRegistry` deployed at `registry.dissent-demo.testnet`:
+  - deployment tx `DwTsqTQ9Lh28zpcqYhNYrzARH7NaQgQkc3sEgtaXaaNv`
+  - commitment tx `EPyCZw3yCiEyVfrpjBvdFVHsRHdnzpsHaLwKLEEPW6YK`
+  - quote issued, funding tx `J4D85KnMNB3RsyDR5ZtotUqxqD8nw5LMqGTwGms6yySY`
+  - commitment/funding verified via API and contract state.
+- Provider adapter: OpenRouter + Groq, token buckets, bounded retry, cost attribution.
+- Evidence adapters: CoinGecko, NearBlocks, FastNEAR RPC, derived depeg, condition preimage.
+
+## Phase 4 — eight live attacker runs
+
+- All 8 attackers `COMPLETED` against live providers.
+- Output schema/semantic validation, Section A exact coverage, Section B, invalid-test analysis, raw output/validation report storage.
+- Model availability diagnostics: preferred free slugs were missing/rate-limited; substitutions recorded in `config/model_assignments.json`.
+- A06/A07 share Flint family as a documented free-model availability substitution; 7 families / 2 vendors / 1 open-weight remains above gate.
+- TEE waiver rows written as `WAIVED`; no TEE badge.
+- Live cost: $0.019186.
+
+## Phase 5 — evidence, adjudication, certificate and bounty
+
+- Evidence re-fetch completed; source outcomes recorded.
+- Sycophancy/novelty and finding review completed; 8 findings accepted, 3 rejected/contradicted in the development audit.
+- Deterministic adjudication returned `ABSTAIN` (material execution-depth condition unverifiable; a condition-preimage hash bug also produced a false contradiction).
+- Certificate `f7783fa3-a71e-49ae-ab06-4ca5ac1b7670`, hash `092e94db24d81e4d9cdb62c16269add73d9b82a18d166d70b6e6054b41e4e4d6`, anchored at tx `BRajqZsAKZPt96BrbFy7y1BRKeLyaE9vymnq2mQFqkkN`.
+- Public verify API recomputes hash and reads registry: `VERIFIED`.
+- 8 bounty allocations totaling `0.03625 NEAR` recorded on testnet; no claim executed.
+- Fixed condition-preimage hash bug for subsequent audits; anchored certificate retained unchanged.
+- Added results/certificate/events APIs and client-scoped access.
+
 ## Package validation
 - JSON Schema: `schemas/attacker-output-v1.schema.json` parses as Draft 2020-12 JSON Schema.
 - Valid attacker fixture: passes schema validation.

@@ -1,0 +1,1 @@
+ALTER TABLE "attacker_runs" ADD COLUMN "raw_output" text;

@@ -1,83 +1,129 @@
 # AI_HANDOFF.md — Dissent
 
 **Last updated:** 2026-11-13
-**Current phase:** Phase 1 complete — route-complete skeletal frontend, in-process queue and live preview deployed.
+**Current phase:** Phase 5 complete — live testnet audit path, evidence review, deterministic adjudication, certificate anchoring and bounty accounting are implemented. Phase 6 UI integration/E2E is next.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
-**Deployed app commit:** `366b967` (`docs: record Phase 1 preview evidence and keep-alive fallback`)
-**Render service:** `srv-dbrgdr3bc2fs73d0oi5g` (`dissent-web`, free web service, Oregon)
+**Deployed app commit:** `366b967` (app shell + overflow fix); the Phase 2–5 backend and live-verifier commits are pending this deployment.
 **Production/mainnet authority:** **not granted**. No mainnet transaction, production release or external posting is authorized.
+
+## Live testnet artifacts
+
+- **Audit ID:** `08939501-b745-407e-8899-7b886ce4e213` (`AUD-F6DB-A20A`)
+- **Commitment transaction:** `EPyCZw3yCiEyVfrpjBvdFVHsRHdnzpsHaLwKLEEPW6YK`
+- **Funding transaction:** `J4D85KnMNB3RsyDR5ZtotUqxqD8nw5LMqGTwGms6yySY`
+- **Certificate ID:** `f7783fa3-a71e-49ae-ab06-4ca5ac1b7670`
+- **Certificate hash:** `092e94db24d81e4d9cdb62c16269add73d9b82a18d166d70b6e6054b41e4e4d6`
+- **Certificate anchor transaction:** `BRajqZsAKZPt96BrbFy7y1BRKeLyaE9vymnq2mQFqkkN`
+- **Verdict:** `ABSTAIN`. Material condition FC-002 (executable pool depth) was `UNVERIFIABLE` in the available evidence; the audit did not substitute `NOT_HIT`.
+- **Bounty accounting:** 8 accepted-finding allocations totaling `0.03625 NEAR` recorded on testnet; no payout claim executed.
+- **Public verify:** `https://dissent-web.onrender.com/verify/f7783fa3-a71e-49ae-ab06-4ca5ac1b7670` (available after the next deployment).
+
+**Known development-audit issue:** the first live audit's condition-preimage evidence hash was computed with an extra field, producing a false `CONTRADICTED` review and contributing to `ABSTAIN`. The hash computation is fixed in `src/lib/evidence/service.ts` for subsequent audits. The anchored certificate is immutable and is retained as a development/test artifact; it is not rewritten.
 
 ## Intake status
 
-- Product definition, scope and frozen architecture: PASS.
-- UI reference images: PASS — `design/dissent-reference1.webp` (2048×1536) and `design/dissent-reference2.webp` (2018×12858), inspected and recorded in `REFERENCE_ASSETS.md`.
-- Repository/Git identity and write permission: PASS — GitHub ADMIN, `main`, `trurntt <onyebuchidaniel60@gmail.com>`.
+- Product definition and scope: PASS.
+- UI references: PASS — `design/dissent-reference1.webp` (2048×1536) and `design/dissent-reference2.webp` (2018×12858), inspected and mapped in `REFERENCE_ASSETS.md`.
+- Repository/Git: PASS — GitHub ADMIN, `main`, `trurntt <onyebuchidaniel60@gmail.com>`.
 - Budget/authority: PASS — **$0 new spend**; pre-purchased OpenRouter credit only; per-audit ceiling $0.50.
-- Model providers: PASS — OpenRouter and Groq keys validated; 8 distinct families across 2 inference vendors; one open-weight attacker.
-- NEAR testnet: deferred to Phase 3 — deployer `dissent-demo.testnet`, registry/escrow accounts reserved; no key material committed.
-- Hosting/database: PASS — Render free + Neon free PostgreSQL; pooled and direct URLs validated.
-- Data adapters: PASS — FastNEAR public RPC and NearBlocks public API reachable; Pikespeak/RedStone skipped.
+- Model providers: PASS — OpenRouter + Groq keys validated; **7 distinct families / 2 vendors / 1 open-weight**. A06 and A07 share Flint as a documented free-model availability substitution; the gate remains satisfied.
+- NEAR testnet: PASS — deployer `dissent-demo.testnet`, registry `registry.dissent-demo.testnet`, payout `payout.dissent-demo.testnet`. `escrow.dissent-demo.testnet` was created but the escrow module is deployed inside the registry contract, so funding uses the registry account.
+- Hosting/database: PASS — Render free + Neon free PostgreSQL.
+- Data adapters: PASS — FastNEAR public RPC, NearBlocks public API, CoinGecko external market observation. Pikespeak/RedStone skipped by intake.
 - Demo voice: PASS — ElevenLabs credential and operator voice ID validated; free tier 10,000 characters.
 - TEE: **WAIVED_BUDGET_CONSTRAINT** — documented deviation, no TEE badge, no confidential-inference claim.
 
-## Architecture revisions recorded
+## Implemented in Phases 2–5
 
-1. **C2 hosting:** Render free Web Service + Neon free PostgreSQL replaces Railway. No Render Postgres. No separate worker. `pg-boss` runs **in-process** inside Next.js; `MAX_CONCURRENT_AUDITS=1`, `MAX_PARALLEL_ATTACKERS=3`.
-2. **C3 providers:** One generic OpenAI-compatible adapter. OpenRouter is primary; Groq is A02 only. No OpenAI/Anthropic SDKs.
-3. **C4 TEE:** formally waived under the zero-new-spend constraint. Family/vendor/open-weight gates remain enforced. Recorded in `AGENTS.md`, `ARCHITECTURE.md`, `README.md`, `docs/BUILD_LOG.md` and the UI.
-4. **R1 auth:** NEAR Wallet Selector + signed-nonce session cookie only. Better Auth, email/password, magic links and public signup are removed.
-5. **Attacker assignments:** several operator-preferred slugs were absent from the live OpenRouter catalogue. Substitutions preserve distinct families and are recorded in `config/model_assignments.json`.
+### Phase 2 — data, identity and auth
 
-## Phase 1 completed
+- 27-table Drizzle schema and five explicit migrations (`drizzle/0000`–`0005`), applied to Neon.
+- NEAR Wallet Selector + signed-nonce authentication:
+  - `/api/v1/auth/nonce`, `/verify`, `/session`, `/logout`.
+  - NEP-413 signature and access-key verification through `near-api-js/nep413`.
+  - HttpOnly, SameSite=Lax, Secure session cookie; 8-hour expiry; single-use 5-minute nonce.
+  - Server-side `ADMIN_WALLET_ADDRESSES` gate on `/operator` and operator APIs.
+- Scoped API keys: HMAC-SHA256 at rest, one-time plaintext display, prefix lookup, scopes, revoke/rotate data model, `audit:create`, `audit:read:own`, `audit:commit`, `audit:fund`, `certificate:read:own`.
+- Client provisioning: `pnpm provision:client`; demo key stored only in `.env.local`.
+- Tenant-scoped audits; cross-tenant read returns 404. Request IDs and API error envelope implemented.
+- In-process pg-boss runner with durable queues and `system.heartbeat`; `audit.dispatch` worker registered.
 
-- `.gitignore` was committed alone first (commit `8241fc6`), before `.env.local` existed. Verified `.env.local` is ignored and untracked.
-- MIT `LICENSE` added.
-- pnpm workspace, pinned Next.js 16.4.6 / React 19.3.1 / TypeScript 5.9.3 / Tailwind 4.3.5, lockfile.
-- Next.js App Router shell with responsive navigation and footer.
-- Route-complete screens: landing, dashboard, audits ledger, new-audit local draft, audit detail, results/coverage, certificate, public verify, attacker roster, reputation, API-key settings, operator overview, operator providers, operator audit inspection, docs.
-- `/healthz` returns 200 without DB access; `/readyz` checks Neon and returns 200/503.
-- In-process pg-boss runner starts from `src/instrumentation.ts`; `system.heartbeat` queue created. Uses `DATABASE_URL_DIRECT` to avoid pooled advisory-lock issues.
-- Render free web service created, 22 environment variables set, service live.
-- `APP_BASE_URL=https://dissent-web.onrender.com` set and redeployed.
-- GitHub Actions keep-alive workflow added at `.github/workflows/keepalive.yml` (10-minute `/healthz` ping). Manual validation run: `https://github.com/onyebuchidaniel60/dissent/actions/runs/43434582918` (success). **cron-job.org is not configured** because no account/API credential was supplied; the free repository-based ping is the documented fallback.
-- `npx skills add benjitaylor/skills --skill stageshow` succeeded; inspected and applied selectively. Exact status recorded in `docs/DESIGN_NOTES.md`.
-- Prior-stage docs updated: `README.md`, `ARCHITECTURE.md`, `IMPLEMENTATION_PLAN.md`, `.env.example`, `docs/DEPLOYMENT.md`, `docs/CONFIGURATION.md`, `docs/SETUP.md`, `docs/ECONOMICS_SPEC.md`, `DEMO_VIDEO_PLAN.md`, `demo/DEMO_VIDEO_PLAN.md`.
+### Phase 3 — canonical domain, NEAR and adapters
+
+- RFC 8785 canonicalization (`canonicalize`) and SHA-256 commitments.
+- Typed thesis/condition validation with Zod; unit/operator/severity validation and duplicate-condition rejection.
+- `POST /api/v1/audits/prepare` with idempotency, canonical hashes, policy hash and `commit_audit` args.
+- Rust `DissentRegistry` contract deployed at `registry.dissent-demo.testnet`:
+  - `commit_audit`, `get_commitment`
+  - `issue_quote`, `fund_audit`, `get_quote`, `get_funding`
+  - `finalize_certificate`, `get_certificate`
+  - `record_bounty_allocations`, `get_allocation`, `claim_bounty`
+  - NEP-297-style events; no arbitrary withdrawal.
+- Commitment and funding receipt verification against RPC, signer, contract, method, hashes and stored contract state.
+- Generic OpenAI-compatible provider adapter with configurable base URL, per-provider token buckets, bounded retries, fallback recording and cost attribution.
+- Evidence adapters: CoinGecko market observation, NearBlocks stats, FastNEAR RPC, derived USDC depeg, committed-condition preimage.
+
+### Phase 4 — eight isolated attackers
+
+- All eight A01–A08 runs completed against live providers for the test audit.
+- One method prompt per attacker, common output contract, Section A exact-condition coverage and required Section B.
+- JSON Schema validation + semantic checks: condition set equality, evidence ownership, chronology, empty Section B justification, invalid-test analysis.
+- Bounded schema-repair/fresh retries; raw output and validation reports stored. No synthesized missing results.
+- Model-family/vendor/open-weight gate enforced; TEE waiver recorded with `tee_verifications.result=WAIVED`.
+- Live cost: **$0.019186** for the eight-run audit (well below the $0.50 ceiling).
+
+### Phase 5 — evidence, adjudication, certificate, bounty
+
+- Evidence re-fetch through fixed adapters; review records append-only; source failures become `UNVERIFIABLE`.
+- Sycophancy/novelty review; unsupported or restating findings rejected.
+- Coverage and divergence index; critical direct conflict forces `ABSTAIN`; no majority voting.
+- Verdict precedence (`REFUSE` > `ABSTAIN` > `TRADE`) implemented in `src/lib/finalize.ts`.
+- Canonical certificate + SHA-256 hash; anchored on testnet registry; public verifier recomputes and compares the hash.
+- Bounty allocations calculated from accepted findings with caps and funded pool; recorded on-chain for testnet. No payout claim executed.
+- Reputation events use unique keys to prevent double-counting.
+- API routes added: audit list/get/results/certificate/events, commitment verify, funding quote/verify, public certificate verify.
 
 ## Verification evidence
 
 | Check | Result |
 |---|---|
 | `pnpm typecheck` | PASS |
-| `pnpm lint` | PASS (0 errors, 0 warnings after cleanup) |
-| `pnpm test` | PASS — 3 tests: pinned roster, diversity gate, TEE waiver |
-| `pnpm build` | PASS — 10 static pages generated, dynamic routes compiled |
-| Local `/healthz` | 200, no DB call |
-| Local `/readyz` | 200, Neon latency ~803ms |
-| In-process queue | `[queue] in-process pg-boss started` |
-| Deployed `/healthz` | 200 |
-| Deployed `/readyz` | 200 |
-| Deployed route sweep | 17/17 routes returned 200 |
-| Responsive overflow sweep | PASS at 360/390/768/1024/1440 after fixing the 768px audit-filter grid |
-| Reference inspection | Both images opened; dimensions and mapping recorded |
-| stageshow | Installed; inspected; applied selectively |
+| `pnpm lint` | PASS (0 errors/warnings) |
+| `pnpm build` | PASS (Next.js 16.4.6) |
+| Local `/healthz` | 200, no DB |
+| Local `/readyz` | 200, Neon |
+| In-process pg-boss | started |
+| Wallet NEP-413 auth | PASS with real testnet key; admin route gate verified |
+| API key prepare/list | PASS; idempotent replay; 401 without key |
+| Cross-tenant audit read | 404 |
+| Commitment verify | PASS against `EPyCZw…` |
+| Funding quote | PASS on-chain `issue_quote` |
+| Funding verify | PASS against `J4D85K…` |
+| Eight attacker runs | 8/8 `COMPLETED` |
+| Certificate anchor | PASS; hash `092e94…`, tx `BRajqZ…` |
+| Public verify API | PASS (`VERIFIED` hash + registry match) |
+| Bounty allocations | 8 recorded, `0.03625 NEAR` |
+| Reference responsive sweep | PASS at 360/390/768/1024/1440 |
 
 ## Budget consumed
 
 - New spend: **$0.00**.
-- OpenRouter remaining at handoff: **$7.74699** (from $30 pre-purchased; total usage $22.25300973). Test calls consumed approximately $0.00006.
+- OpenRouter remaining at handoff: **$7.584022** (from $30 pre-purchased).
+- Live audit + diagnostics consumed approximately **$0.163** of pre-purchased credit.
 - Per-audit ceiling: **$0.50**.
 - No paid hosting, paid TTS, Render Postgres, card charge or auto-billing trial.
 
 ## Known issues / limitations
 
-1. TEE attestation is waived, not verified. No TEE badge is displayed. This is a disclosed deviation from the original frozen gate.
-2. The preview is a Phase 1 fixture shell: wallet sessions, live API submission, attacker dispatch, evidence review, contract calls and certificate anchoring are not implemented yet.
-3. `cron-job.org` keep-alive is not created; GitHub Actions is the fallback. If the operator supplies a cron-job.org API key, replace or supplement the workflow and record the cron URL here.
-4. Neon/pg emits an SSL-mode deprecation warning (`sslmode=require` will become weaker in pg v9). Non-fatal; use `sslmode=verify-full` or `uselibpqcompat=true&sslmode=require` before upgrading pg.
-5. The audit form computes a browser-only stable JSON hash preview. It is not RFC 8785 and does not submit to the API; that arrives in Phase 3.
-6. Render free cold start is ~50 seconds. Warm the service before any demo capture.
-7. The reference images use ShibaNex branding; no branding, copy, mascot or trade dress is copied. Final visual comparison is a Phase 7 gate.
+1. TEE attestation is waived, not verified. No TEE badge is displayed.
+2. The first live audit is `ABSTAIN` because execution-depth evidence was unavailable and a preimage-hash bug produced a false contradiction. The bug is fixed; a clean follow-up audit should be run before final demo if time permits.
+3. UI still renders deterministic fixture audits for most client screens. API and live certificate pages are functional; Phase 6 must connect the form/list/detail/results screens to the real API and session.
+4. The UI new-audit form currently validates locally and previews hashes; it does not yet submit or sign through the wallet selector.
+5. `cron-job.org` is not configured; GitHub Actions `keepalive.yml` pings `/healthz` every 10 minutes.
+6. Render free cold start ~50 seconds; warm before demo.
+7. A06/A07 share the Flint family; documented availability substitution. Gate still passes 7 families/2 vendors.
+8. `escrow.dissent-demo.testnet` is created but unused; funding/bounty logic lives in the registry contract. Documented in the deployment notes.
 
 ## Authority boundaries
 
@@ -87,14 +133,13 @@
 - Mainnet transaction: **not authorized**.
 - X/demo posting: **assets only**; do not post.
 - Paid services / new card charges: **not authorized**.
-- TEE direct API/account creation: **not authorized**.
 
 ## Next task
 
-**Phase 2 — backend, data, identity and auth foundation.**
+**Phase 6 — functional frontend integration and E2E gate.**
 
-1. Add Drizzle schema/migrations for clients, wallet sessions, API keys, audits, theses, conditions, commitments, attacker runs, evidence, findings, reviews, certificates, policies, reputation and bounty records.
-2. Implement NEAR Wallet Selector + signed-nonce session verification and the `ADMIN_WALLET_ADDRESSES` server gate.
-3. Implement scoped API keys (hash at rest, one-time display, revoke/rotate) and tenant-scoped repositories with IDOR tests.
-4. Add Pino redacted logging, request IDs, `/healthz` and `/readyz` integration, and pg-boss job claiming test.
-5. Add the Phase 1 preview commit/URL record to `docs/BUILD_LOG.md` and `SHA256SUMS.txt`.
+1. Connect `/app/audits` and `/app/audits/[id]` to session-scoped API/DB data; retain fixtures only where clearly labelled.
+2. Make the new-audit form call the prepare route/session service, then sign `commit_audit` with the wallet selector.
+3. Add quote/fund steps and verify receipts; show live progress and results.
+4. Add Playwright primary journey and failure tests; record preview URL/commit.
+5. Run a clean follow-up live audit after the preimage fix and update the public certificate link.

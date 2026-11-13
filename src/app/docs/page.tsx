@@ -399,13 +399,13 @@ Readiness: /readyz`}</code>
           <Panel title="Current limitations" subtitle="What this checkpoint does not do.">
             <div id="limitations" className="scroll-mt-24" />
             <ul className="gate-list">
-              <li className="gate" data-pass="false">
-                <CircleAlert aria-hidden="true" />
-                Wallet-selector connect and signed-nonce sessions are not live yet.
+              <li className="gate" data-pass="true">
+                <CheckCircle2 aria-hidden="true" />
+                Wallet-selector connect, signed nonce and server session are live.
               </li>
               <li className="gate" data-pass="false">
                 <CircleAlert aria-hidden="true" />
-                The audit form validates locally but does not submit to an API or chain.
+                The audit form validates locally but does not yet submit to the API or chain.
               </li>
               <li className="gate" data-pass="false">
                 <CircleAlert aria-hidden="true" />

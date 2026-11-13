@@ -58,9 +58,39 @@ export async function startQueue(): Promise<PgBoss | null> {
       expireInSeconds: 60,
       deleteAfterSeconds: 3600,
     });
+    const queues = [
+      "audit.dispatch",
+      "attacker.run",
+      "evidence.verify",
+      "redteam.review",
+      "audit.reproduce",
+      "audit.adjudicate",
+      "certificate.anchor",
+      "bounty.settle",
+    ];
+    for (const queue of queues) {
+      await boss.createQueue(queue, {
+        retryLimit: 1,
+        expireInSeconds: 900,
+        deleteAfterSeconds: 3600,
+      });
+    }
+
     await boss.work("system.heartbeat", { pollingIntervalSeconds: 30 }, async () => {
       return { ok: true };
     });
+
+    await boss.work<{ auditId: string }>(
+      "audit.dispatch",
+      { pollingIntervalSeconds: 5, batchSize: 1 },
+      async (jobs) => {
+        for (const job of jobs) {
+          const { dispatchAudit } = await import("@/lib/orchestrator");
+          await dispatchAudit(job.data.auditId);
+        }
+        return { ok: true };
+      },
+    );
 
     current.instance = boss;
     console.info("[queue] in-process pg-boss started");

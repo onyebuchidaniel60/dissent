@@ -204,7 +204,7 @@ export default async function AppOverviewPage() {
                 <WalletCards size={13} aria-hidden="true" />
                 Wallet sessions
               </span>
-              <strong className="text-warn">Phase 2</strong>
+              <strong className="text-ok">signed nonce</strong>
             </div>
             <div className="rail-row">
               <span className="flex items-center gap-2">
@@ -260,9 +260,9 @@ export default async function AppOverviewPage() {
 
           <Panel title="Preview boundary" subtitle="What is not connected yet.">
             <ul className="gate-list">
-              <li className="gate" data-pass="false">
-                <CircleAlert aria-hidden="true" />
-                Live wallet challenge and session
+              <li className="gate" data-pass="true">
+                <CheckCircle2 aria-hidden="true" />
+                Wallet challenge and signed session
               </li>
               <li className="gate" data-pass="false">
                 <CircleAlert aria-hidden="true" />

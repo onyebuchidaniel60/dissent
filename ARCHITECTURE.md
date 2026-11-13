@@ -143,7 +143,7 @@ Provider requirements: at least three distinct model families across at least tw
 | A07 Timing / MEV | OpenRouter | `cohere/north-mini-code:free` | North | Execution window and transaction path; free slug |
 | A08 Base Rate | OpenRouter | `particle-ai/particle-1:free` | Particle | Historical prior analysis; free slug |
 
-All eight attackers use distinct model families across two inference vendors (OpenRouter + Groq), and A02 is open-weight. Several operator-preferred slugs were absent from the live catalogue; substitutions are recorded with a reason in the assignment file. A provider fallback is allowed only if it preserves the family/vendor gate and is explicitly recorded; otherwise the audit cannot return `TRADE`.
+The roster spans seven distinct model families across two inference vendors (OpenRouter + Groq), and A02 is open-weight. A06 and A07 share the Flint family as a documented free-model availability substitution. Several operator-preferred slugs were absent from the live catalogue; substitutions are recorded with a reason in the assignment file. A provider fallback is allowed only if it preserves the family/vendor gate and is explicitly recorded; otherwise the audit cannot return `TRADE`.
 
 Use one generic OpenAI-compatible adapter with configurable base URL. Structured output is validated with Zod and JSON Schema. Model self-reported `provider`, `model_id`, time, confidence and evidence hash are not trusted; the orchestrator overwrites provenance fields from the actual invocation record. Temperature changes do not count as model diversity.
 

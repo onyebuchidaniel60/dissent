@@ -1,0 +1,54 @@
+{
+  "policy_id": "dissent-adjudication-v1.0",
+  "status": "normative",
+  "severity_weights": {
+    "CRITICAL": 5,
+    "HIGH": 4,
+    "MEDIUM": 2,
+    "LOW": 1,
+    "INFO": 0.25
+  },
+  "evidence_factors": {
+    "VERIFIED": 1.0,
+    "PARTIALLY_VERIFIED": 0.5,
+    "UNVERIFIABLE": 0.0,
+    "CONTRADICTED": 0.0
+  },
+  "reproducibility_factors": {
+    "REPRODUCED": 1.0,
+    "PARTIALLY_REPRODUCED": 0.75,
+    "NOT_REPRODUCED": 0.5,
+    "NOT_REPLAYABLE_SOURCE_LIMITATION": 0.75,
+    "CONTRADICTED_ON_REPLAY": 0.0,
+    "NOT_ATTEMPTED": 0.0
+  },
+  "section_multipliers": {
+    "A": 1.0,
+    "B": 1.25,
+    "INVALID_TEST": 1.25
+  },
+  "condition_criticality_weights": {
+    "CRITICAL": 2,
+    "HIGH": 1,
+    "NORMAL": 0.5
+  },
+  "divergence_threshold": 0.25,
+  "bounty": {
+    "base_unit_yocto": "1000000000000000000000",
+    "per_finding_cap_yocto": "10000000000000000000000",
+    "per_attacker_cap_yocto": "20000000000000000000000",
+    "audit_pool_yocto": "80000000000000000000000"
+  },
+  "audit_fee": {
+    "amount_yocto": "100000000000000000000000",
+    "bounty_share_bps": 8000,
+    "reserve_share_bps": 2000,
+    "quote_expiry_seconds": 900
+  },
+  "rules": [
+    "A verified accepted disqualifier takes precedence over incomplete coverage.",
+    "Incomplete coverage, missing evidence, unresolved material contradiction or a critical invalid test produces ABSTAIN.",
+    "A verified critical condition HIT is disqualifying under the pinned policy.",
+    "No majority vote or confidence weighting may override a hard gate."
+  ]
+}

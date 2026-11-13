@@ -14,14 +14,16 @@ import {
 import { FixtureBadge, TeeWaiverNotice } from "@/components/fixture-badge";
 import { KpiCard, PageHeader, Panel } from "@/components/ui";
 import { StatusPill } from "@/components/status-pill";
+import { getAdminRecentAudits } from "@/lib/audit-read";
 import { DEMO_AUDITS } from "@/lib/demo-data";
 import { getAdminAllowlist } from "@/lib/env";
 import { MODEL_ASSIGNMENTS, PROVIDER_CONFIG } from "@/lib/model-assignments";
 
 export const dynamic = "force-dynamic";
 
-export default function OperatorPage() {
+export default async function OperatorPage() {
   const allowlist = getAdminAllowlist();
+  const liveAudits = await getAdminRecentAudits(5);
 
   return (
     <>
@@ -73,6 +75,63 @@ export default function OperatorPage() {
 
       <div className="dashboard-grid">
         <div className="dashboard-stack">
+          <Panel
+            title="Live testnet runs"
+            subtitle="Real workspace audits. Only the operator allowlist reaches this panel."
+            action={<span className="tag tag--ok">{liveAudits.length} records</span>}
+            bodyClassName=""
+          >
+            {liveAudits.length > 0 ? (
+              <div className="table-wrap">
+                <table className="data-table">
+                  <caption className="sr-only">Live testnet audits</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Audit</th>
+                      <th scope="col">State</th>
+                      <th scope="col">Verdict</th>
+                      <th scope="col">Created</th>
+                      <th scope="col">Inspect</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {liveAudits.map((audit) => (
+                      <tr key={audit.id}>
+                        <td data-label="Audit">
+                          <Link className="font-mono text-[10px] text-primary" href={`/operator/audits/${audit.id}`}>
+                            {audit.publicAuditId}
+                          </Link>
+                        </td>
+                        <td data-label="State">
+                          <StatusPill status={audit.status} />
+                        </td>
+                        <td data-label="Verdict">
+                          {audit.verdict ? <StatusPill status={audit.verdict} /> : <span className="mono text-[10px] text-muted-2">Pending</span>}
+                        </td>
+                        <td data-label="Created">
+                          <span className="mono text-[10px] text-muted-2">
+                            {audit.createdAt.toISOString().replace("T", " ").slice(0, 16)} UTC
+                          </span>
+                        </td>
+                        <td data-label="Inspect">
+                          <Link href={`/operator/audits/${audit.id}`} className="text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
+                            Open
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="empty-state">
+                <Database size={20} aria-hidden="true" />
+                <p className="empty-title">No live audits yet.</p>
+                <p className="empty-copy">The fixture preview below remains available until a real audit is dispatched.</p>
+              </div>
+            )}
+          </Panel>
+
           <Panel
             title="Audit operations"
             subtitle="Redacted inspection and bounded recovery only."

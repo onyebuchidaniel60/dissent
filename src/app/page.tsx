@@ -99,7 +99,7 @@ export default function HomePage() {
                 <strong>8</strong> isolated attackers
               </span>
               <span>
-                <strong>8</strong> distinct model families
+                <strong>7</strong> distinct model families
               </span>
               <span>
                 <strong>2</strong> inference vendors
