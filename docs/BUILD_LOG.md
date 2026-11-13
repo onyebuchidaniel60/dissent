@@ -166,4 +166,4 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Vault allowlist updated for that Tidepool deposit address (tx `DRu6sA1Jzxciudc3ofNPobjgJkAnVFTJhhcq1zG78Nai`); Ref Finance recipient revoked (tx `CsvM84SVVPEdHEVTgESSVHgxfGqqPZNv24FtHFDMzTg`).
 - **Hard blocker:** Tidepool wNEAR deposits require NEP-141 `ft_transfer` with storage registration; the current vault only transfers native NEAR. No live swap or execution receipt was fabricated. `NOT_CONFIGURED` with `VAULT_NATIVE_NEAR_ONLY` is used.
 - Demo intentionally not regenerated; operator review required.
-- Preview deployed at `f2ee8db`; `/healthz`, `/readyz` and Playwright 3/3 pass. `/operator/proprietary` renders the blocked venue state at 390/1440.
+- Preview deployed at `245bf9a`; `/healthz`, `/readyz` and Playwright 3/3 pass. `/operator/proprietary` renders the Tidepool reachable / vault-incompatible state at 390/1440.

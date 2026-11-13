@@ -1,12 +1,12 @@
-eb66a8dc475fbf170f4e9d2564e56fb722bb753ea136546f739e0a48877fdfdf  ./.env.example
+4bdb6746d4ff18f0e1535c9eff5e384d17391cd8c0a701f33897cb5e8e1c60ce  ./.env.example
 1e5a65cbad7dda99a442e362f43a14fe331f7b451d8cab7f8a5e288cc467f781  ./.github/workflows/keepalive.yml
 d16848d08250adcb5dcba23fe15970e9b88e45f9acee3ba6f5a433f486d4f408  ./.gitignore
 f14b4987904bcb5814e4459a057ed4d20f58a633152288a761214dcd28780b56  ./.nvmrc
 3b60bceb69f374b34bc2cb4e026a0a866facc444d3fb1386674e32b8a89c5ffc  ./.prettierignore
 01abb8a246f3b055328684a5d3c61a9249dd89694a9efbf27283b33eb2cf25d1  ./.prettierrc
-fc2173d86bc25663b70711178cca0c5383b44aa2261d76ac91306cc3411444cd  ./AGENTS.md
-a0ece3de36b744dfda6455a84185adb9ff39a3f782ad152d30e42616c048c4a2  ./AI_HANDOFF.md
-85a54f4a15590ad2ad9c0e6c3028021c2c64113e7e98dd9e044b54b1e4c19866  ./ARCHITECTURE.md
+2051b5c131cfd996332e52bae26988981e0cf320648b0eb5b5d9814f83111f34  ./AGENTS.md
+2802fbea123dc3abc74392c2817831db878da8e0f17cad0687e0c3bed35774bf  ./AI_HANDOFF.md
+36733acbd6f163a0e6006a58e35d5382f50b45c60bd31001b7488edd66a80cd7  ./ARCHITECTURE.md
 5cabd8986373c676b6248f9b17366a9f4c42bee95b39d2bed7a2c18fe97ca883  ./DEMO_VIDEO_PLAN.md
 4d0c97d9c75b8563995e43d009a9485ee96c326d3ed1918fabb28b61b627d8ea  ./DISSENT_ATTACKER_OUTPUT_SCHEMA.md
 9634de1c69a79206d7c0229124c92353f7ae5066a54ad85a24b7250a429c0d47  ./DISSENT_IMPLEMENTATION_BLUEPRINT.md
@@ -16,7 +16,7 @@ b7395ae5b4ff36ae8147171f4755efeda33396c9dc1d1d177a34cc76c089f4a1  ./LICENSE
 06038a29b9b31b655e110008c95b50a598d2060ab9e7ad1014fb19173002feeb  ./OPERATOR_INTAKE.md
 336c54bbd5eeb768cb88fd91778cc4988f7b73f6cbcea05cd834693fccbff8ed  ./PROJECT_SPEC.md
 11607c448d9803ef27ab69d7e20d53730c2f535fc8b2b97559c9f464b66cacdb  ./PROPER_VIBE_CODING_WORKFLOW.md
-793fa5d6b3fdbecc176fb97dd4b92cffd94686ee6b5cae05e7668835e95b9c57  ./README.md
+5339d18739d4b6bfabe1008d7bed5fb2cfc6ba58398d9cd06d9080c9a9eab8af  ./README.md
 7c9591d202420171c3568883be37e9c1228720e2449f0089e3256596deeb6251  ./REFERENCE_ASSETS.md
 f87545f4f29254899f5fd2b4565992d76e24e1be0d9bb1e9931705444333af4b  ./config/adjudication-policy-v1.0.json
 88c7f0da4eb935c66a4ba67138d9bab2aa0a0ecfe5e801ea56950dcdf1d69694  ./config/model_assignments.json
@@ -36,8 +36,8 @@ f5a8d128d962cb44b117981e21a7254e5b969805c3de400b81c6cc4ff8526425  ./demo/PRODUCT
 8630cc1891f86c01419deefb172c5de6430d95ef8cef80fcadf610a441338e70  ./design/dissent-reference2.webp
 29b38bb8084f4c22896582977c26445eb100eb57756f57a0f88b22eddf90441a  ./docs/ADJUDICATION_SPEC.md
 5d70493574b43edfcff69f053232e9126e26b91dde033675927ff293cff32685  ./docs/API_SPEC.md
-30e344d77ed42c499e4a532fefe558b43ba429d2e29ff5b5c0f8f039b63101ed  ./docs/BUILD_LOG.md
-bfecce5b663e3808432fadbde24ea3491eae4ee2a7865d5dd77348862e5c0bfe  ./docs/CONFIGURATION.md
+d7ba044b69e27c3227714d2adcb3a1b5aa3db5274fb5a20c0705ca49bf671503  ./docs/BUILD_LOG.md
+b1fa9a35ac8ec0330c5231cfdab2116376208ff71b293da8a994012e91546b34  ./docs/CONFIGURATION.md
 7ab848fe7b6fea7558d944e2b1b52e946737c63df3c2ca496ccca4d08d1738c9  ./docs/DATABASE_OPERATIONS.md
 3087a3ddf760669bd9d018ee29996f5b5efaf2fb63842f969d10ddf273073a3b  ./docs/DATA_MODEL.md
 82fd646a380b1331359c5bc902e06a05b45e56245c418e43d4c9672e31e8db0f  ./docs/DEPLOYMENT.md
@@ -47,7 +47,7 @@ d2ffaf00cedf3bccce0ac2468c7457c627e6890390e4ba7c2126827525677b18  ./docs/ERROR_E
 0d58bacf322049ff934993b69d08db5fe9ae5f424c682e4ab89a8f36c0a38920  ./docs/OPERATOR_GUIDE.md
 40f97122f7aae1b7152cc8b52f80afae6cbb986e01ca261c5786783814ebf7e6  ./docs/SECURITY_SPEC.md
 1bbf838a14bfcb47ed332975ab9c6f64e9298b2c5f5080aa104fe5400d86987a  ./docs/SETUP.md
-e9a320ae1657595b4d7dc83f468b7e7ed3a8bc82cfe325fc7190f90a48c09b7f  ./docs/SMART_CONTRACT_SPEC.md
+807e99c13aad6e1ffd8b63b3fc84617b9476d0baa3e6e4939566e3f1d6f093a9  ./docs/SMART_CONTRACT_SPEC.md
 9288ba61c6a0ead725c2f817fdfd61c7d017378c160deacac66089ec5eec0645  ./docs/SOURCE_NOTES.md
 0a21fb33852cc6a8ebd74ed9318321b7f4ad06d37221b1e5600e0f4fbb3695a5  ./docs/TESTING.md
 5b37571f18611f8c0c18822f07e1f4ed7294c24c781ab90668adf2b57667afcc  ./docs/TROUBLESHOOTING.md
@@ -73,8 +73,8 @@ d2432e4b8b0e1e565e348e9eb9da5065e566f2d8eb1cf0e1e75bfd7919ffa622  ./drizzle/meta
 f2aaa8e2014ce023f29a847aa3541eec3d185972bc734b829bbdebf73e1634db  ./next.config.ts
 92f4a62b54e42826f87641123557cf78a4209364bb8ea22143126aef52b9e223  ./package.json
 7843890c4e17f132215c797c4bf4206f2b048030b54a91a001b128dd2a1da959  ./packages/execution/package.json
-195d48413d7e57947d56fc93196c4f2b31683d116125bd1308196d4ed59a7da5  ./packages/execution/src/index.test.ts
-db0cdabf13e8fd7c99d86d9f36a58b0eceb7926b0860e1a9fbbef780a11f5c82  ./packages/execution/src/index.ts
+a14260ec35e3635fde40f562b608ce2a2a1acd37ed9a52a0800b709dd074fe68  ./packages/execution/src/index.test.ts
+9acd01b5658e78bac66b060d509777f6a105bafede04572679855cb4ca4ad021  ./packages/execution/src/index.ts
 72e66c2ba24fe4aedb5c359cd5e50efb6408dc3dc677ccce025d1aecbfc2d965  ./playwright.config.ts
 67d49a1ef8106b9b64558df4efe8d1d02934427bc34ae569b71f207a6647bf94  ./pnpm-lock.yaml
 08d75840c97ab0e72d1d9b5b84a17e47a2e06cb159a5fbec5ee0a6a56682dad7  ./pnpm-workspace.yaml
@@ -116,7 +116,7 @@ dc42cbc7ff21cd615e36d379068357fdb9cfafaef490fcd49a091b78509bedf6  ./src/app/app/
 7061842d03f82b3473ba9f4449cbbbdebc5e1785a411656a2ca6df552ed5d3c0  ./src/app/operator/audits/[auditId]/page.tsx
 5dc1ac76351d47c6efafd010aa09a65430bd1e69de9fdd4f2674349ec0b0b924  ./src/app/operator/layout.tsx
 b9a626a4d1ece14b1da2df79818820455efff8f0b03ad424b651dfef1612b643  ./src/app/operator/page.tsx
-a41a645e8c320380d3b7dde6bc6411abaefa93da82c0950e7e71d5e44b668812  ./src/app/operator/proprietary/page.tsx
+2c64fb73b41a7d0c55723c816a90213dc71e8475e9e692840d860571198f4f6d  ./src/app/operator/proprietary/page.tsx
 916ed79662e916f51e28fcb4a6e232b94e8f97d43c7fd8d681eaa50343d42763  ./src/app/operator/providers/page.tsx
 15d9f587b18bb0b1b1008ff6885e45b3acee163d39f8e9f2c23711a76dd84850  ./src/app/page.tsx
 a4f29ef7696cdb46732f2ddcf231f335085c912f2860e843d050b0435bf1c271  ./src/app/readyz/route.ts
@@ -154,8 +154,8 @@ fdcb0be4c56f8723658bf7129a0f977e6201073cce94542a8ee40e31f0ca2a37  ./src/lib/mode
 fab4f7e48078c0a8548b600f96c9dfe30c2da7d93bd7dea7ad658e94679a5098  ./src/lib/near.ts
 25282823babcf22178da1923cda1e5662235819cd24a8d6c9ed9684dcc1a6a23  ./src/lib/orchestrator.ts
 8f1efaea38d58ced21984cbc8efe5dfe2322cd8e317ed513f452f0e98b3d3893  ./src/lib/policy.ts
-a5dd4d9948f2c62324495a044ac698d776328a9a6d917d02e3c215477907ac85  ./src/lib/proprietary/loop.ts
-83a56ebb02c12c7c735f270e1a2c93c140e462214add382cd1b1fb679cdbab66  ./src/lib/proprietary/venue.ts
+369937312cda2fdd8697887dae5250889b9ba885cb963f89ec4caf3710b610aa  ./src/lib/proprietary/loop.ts
+89a8e73bc4cfe3b3ffebcbb68300bcd76317acdac1db68537789874fae0d4b38  ./src/lib/proprietary/venue.ts
 835828cf55ff046f76a4578fa3d3cfe5a9593d822ad2bf11f4815b5fc852a34e  ./src/lib/providers/openai-compatible.ts
 cfcdb530779b37f2ba666630f8ca541e23182f12ac536f5d037afbdf40a99e3e  ./src/lib/queue.ts
 5dc83f912dc6a83fcef9925b08be2a1f5fc327b4d971db35d00fdbd0aa9303a9  ./src/lib/rate-limit.ts
