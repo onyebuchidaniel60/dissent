@@ -36,7 +36,7 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - **Commit:** `1c63526` (`feat: establish route-complete app shell and in-process queue`)
 - **Preview:** `https://dissent-web.onrender.com`
 - **Render service:** `srv-dbrgdr3bc2fs73d0oi5g` (free, Oregon)
-- **Deployed commit:** `1c63526`
+- **Deployed commit:** `c6e6d93` (first live build `1c63526`; docs/keep-alive commit redeployed)
 - **Queue:** `[queue] in-process pg-boss started`; uses `DATABASE_URL_DIRECT`.
 - **Commands and results:**
   - `pnpm install` — PASS (lockfile committed).
@@ -61,5 +61,6 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - `assessment_status=UNVERIFIABLE` with null condition status: passes schema validation.
 - Invalid combination `UNVERIFIABLE` + `NOT_HIT`: correctly rejected.
 - Markdown local links: zero broken relative links across the package.
-- Application implementation: not started; no preview, contract deployment, live API run, or production release is claimed.
-- Remaining Phase 0 blockers are recorded in `OPERATOR_INTAKE.md` and `AI_HANDOFF.md`, including the required missing UI reference image, repository/provider credentials, explicit budget, and testnet signer/deployer access.
+- Application implementation: Phase 1 route shell and live preview exist. Contract deployment, live inference, certificate anchoring and production release are **not** claimed.
+- Phase 0 blockers: resolved by the completed intake in `OPERATOR_INTAKE.md`. The only non-critical open item is the optional cron-job.org account; GitHub Actions provides the free keep-alive fallback.
+- Phase 1 preview: `https://dissent-web.onrender.com`, deployed commit `c6e6d93`.

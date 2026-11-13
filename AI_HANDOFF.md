@@ -4,7 +4,7 @@
 **Current phase:** Phase 1 complete — route-complete skeletal frontend, in-process queue and live preview deployed.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
-**Deployed commit:** `1c63526` (`feat: establish route-complete app shell and in-process queue`)
+**Deployed commit:** `c6e6d93` (`docs: record Phase 1 preview evidence and keep-alive fallback`)  
 **Render service:** `srv-dbrgdr3bc2fs73d0oi5g` (`dissent-web`, free web service, Oregon)
 **Production/mainnet authority:** **not granted**. No mainnet transaction, production release or external posting is authorized.
 
@@ -40,7 +40,7 @@
 - In-process pg-boss runner starts from `src/instrumentation.ts`; `system.heartbeat` queue created. Uses `DATABASE_URL_DIRECT` to avoid pooled advisory-lock issues.
 - Render free web service created, 22 environment variables set, service live.
 - `APP_BASE_URL=https://dissent-web.onrender.com` set and redeployed.
-- GitHub Actions keep-alive workflow added at `.github/workflows/keepalive.yml` (10-minute `/healthz` ping). **cron-job.org is not configured** because no account/API credential was supplied; the free repository-based ping is the documented fallback.
+- GitHub Actions keep-alive workflow added at `.github/workflows/keepalive.yml` (10-minute `/healthz` ping). Manual validation run: `https://github.com/onyebuchidaniel60/dissent/actions/runs/43434582918` (success). **cron-job.org is not configured** because no account/API credential was supplied; the free repository-based ping is the documented fallback.
 - `npx skills add benjitaylor/skills --skill stageshow` succeeded; inspected and applied selectively. Exact status recorded in `docs/DESIGN_NOTES.md`.
 - Prior-stage docs updated: `README.md`, `ARCHITECTURE.md`, `IMPLEMENTATION_PLAN.md`, `.env.example`, `docs/DEPLOYMENT.md`, `docs/CONFIGURATION.md`, `docs/SETUP.md`, `docs/ECONOMICS_SPEC.md`, `DEMO_VIDEO_PLAN.md`, `demo/DEMO_VIDEO_PLAN.md`.
 
