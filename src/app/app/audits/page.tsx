@@ -119,9 +119,7 @@ export default async function AuditsPage({
                     <th scope="col">Verdict</th>
                     <th scope="col">Conditions</th>
                     <th scope="col">Updated</th>
-                    <th scope="col">
-                      <span className="sr-only">Open</span>
-                    </th>
+                    <th scope="col" aria-label="Open audit" />
                   </tr>
                 </thead>
                 <tbody>
