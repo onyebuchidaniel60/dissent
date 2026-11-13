@@ -4,12 +4,12 @@ import { AlertTriangle, ArrowLeft, CheckCircle2, CircleAlert, LockKeyhole, Refre
 import { PageHeader, Panel } from "@/components/ui";
 import { getDb } from "@/db";
 import { executionReceipts } from "@/db/schema";
-import { checkRefTestnetVenue, proprietaryLoopEnabled } from "@/lib/proprietary/venue";
+import { checkTidepoolVenue, proprietaryLoopEnabled } from "@/lib/proprietary/venue";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProprietaryPage() {
-  const venue = await checkRefTestnetVenue();
+  const venue = await checkTidepoolVenue();
   const loopEnabled = proprietaryLoopEnabled();
   const executionEnabled = process.env.EXECUTION_ENABLED === "true";
   const vault = process.env.NEAR_VAULT_ACCOUNT_ID ?? null;
@@ -22,7 +22,7 @@ export default async function ProprietaryPage() {
         eyebrow="Proprietary arm · testnet"
         title="Originate, audit,"
         accent="then execute—only if TRADE."
-        description="The proprietary loop uses the same eight-attacker pipeline as a client thesis. Execution is separately gated by the vault, the Ref Finance venue precheck and EXECUTION_ENABLED."
+        description="The proprietary loop uses the same eight-attacker pipeline as a client thesis. Execution is separately gated by the vault, the Tidepool venue precheck and EXECUTION_ENABLED."
         actions={
           <Link href="/operator" className="button button--ghost">
             <ArrowLeft size={14} aria-hidden="true" />
@@ -48,7 +48,7 @@ export default async function ProprietaryPage() {
         <div className="dashboard-stack">
           <Panel
             title="Venue precheck"
-            subtitle="Ref Finance testnet pool API. A failed precheck blocks live origination and swap execution."
+            subtitle="Tidepool testnet quote/health/tokens precheck. A failed precheck blocks live origination and swap execution."
             action={
               <Link href="/operator/proprietary" className="button button--ghost button--small">
                 <RefreshCw size={12} aria-hidden="true" />
@@ -69,8 +69,8 @@ export default async function ProprietaryPage() {
                   </p>
                   <p className="mt-2 text-[12px] leading-relaxed text-muted">
                     {venue.available
-                      ? "The testnet pool API returned data. The loop may originate a thesis; execution still requires a TRADE verdict, an approved certificate and EXECUTION_ENABLED=true."
-                      : `No live swap was attempted. Reason: ${venue.reason ?? "REF_FINANCE_TESTNET_API_UNAVAILABLE"}. Missing venue data is not a negative market result.`}
+                      ? "Tidepool returned health, token and quote data. Execution still requires a TRADE verdict, an approved certificate, a NEP-141-capable vault and EXECUTION_ENABLED=true."
+                      : `No live swap was attempted. Reason: ${venue.reason ?? "TIDEPOOL_UNAVAILABLE"}. Missing venue data is not a negative market result.`}
                   </p>
                   <p className="mono mt-2 text-[9px] text-muted-2">
                     checked {venue.checkedAt}
@@ -168,7 +168,7 @@ export default async function ProprietaryPage() {
               </li>
               <li className="gate" data-pass="true">
                 <CheckCircle2 aria-hidden="true" />
-                Recipient allowlist; Ref testnet router only
+                Recipient allowlist; Tidepool quote deposit address only
               </li>
               <li className="gate" data-pass="true">
                 <CheckCircle2 aria-hidden="true" />

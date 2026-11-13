@@ -28,6 +28,7 @@ export type ExecutionConfig = {
   agentKey: string | null;
   recipientId: string | null;
   amountYocto: string | null;
+  vaultSupportsNep141: boolean;
 };
 
 export function executionConfigFromEnv(): ExecutionConfig {
@@ -36,8 +37,9 @@ export function executionConfigFromEnv(): ExecutionConfig {
     vaultAccountId: process.env.NEAR_VAULT_ACCOUNT_ID ?? null,
     agentAccountId: process.env.NEAR_VAULT_AGENT_ACCOUNT_ID ?? null,
     agentKey: process.env.NEAR_VAULT_AGENT_KEY ?? null,
-    recipientId: process.env.REF_FINANCE_TESTNET_ROUTER ?? null,
+    recipientId: process.env.TIDEPOOL_DEPOSIT_ADDRESS ?? null,
     amountYocto: process.env.PROPRIETARY_THESIS_AMOUNT_YOCTO ?? null,
+    vaultSupportsNep141: process.env.VAULT_SUPPORTS_NEP141 === "true",
   };
 }
 
@@ -56,12 +58,15 @@ export function executionReadiness(input: {
     return { status: "NOT_CONFIGURED", reason: "VAULT_OR_VENUE_MISSING" };
   }
   if (input.venueAvailable === false) {
-    return { status: "NOT_CONFIGURED", reason: "REF_FINANCE_TESTNET_API_UNAVAILABLE" };
+    return { status: "NOT_CONFIGURED", reason: "TIDEPOOL_UNAVAILABLE" };
+  }
+  if (!input.config.vaultSupportsNep141) {
+    return { status: "NOT_CONFIGURED", reason: "VAULT_NATIVE_NEAR_ONLY" };
   }
   return { status: "READY" };
 }
 
-export class RefFinanceExecutionAdapter {
+export class TidepoolExecutionAdapter {
   private readonly vault: VaultClient;
   private readonly config: ExecutionConfig;
 
@@ -76,6 +81,9 @@ export class RefFinanceExecutionAdapter {
     }
     if (verdict !== "TRADE") {
       return { status: "REFUSED", reason: "VERDICT_NOT_TRADE" };
+    }
+    if (!this.config.vaultSupportsNep141) {
+      return { status: "NOT_CONFIGURED", reason: "VAULT_NATIVE_NEAR_ONLY" };
     }
     if (
       !this.config.vaultAccountId ||
@@ -146,7 +154,7 @@ export class NearVaultClient implements VaultClient {
   }
 }
 
-export function createExecutionAdapter(): RefFinanceExecutionAdapter {
+export function createExecutionAdapter(): TidepoolExecutionAdapter {
   const config = executionConfigFromEnv();
   const vault = new NearVaultClient({
     vaultAccountId: config.vaultAccountId ?? "vault.dissent-demo.testnet",
@@ -154,5 +162,5 @@ export function createExecutionAdapter(): RefFinanceExecutionAdapter {
     agentKey: config.agentKey ?? "",
     rpcUrl: process.env.NEAR_RPC_URL ?? "https://rpc.testnet.near.org",
   });
-  return new RefFinanceExecutionAdapter({ vault, config });
+  return new TidepoolExecutionAdapter({ vault, config });
 }

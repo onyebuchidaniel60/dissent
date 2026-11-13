@@ -264,7 +264,7 @@ Pino JSON logs with `request_id`, `audit_id`, `run_id`, job ID, provider, model,
 
 ## 14. Explicitly deferred architecture
 
-- NEAR Intents signed-intent (NEP-413) path is incompatible with a Function Call Key because the signing standard requires the owner's full-access key. Do not give such a key to the execution agent. The testnet execution arm uses the capped vault and Ref Finance adapter instead.
+- NEAR Intents signed-intent (NEP-413) path is incompatible with a Function Call Key because the signing standard requires the owner's full-access key. Do not give such a key to the execution agent. The testnet execution arm uses the capped vault and Tidepool adapter instead. Ref Finance testnet is permanently unavailable and is not a supported venue.
 - 1Click is mainnet-only; it has no testnet. Do not use it as a hackathon integration test dependency.
 - Pyth Core NEAR feed is disabled unless a currently maintained contract/feed is verified.
 - TEE attestation is deferred and **waived** for the zero-new-spend build (`WAIVED_BUDGET_CONSTRAINT`). Re-enable only with a direct, authorized NEAR AI Cloud account, current verification tooling and a fresh operator decision. Do not display a TEE badge until then.
@@ -284,11 +284,12 @@ Pino JSON logs with `request_id`, `audit_id`, `run_id`, job ID, provider, model,
 
 - Refuses any verdict other than `TRADE`.
 - Gated by `EXECUTION_ENABLED=true` (default `false`).
-- Calls `vault.spend_as` with the thesis position amount and the configured Ref Finance testnet router recipient.
+- Uses a Tidepool `/v0/quote` deposit address for the selected pair and calls `vault.spend_as` with the thesis position amount.
+- The current vault only transfers native NEAR; Tidepool wNEAR deposits require a NEP-141 `ft_transfer` with storage registration. Until the vault is upgraded to token-aware wNEAR spending, execution remains `NOT_CONFIGURED`.
 - Returns `EXECUTED` with a tx hash or `REVERTED` with the contract reason. It never retries a failed transfer.
 - The vault enforces caps and allowlists on-chain; the adapter is not the security boundary.
 
-**Venue precheck:** before wiring a live swap, check the Ref Finance testnet pool API. If it is empty, 404 or unresolvable, do not fake a trade. The certificate records `NOT_CONFIGURED` (venue missing) and the execution path remains disabled. Do not set `READY` when the venue is unavailable.
+**Venue precheck:** check Tidepool health, token catalogue and a dry wNEAR/USDC quote at `https://www.usetidepool.tech`. If the venue is unreachable, or the vault cannot fund its NEP-141 deposit, do not fake a trade. The certificate records `NOT_CONFIGURED` and execution remains disabled.
 
 **Proprietary loop:** a pg-boss scheduled task (every 5 minutes, `PROPRIETARY_LOOP_ENABLED=true`, default `false`) reads Ref testnet NEAR/USDC pool state, originates a thesis, submits it through the same audit pipeline, and invokes the execution adapter only after a `TRADE` certificate. A `REFUSE`/`ABSTAIN` is logged without execution. Proprietary inference spend is tracked in a separate cost ledger from client audits.
 

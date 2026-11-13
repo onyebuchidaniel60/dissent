@@ -188,7 +188,7 @@ Use NEAR Sandbox/near-workspaces for local development and automated tests. Depl
 ## 10. Testnet vault contract (Phase 10)
 
 **Account:** `vault.dissent-demo.testnet`
-**Purpose:** bounded testnet NEAR transfers to the approved Ref Finance testnet router for the proprietary execution arm. It does not custody client assets and does not execute mainnet transfers.
+**Purpose:** bounded testnet transfers for the proprietary execution arm. The intended venue is Tidepool. Ref Finance testnet is permanently unavailable and is not a supported venue. It does not custody client assets and does not execute mainnet transfers.
 
 ### State
 
@@ -226,8 +226,8 @@ Use NEAR Sandbox/near-workspaces for local development and automated tests. Depl
 - Agent account: `vault-agent.dissent-demo.testnet`
 - Agent permission: Function Call Key scoped to `vault.dissent-demo.testnet::spend_as` only; verified via RPC.
 - Per-transaction cap: `0.5 NEAR`; daily cap: `1 NEAR`.
-- Allowlisted recipient: `ref-finance-101.testnet` (approval tx `EwQkvnnnnreFUZru5pvPaVPWNaY7p16ybMYQnu9XUvQt`).
+- Tidepool quote deposit address allowlisted: `76e9fdee35e85f863076d379d2117297449b4d5965c5a461d3c11c3a8af57f73` (tx `DRu6sA1Jzxciudc3ofNPobjgJkAnVFTJhhcq1zG78Nai`). This is per-quote; the owner must approve each new address. The old Ref Finance recipient was revoked (tx `CsvM84SVVPEdHEVTgESSVHgxfGqqPZNv24FtHFDMzTg`).
 - Approved current clean certificate: `96426c09-87ec-4641-94ed-4edf0b7b34f1` (tx `AMEWXAiFKUZa9wiZTde3JrdjkvFEBPMzd8GL85ApvKWW`).
 - Vault balance after deployment: `2.998422576908042600000000 NEAR`.
 - `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false`.
-- Venue precheck: **BLOCKED** — `api.testnet.ref-finance.com` does not resolve; both required endpoints failed at DNS. No live swap was attempted.
+- Venue precheck: Tidepool is reachable (`/v0/health`, `/v0/tokens`, dry quote 200). A real wNEAR/USDC quote returned deposit address `76e9fdee35e85f863076d379d2117297449b4d5965c5a461d3c11c3a8af57f73` and 0.034845 USDC for 0.01 wNEAR. However, ORIGIN_CHAIN deposits require NEP-141 `ft_transfer` plus storage registration; the current vault only transfers native NEAR. Execution is **NOT_CONFIGURED** (`VAULT_NATIVE_NEAR_ONLY`); no live swap was attempted.

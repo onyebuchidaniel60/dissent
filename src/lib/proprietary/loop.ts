@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { workspaces } from "@/db/schema";
 import { prepareAudit } from "@/lib/audit-service";
-import { checkRefTestnetVenue, proprietaryLoopEnabled } from "@/lib/proprietary/venue";
+import { checkTidepoolVenue, proprietaryLoopEnabled } from "@/lib/proprietary/venue";
 
 export type ProprietaryLoopResult =
   | { status: "DISABLED" }
@@ -20,7 +20,7 @@ export type ProprietaryLoopResult =
 export async function runProprietaryLoop(): Promise<ProprietaryLoopResult> {
   if (!proprietaryLoopEnabled()) return { status: "DISABLED" };
 
-  const venue = await checkRefTestnetVenue();
+  const venue = await checkTidepoolVenue();
   if (!venue.available) {
     return { status: "BLOCKED_VENUE", reason: venue.reason ?? "VENUE_UNAVAILABLE" };
   }
@@ -51,7 +51,7 @@ export async function runProprietaryLoop(): Promise<ProprietaryLoopResult> {
           "Testnet proprietary thesis: NEAR/USDC LP yield remains attractive while executable depth and USDC peg stay within committed bounds.",
         position: { amount: "0.5", unit: "NEAR", notional_usd: null },
         time_horizon: { value: 7, unit: "DAY" },
-        execution_venue: "REF_FINANCE_TESTNET",
+        execution_venue: "TIDEPOOL_TESTNET",
       },
       conditions: [
         {

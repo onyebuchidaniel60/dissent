@@ -9,15 +9,22 @@ export type VenueStatus = {
   sample?: unknown;
 };
 
-const STABLE_URL = "https://api.testnet.ref-finance.com/v1/stable-pools";
-const LIST_URL = "https://api.testnet.ref-finance.com/v1/list-pools";
+const BASE = "https://www.usetidepool.tech";
+const HEALTH_URL = `${BASE}/v0/health`;
+const TOKENS_URL = `${BASE}/v0/tokens`;
+const QUOTE_URL = `${BASE}/v0/quote`;
 
-async function probe(url: string): Promise<{ ok: boolean; sample?: unknown; reason?: string }> {
+async function probeJson(url: string, init?: RequestInit): Promise<{ ok: boolean; sample?: unknown; reason?: string }> {
   try {
     const response = await fetch(url, {
+      ...init,
       redirect: "error",
-      signal: AbortSignal.timeout(10_000),
-      headers: { Accept: "application/json", "User-Agent": "Dissent/1.0 (venue precheck)" },
+      signal: AbortSignal.timeout(15_000),
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "Dissent/1.0 (Tidepool venue precheck)",
+        ...(init?.headers ?? {}),
+      },
     });
     if (!response.ok) return { ok: false, reason: `HTTP_${response.status}` };
     const data = (await response.json()) as unknown;
@@ -27,31 +34,45 @@ async function probe(url: string): Promise<{ ok: boolean; sample?: unknown; reas
       (typeof data === "object" && data !== null && Object.keys(data).length === 0);
     return empty ? { ok: false, reason: "EMPTY_RESPONSE" } : { ok: true, sample: data };
   } catch (error) {
-    return {
-      ok: false,
-      reason: error instanceof Error ? error.name : "NETWORK_ERROR",
-    };
+    return { ok: false, reason: error instanceof Error ? error.name : "NETWORK_ERROR" };
   }
 }
 
-export async function checkRefTestnetVenue(): Promise<VenueStatus> {
-  const [stable, list] = await Promise.all([probe(STABLE_URL), probe(LIST_URL)]);
-  if (!stable.ok && !list.ok) {
-    return {
-      available: false,
-      checkedAt: new Date().toISOString(),
-      reason: `stable-pools:${stable.reason ?? "UNKNOWN"}; list-pools:${list.reason ?? "UNKNOWN"}`,
-    };
-  }
+export async function checkTidepoolVenue(): Promise<VenueStatus> {
+  const quote = await probeJson(QUOTE_URL, {
+    method: "POST",
+    headers: { "content-type": "application/json", "X-API-Key": "dissent-demo" },
+    body: JSON.stringify({
+      dry: true,
+      swapType: "EXACT_INPUT",
+      slippageTolerance: 100,
+      originAsset: "nep141:wnear.tidepool-sandbox.testnet",
+      depositType: "ORIGIN_CHAIN",
+      depositMode: "SIMPLE",
+      destinationAsset: "nep141:usdc.tidepool-sandbox.testnet",
+      amount: "10000000000000000000000",
+      refundTo: "demo-client.testnet",
+      refundType: "ORIGIN_CHAIN",
+      recipient: "demo-client.testnet",
+      recipientType: "DESTINATION_CHAIN",
+      deadline: "2030-01-01T00:00:00.000Z",
+    }),
+  });
+  const health = await probeJson(HEALTH_URL);
+  const tokens = await probeJson(TOKENS_URL);
+  const available = quote.ok && health.ok && tokens.ok;
   return {
-    available: true,
+    available,
     checkedAt: new Date().toISOString(),
-    sample: stable.sample ?? list.sample,
+    reason: available
+      ? undefined
+      : `quote:${quote.reason ?? "UNKNOWN"}; health:${health.reason ?? "UNKNOWN"}; tokens:${tokens.reason ?? "UNKNOWN"}`,
+    sample: available ? quote.sample : undefined,
   };
 }
 
 export async function currentExecutionReadiness(verdict: "TRADE" | "REFUSE" | "ABSTAIN") {
-  const venue = await checkRefTestnetVenue();
+  const venue = await checkTidepoolVenue();
   const config = executionConfigFromEnv();
   const readiness = executionReadiness({ verdict, config, venueAvailable: venue.available });
   return {
@@ -60,6 +81,7 @@ export async function currentExecutionReadiness(verdict: "TRADE" | "REFUSE" | "A
     vault_configured: Boolean(
       config.vaultAccountId && config.agentAccountId && config.agentKey && config.recipientId,
     ),
+    vault_supports_nep141: config.vaultSupportsNep141,
     execution_enabled: config.enabled,
   };
 }

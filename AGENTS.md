@@ -27,7 +27,7 @@ Where documents appear inconsistent, `PROJECT_SPEC.md` and `ARCHITECTURE.md` gov
 - Verdicts are `TRADE`, `REFUSE`, `ABSTAIN`; failure/incomplete coverage never becomes `NOT_HIT`.
 - Preserve minority findings and the complete coverage table.
 - Client conditions are committed on-chain before they are revealed to attackers; fixed testnet audit fee funding must also be confirmed before attacker dispatch.
-- Proprietary trade execution is **testnet-only** via a capped vault + Ref Finance adapter. No mainnet execution; no AI key can drain a treasury. `EXECUTION_ENABLED` defaults to `false`; the only execution credential is a Function Call Key scoped to `vault.spend_as`.
+- Proprietary trade execution is **testnet-only** via a capped vault + Tidepool adapter. No mainnet execution; no AI key can drain a treasury. `EXECUTION_ENABLED` defaults to `false`; the only execution credential is a Function Call Key scoped to `vault.spend_as`.
 - Pyth Core is not a required NEAR price source unless a maintained deployment is re-verified.
 - 1Click NEP-413 signed-intent flow must not be given to a Function Call Key; 1Click is mainnet-only and is not an MVP test dependency.
 

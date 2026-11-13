@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  RefFinanceExecutionAdapter,
+  TidepoolExecutionAdapter,
   executionReadiness,
   type ExecutionConfig,
   type VaultClient,
@@ -12,8 +12,9 @@ const config: ExecutionConfig = {
   vaultAccountId: "vault.testnet",
   agentAccountId: "agent.testnet",
   agentKey: "ed25519:test",
-  recipientId: "ref-finance-101.testnet",
+  recipientId: "tidepool-deposit.testnet",
   amountYocto: "500000000000000000000000",
+  vaultSupportsNep141: true,
 };
 
 function vault(overrides?: Partial<VaultClient>): VaultClient {
@@ -26,7 +27,7 @@ function vault(overrides?: Partial<VaultClient>): VaultClient {
 describe("execution adapter", () => {
   it("refuses non-TRADE verdicts without calling the vault", async () => {
     const client = vault();
-    const adapter = new RefFinanceExecutionAdapter({ vault: client, config });
+    const adapter = new TidepoolExecutionAdapter({ vault: client, config });
     const result = await adapter.execute("cert-1", "REFUSE");
     expect(result).toEqual({ status: "REFUSED", reason: "VERDICT_NOT_TRADE" });
     expect(client.spendAs).not.toHaveBeenCalled();
@@ -34,12 +35,12 @@ describe("execution adapter", () => {
 
   it("executes a TRADE with the certificate-bound memo", async () => {
     const client = vault();
-    const adapter = new RefFinanceExecutionAdapter({ vault: client, config });
+    const adapter = new TidepoolExecutionAdapter({ vault: client, config });
     const result = await adapter.execute("cert-1", "TRADE");
     expect(result).toEqual({ status: "EXECUTED", tx_hash: "tx-123" });
     expect(client.spendAs).toHaveBeenCalledWith({
       certificateId: "cert-1",
-      recipientId: "ref-finance-101.testnet",
+      recipientId: "tidepool-deposit.testnet",
       amountYocto: "500000000000000000000000",
       memo: "Dissent certificate_id=cert-1",
     });
@@ -51,7 +52,7 @@ describe("execution adapter", () => {
         throw new Error("amount exceeds per-transaction cap");
       }),
     });
-    const adapter = new RefFinanceExecutionAdapter({ vault: client, config });
+    const adapter = new TidepoolExecutionAdapter({ vault: client, config });
     const result = await adapter.execute("cert-1", "TRADE");
     expect(result.status).toBe("REVERTED");
     expect(result.reason).toContain("per-transaction cap");
@@ -59,7 +60,7 @@ describe("execution adapter", () => {
 
   it("refuses when execution is disabled", async () => {
     const client = vault();
-    const adapter = new RefFinanceExecutionAdapter({
+    const adapter = new TidepoolExecutionAdapter({
       vault: client,
       config: { ...config, enabled: false },
     });
@@ -71,8 +72,14 @@ describe("execution adapter", () => {
   it("reports NOT_CONFIGURED when the venue is unavailable", () => {
     expect(executionReadiness({ verdict: "TRADE", config, venueAvailable: false })).toEqual({
       status: "NOT_CONFIGURED",
-      reason: "REF_FINANCE_TESTNET_API_UNAVAILABLE",
+      reason: "TIDEPOOL_UNAVAILABLE",
     });
+  });
+
+  it("reports NOT_CONFIGURED when the vault cannot spend NEP-141", () => {
+    expect(
+      executionReadiness({ verdict: "TRADE", config: { ...config, vaultSupportsNep141: false }, venueAvailable: true }),
+    ).toEqual({ status: "NOT_CONFIGURED", reason: "VAULT_NATIVE_NEAR_ONLY" });
   });
 
   it("reports READY when the vault and venue are configured", () => {

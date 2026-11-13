@@ -154,12 +154,16 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Specs updated before code: MUST-HAVE proprietary arm/vault execution, execution architecture, proprietary cost ledger, frozen AGENTS decision, vault interface section.
 - Vault `vault.dissent-demo.testnet` deployed at `8V4A7CypSu6SS3NWywnJFhCqqfUzDxo9xYr1azdzqMBN`; caps 0.5 NEAR/tx, 1 NEAR/day.
 - Agent `vault-agent.dissent-demo.testnet` has only a Function Call Key scoped to `vault.dissent-demo.testnet::spend_as`; verified via RPC.
-- Allowlisted recipient `ref-finance-101.testnet`; current clean certificate `96426c09…` approved.
+- Allowlisted recipient was `ref-finance-101.testnet`; Tidepool is the intended venue and requires per-quote deposit-address approval.
 - `packages/execution` implements the adapter and `executionReadiness`.
 - Certificate body/public certificate include `execution_readiness` for new certificates. Existing anchored certificates untouched.
 - `/operator/proprietary` UI added; 390/1440 overflow checks and operator gate pass.
 - Queue registers the 5-minute proprietary loop only when `PROPRIETARY_LOOP_ENABLED=true`; default false.
-- Tests: vault 5/5, execution 6/6, full Vitest 9/9; `pnpm build` passes.
-- **Hard blocker:** `api.testnet.ref-finance.com` DNS resolution fails. Both required precheck endpoints fail before HTTP. No live swap or execution receipt was fabricated. `NOT_CONFIGURED` is used for the new readiness state.
+- Tests: vault 5/5, execution 6/6, full Vitest 10/10; `pnpm build` passes.
+- Ref Finance testnet confirmed permanently unavailable; no further probes.
+- Tidepool docs (`llms.txt`, `AGENTS.md`, `openapi.json`) read from `www.usetidepool.tech`; health/tokens/dry quote return 200.
+- Real wNEAR/USDC quote: 0.01 wNEAR → 0.034845 USDC, deposit address `76e9fdee35e85f863076d379d2117297449b4d5965c5a461d3c11c3a8af57f73`.
+- Vault allowlist updated for that Tidepool deposit address (tx `DRu6sA1Jzxciudc3ofNPobjgJkAnVFTJhhcq1zG78Nai`); Ref Finance recipient revoked (tx `CsvM84SVVPEdHEVTgESSVHgxfGqqPZNv24FtHFDMzTg`).
+- **Hard blocker:** Tidepool wNEAR deposits require NEP-141 `ft_transfer` with storage registration; the current vault only transfers native NEAR. No live swap or execution receipt was fabricated. `NOT_CONFIGURED` with `VAULT_NATIVE_NEAR_ONLY` is used.
 - Demo intentionally not regenerated; operator review required.
 - Preview deployed at `f2ee8db`; `/healthz`, `/readyz` and Playwright 3/3 pass. `/operator/proprietary` renders the blocked venue state at 390/1440.
