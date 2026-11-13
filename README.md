@@ -128,11 +128,16 @@ Expected outputs:
 - `demo/NARRATION.md` — final script with per-segment timing.
 - `demo/PRODUCTION_NOTES.md` — voice ID, music source/license, ffmpeg commands, sync and review results.
 
-Voiceover uses the operator-supplied ElevenLabs voice ID. Background music is royalty-free (CC0 or CC BY), mixed approximately −20 dB under the voice, with a 1.5s fade-in and 2s fade-out.
+The delivered demo uses a public-domain local Piper/LJSpeech fallback because the operator-supplied ElevenLabs library voice returned `paid_plan_required` on the free tier (no charge was made). Background music is CC BY 4.0, mixed approximately −20 dB under the voice, with a 1.5s fade-in and 2s fade-out. See `demo/PRODUCTION_NOTES.md`.
 
 ### Music attribution
 
-No track has been selected yet. The final track title, artist, source URL and license will be recorded here and in `demo/PRODUCTION_NOTES.md` before release.
+- **Track:** Floating Cities
+- **Artist:** Kevin MacLeod
+- **Source:** https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1600018
+- **License:** Creative Commons Attribution 4.0 (CC BY 4.0)
+
+The track is used as an ambient bed at approximately −20 dB under the narration, with a 1.5s fade-in and 2s fade-out. Full production details, including the ElevenLabs free-tier blocker and the public-domain Piper fallback voice, are in `demo/PRODUCTION_NOTES.md`.
 
 ## Security
 

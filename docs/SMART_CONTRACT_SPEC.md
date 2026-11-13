@@ -173,3 +173,14 @@ Events must not contain secret preimages, full certificate bodies or sensitive c
 ## 8. Deployment boundary
 
 Use NEAR Sandbox/near-workspaces for local development and automated tests. Deploy to testnet only after the exact operator authorization, deployer account and signer are verified. Do not use mainnet, NEAR Intents 1Click or live user assets for MVP. Contract account, source commit and deployment transaction must be recorded in `AI_HANDOFF.md`.
+
+## 9. Testnet deployment record
+
+- Contract account: `registry.dissent-demo.testnet`
+- Deploy transaction: `DwTsqTQ9Lh28zpcqYhNYrzARH7NaQgQkc3sEgtaXaaNv`
+- Initializer: owner/adjudicator/treasury `dissent-demo.testnet`, payout `payout.dissent-demo.testnet`.
+- First commitment transaction: `EPyCZw3yCiEyVfrpjBvdFVHsRHdnzpsHaLwKLEEPW6YK`.
+- First certificate anchor: `BRajqZsAKZPt96BrbFy7y1BRKeLyaE9vymnq2mQFqkkN` (ABSTAIN development audit).
+- Clean follow-up certificate anchor: `6G7Yd3uvZozLC9SbXtNW5jxFetV4TLqgTMFxN76MmYJF` (TRADE).
+- Escrow/bounty accounting is implemented inside the registry contract. `escrow.dissent-demo.testnet` was created but is reserved and unused.
+- No mainnet deployment is authorized.

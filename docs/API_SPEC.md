@@ -179,3 +179,26 @@ Purpose: liveness/readiness probes. Readiness checks DB and queue; optional prov
 - Commitment and funding verification are idempotent.
 - Job creation is atomic with the status transition using an outbox or queue transaction pattern supported by pg-boss.
 - No request route performs long-running model calls inline; all inference is worker-backed.
+
+## 6. Implemented addenda (Phase 5)
+
+The following routes are implemented in addition to the baseline contract:
+
+- `POST /api/v1/auth/nonce` — create a single-use NEP-413 challenge for a NEAR account.
+- `POST /api/v1/auth/verify` — verify the signed NEP-413 payload and access key, then set the HttpOnly session cookie.
+- `GET /api/v1/auth/session` — return the current wallet session and admin flag.
+- `POST /api/v1/auth/logout` — revoke the server session and clear the cookie.
+- `POST /api/v1/ui/audits/prepare` — session-authenticated console draft creation; delegates to the same prepare service as the API-key route.
+- `GET /api/v1/audits/{audit_id}/results` — owner-scoped coverage, findings, evidence and adjudication.
+- `GET /api/v1/audits/{audit_id}/certificate` — owner-scoped finalized certificate.
+- `GET /api/v1/audits/{audit_id}/events` — owner-scoped event history.
+- `GET /api/v1/certificates/{certificate_id}/verify` — public hash recomputation plus registry comparison.
+
+Auth notes:
+
+- Client agents use `Authorization: Bearer ds_test_...`.
+- Human console requests use the HttpOnly `dissent_session` cookie; mutations check the request origin when present.
+- Admin/operator access requires the verified wallet account to be in `ADMIN_WALLET_ADDRESSES`.
+- Every JSON response carries `request_id`; errors use the shared envelope.
+
+The commitment route is `POST /api/v1/audits/{audit_id}/commitment/verify`. All attacker dispatch is worker-backed; no route performs inference inline.

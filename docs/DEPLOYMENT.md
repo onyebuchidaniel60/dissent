@@ -75,3 +75,11 @@ Render free spins down after ~15 minutes idle. Create a cron-job.org job pinging
 - [ ] Security tests pass; no unresolved critical/high issue.
 - [ ] Rollback instructions tested/documented.
 - [ ] Production deployment is not performed without a new explicit authorization.
+
+## Current preview record
+
+- URL: `https://dissent-web.onrender.com`
+- Render service: `srv-dbrgdr3bc2fs73d0oi5g`
+- Registry contract: `registry.dissent-demo.testnet`
+- Clean live audit certificate: `https://dissent-web.onrender.com/verify/96426c09-87ec-4641-94ed-4edf0b7b34f1`
+- Keep-alive: `.github/workflows/keepalive.yml` (10-minute `/healthz` ping). `cron-job.org` remains an optional external fallback because no account credential was supplied.

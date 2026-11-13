@@ -183,7 +183,9 @@ function LiveAuditInspection({
 }: {
   live: NonNullable<Awaited<ReturnType<typeof getAdminAudit>>>;
 }) {
-  const { audit, runs, certificate, adjudication } = live;
+  const { audit, runs, certificate, adjudication, allocations } = live;
+  const allocatedYocto = allocations.reduce((sum, allocation) => sum + BigInt(allocation.amountYocto), 0n);
+  const allocatedNear = Number(allocatedYocto) / 1e24;
   const completed = runs.filter((run) => run.status === "COMPLETED").length;
   const totalCost = runs.reduce((sum, run) => sum + (run.estimatedCostMicrounits ?? 0), 0);
 
@@ -316,6 +318,32 @@ function LiveAuditInspection({
             ) : (
               <p className="text-[12px] text-muted">No certificate finalized.</p>
             )}
+          </Panel>
+
+          <Panel title="Bounty accounting" subtitle="Testnet allocations; no claim executed.">
+            <div className="rail-row">
+              <span>Accepted allocations</span>
+              <strong>{allocations.length}</strong>
+            </div>
+            <div className="rail-row">
+              <span>Total allocated</span>
+              <strong>{allocatedNear.toFixed(4)} NEAR</strong>
+            </div>
+            <div className="rail-row">
+              <span>Recipient</span>
+              <strong className="break-all">{allocations[0]?.recipientAccountId ?? "payout.dissent-demo.testnet"}</strong>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {allocations.slice(0, 4).map((allocation) => (
+                <span key={allocation.id} className="tag tag--muted">
+                  {allocation.attackerId} · {(Number(allocation.amountYocto) / 1e24).toFixed(4)} NEAR
+                </span>
+              ))}
+            </div>
+            <p className="mt-3 text-[10px] leading-relaxed text-muted-2">
+              Allocations are recorded on the registry contract. The payout account can claim them
+              individually; no automatic transfer is made.
+            </p>
           </Panel>
 
           <Panel title="Boundary" subtitle="Operator recovery only.">

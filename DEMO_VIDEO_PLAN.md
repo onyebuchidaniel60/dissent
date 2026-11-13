@@ -1,5 +1,7 @@
 # Dissent — Product Demo Video Plan
 
+> **Production status:** delivered 2026-11-13. The operator-supplied ElevenLabs library voice returned `paid_plan_required` on the free tier; no charge was made. The delivered video uses a public-domain Piper/LJSpeech fallback. See `demo/PRODUCTION_NOTES.md` for evidence and the operator action needed to regenerate with the requested voice.
+
 **Length:** Target 90–150 seconds; hard limit 180 seconds.  
 **Capture:** Playwright at **1280×720**, deterministic demo data, clean browser profile, service warmed for ~2 minutes. Render free cold starts can take ~50 seconds; never record a cold service.  
 **Voice:** **ElevenLabs**, using the exact operator-supplied `ELEVENLABS_VOICE_ID` for every segment. Do not substitute a default voice.  

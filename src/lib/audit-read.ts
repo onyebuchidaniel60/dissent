@@ -8,10 +8,13 @@ import {
   attackerRuns,
   auditEvents,
   audits,
+  bountyAllocations,
   certificates,
+  commitments,
   conditionAssessments,
   evidenceRecords,
   failureConditions,
+  feePayments,
   findingEvidenceLinks,
   findings,
   theses,
@@ -91,6 +94,24 @@ export async function getAuditBundle(principal: ApiPrincipal, auditId: string) {
     })
     .from(certificates)
     .where(eq(certificates.auditId, audit.id))
+    .limit(1);
+  const [commitment] = await db
+    .select({
+      transactionHash: commitments.transactionHash,
+      blockHeight: commitments.blockHeight,
+      committedAt: commitments.committedAt,
+    })
+    .from(commitments)
+    .where(eq(commitments.auditId, audit.id))
+    .limit(1);
+  const [funding] = await db
+    .select({
+      txHash: feePayments.txHash,
+      amountYocto: feePayments.amountYocto,
+      verifiedAt: feePayments.verifiedAt,
+    })
+    .from(feePayments)
+    .where(eq(feePayments.auditId, audit.id))
     .limit(1);
 
   return {
@@ -180,6 +201,8 @@ export async function getAuditBundle(principal: ApiPrincipal, auditId: string) {
           public_certificate: certificate.publicCertificateJson,
         }
       : null,
+    commitment: commitment ?? null,
+    funding: funding ?? null,
   };
 }
 
@@ -221,7 +244,18 @@ export async function getAdminAudit(auditId: string) {
     .from(adjudications)
     .where(eq(adjudications.auditId, auditId))
     .limit(1);
-  return { audit, runs, certificate, adjudication };
+  const allocations = await db
+    .select({
+      id: bountyAllocations.id,
+      settlementId: bountyAllocations.settlementId,
+      attackerId: bountyAllocations.attackerId,
+      amountYocto: bountyAllocations.amountYocto,
+      status: bountyAllocations.status,
+      recipientAccountId: bountyAllocations.recipientAccountId,
+    })
+    .from(bountyAllocations)
+    .where(eq(bountyAllocations.auditId, auditId));
+  return { audit, runs, certificate, adjudication, allocations };
 }
 
 export async function getAdminRecentAudits(limit = 5) {

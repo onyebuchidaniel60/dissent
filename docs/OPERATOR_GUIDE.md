@@ -20,3 +20,14 @@
 
 ## Financial boundary
 All MVP funding and reward demonstration is on testnet. No mainnet funds, trading or client custody are enabled. Do not transfer funds or deploy to mainnet without a separately signed-off authorization record.
+
+## Live preview state
+
+- Preview: `https://dissent-web.onrender.com`
+- Registry: `registry.dissent-demo.testnet`
+- Payout: `payout.dissent-demo.testnet`
+- Clean live audit: `AUD-C963-E660` (`394c2192-8d9f-4463-99f2-a15d45dc54a2`), verdict `TRADE`
+- Public certificate: `https://dissent-web.onrender.com/verify/96426c09-87ec-4641-94ed-4edf0b7b34f1`
+- The TEE waiver remains visible on every operator surface. Do not add a TEE badge or claim.
+
+Operator recovery remains bounded: retry an eligible failed run with the same input snapshot, record a new generation, and never rewrite a finalized certificate. The current preview exposes the live audit read-only; retry controls are intentionally not rendered while no eligible run exists.

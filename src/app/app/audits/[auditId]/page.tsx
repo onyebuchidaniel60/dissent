@@ -267,15 +267,16 @@ function LiveClientAudit({
 }: {
   bundle: NonNullable<Awaited<ReturnType<typeof getAuditBundle>>>;
 }) {
-  const { audit, thesis, conditions, runs, findings, certificate } = bundle;
+  const { audit, thesis, conditions, runs, findings, certificate, commitment, funding } = bundle;
   const completed = runs.filter((run) => run.status === "COMPLETED").length;
 
   return (
     <>
       <PageHeader
-        eyebrow={`Audit ${audit.public_audit_id} · live`}
-        title={(thesis?.rationale ?? "Live audit").slice(0, 90)}
-        description="This record was created through the authenticated workspace API. The full result is preserved server-side; the public certificate exposes only approved fields."
+        eyebrow="Live workspace audit"
+        title="The record is"
+        accent={audit.public_audit_id}
+        description={thesis?.rationale ?? "This record was created through the authenticated workspace API."}
         actions={
           <>
             <Link href="/app/audits" className="button button--ghost">
@@ -388,6 +389,47 @@ function LiveClientAudit({
             ) : (
               <p className="text-[12px] text-muted">The certificate is not finalized yet.</p>
             )}
+          </Panel>
+
+          <Panel title="Commitment & funding" subtitle="Testnet transactions.">
+            <div className="rail-row">
+              <span>Commitment</span>
+              <strong className="break-all">
+                {commitment ? (
+                  <a
+                    href={`https://explorer.testnet.near.org/transactions/${commitment.transactionHash}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary underline"
+                  >
+                    {commitment.transactionHash.slice(0, 10)}…
+                  </a>
+                ) : "pending"}
+              </strong>
+            </div>
+            <div className="rail-row">
+              <span>Block</span>
+              <strong>{commitment?.blockHeight ?? "—"}</strong>
+            </div>
+            <div className="rail-row">
+              <span>Funding</span>
+              <strong className="break-all">
+                {funding ? (
+                  <a
+                    href={`https://explorer.testnet.near.org/transactions/${funding.txHash}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary underline"
+                  >
+                    {funding.txHash.slice(0, 10)}…
+                  </a>
+                ) : "pending"}
+              </strong>
+            </div>
+            <div className="rail-row">
+              <span>Fee</span>
+              <strong>{funding ? "0.1 NEAR" : "—"}</strong>
+            </div>
           </Panel>
 
           <Panel title="Evidence boundary" subtitle="Re-fetch precedes acceptance.">

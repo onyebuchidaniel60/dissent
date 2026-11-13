@@ -109,3 +109,42 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Application implementation: Phase 1 route shell and live preview exist. Contract deployment, live inference, certificate anchoring and production release are **not** claimed.
 - Phase 0 blockers: resolved by the completed intake in `OPERATOR_INTAKE.md`. The only non-critical open item is the optional cron-job.org account; GitHub Actions provides the free keep-alive fallback.
 - Phase 1 preview: `https://dissent-web.onrender.com`, deployed commit `366b967`.
+
+## Phase 6 — functional UI integration and E2E
+
+- `/app/audits` now shows session-scoped live audits alongside clearly labelled fixtures.
+- New-audit form validates locally and creates a real draft through `/api/v1/ui/audits/prepare`.
+- `/app/audits/[id]` renders live thesis, committed conditions, eight runs, findings, commitment/funding and certificate for an authenticated workspace member.
+- `/operator` and `/operator/audits/[id]` render live testnet runs, gate trace, certificate and bounty accounting for the allowlisted wallet.
+- `tests/e2e/primary.spec.ts` verifies:
+  - public route status and no horizontal overflow at 360/1440;
+  - unauthenticated operator gate;
+  - NEP-413 signed session, live audit list, draft creation, operator surface.
+- E2E result: 3/3 passed locally and against `https://dissent-web.onrender.com`.
+- Remaining gap: browser wallet `commit_audit`/`fund_audit` signing is not wired; API + CLI path is verified end-to-end.
+
+## Phase 7 — reference-led UI
+
+- Two operator-owned references inspected and mapped in `REFERENCE_ASSETS.md`.
+- Dark crimson system, 1520px grid, Orbitron/Manrope/JetBrains Mono, thin panels, oversized display type, asymmetric dashboard and inspector rail.
+- Final live views use the same language; fixture results and live records are visually distinct.
+- `npx skills add benjitaylor/skills --skill stageshow` succeeded and was inspected; craft rules were applied selectively. No third-party branding, copy or mascot copied.
+- Intentional deviations and the TEE-waiver treatment recorded in `docs/DESIGN_NOTES.md`.
+
+## Phase 8 — frontend and documentation completeness
+
+- Responsive route inventory complete; data tables become labelled mobile rows; coverage matrix scrolls with a sticky first column.
+- Live certificate verifier, public API verification, operator gate, API-key settings, reputation and docs pages complete.
+- Updated README, API addenda, deployment, configuration, setup, operator, troubleshooting and contract deployment records.
+- No dead `href="#"`, inert buttons or placeholder external URLs in the app.
+- E2E overflow checks at 360/1440; earlier full sweep at 360/390/768/1024/1440 passed after the audit-ledger header fix.
+
+## Phase 9 — demo video and release checks
+
+- Demo video: `demo/dissent-demo.mp4`, 100.08s, 1280×720, H.264/AAC, 4,200,670 bytes.
+- SHA-256: `0f86840bf291e53267bd502bf5db403d144f3434ab7fba5fe01d4a6597cff79a`.
+- Narration: `demo/NARRATION.md`; production notes: `demo/PRODUCTION_NOTES.md`; timing: `demo/timings.json`.
+- ElevenLabs library voice was blocked by `paid_plan_required` on the free tier; no charge. Delivered with public-domain Piper/LJSpeech fallback. Operator action documented.
+- Music: Kevin MacLeod — “Floating Cities”, CC BY 4.0; attributed in README and production notes.
+- Captions burned in; audio/video decode and volume checked; no secrets or private URLs visible.
+- Final release: preview only. No production or mainnet authorization.

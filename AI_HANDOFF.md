@@ -1,7 +1,7 @@
 # AI_HANDOFF.md — Dissent
 
 **Last updated:** 2026-11-13
-**Current phase:** Phase 5 complete — live testnet audit path, evidence review, deterministic adjudication, certificate anchoring and bounty accounting are implemented. Phase 6 UI integration/E2E is next.
+**Current phase:** Phase 9 checkpoint — live testnet audit, evidence review, certificate anchoring, bounty accounting, session-scoped UI drafts, owner/operator live views, E2E checks and a reviewed 100-second demo are delivered. Wallet-driven commit/fund UI remains the main incomplete UI journey.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
 **Deployed app commit:** `366b967` (app shell + overflow fix); the Phase 2–5 backend and live-verifier commits are pending this deployment.
@@ -31,7 +31,7 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 - NEAR testnet: PASS — deployer `dissent-demo.testnet`, registry `registry.dissent-demo.testnet`, payout `payout.dissent-demo.testnet`. `escrow.dissent-demo.testnet` was created but the escrow module is deployed inside the registry contract, so funding uses the registry account.
 - Hosting/database: PASS — Render free + Neon free PostgreSQL.
 - Data adapters: PASS — FastNEAR public RPC, NearBlocks public API, CoinGecko external market observation. Pikespeak/RedStone skipped by intake.
-- Demo voice: PASS — ElevenLabs credential and operator voice ID validated; free tier 10,000 characters.
+- Demo voice: **BLOCKED for the selected voice** — ElevenLabs returned `paid_plan_required` for the operator-supplied library voice on the free tier. No charge was made. The delivered demo uses a public-domain local Piper/LJSpeech fallback; see `demo/PRODUCTION_NOTES.md` for the exact evidence and minimum operator action.
 - TEE: **WAIVED_BUDGET_CONSTRAINT** — documented deviation, no TEE badge, no confidential-inference claim.
 
 ## Implemented in Phases 2–5
@@ -118,10 +118,10 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 
 1. TEE attestation is waived, not verified. No TEE badge is displayed.
 2. The clean follow-up live audit is `TRADE` with all evidence verified. The earlier `ABSTAIN` development audit remains anchored; it is not rewritten.
-3. UI still renders deterministic fixture audits for most client screens. API and live certificate pages are functional; Phase 6 must connect the form/list/detail/results screens to the real API and session.
-4. The UI new-audit form currently validates locally and previews hashes; it does not yet submit or sign through the wallet selector.
+3. UI list/detail/operator live views are connected to session-scoped data and the form can create a real draft. Wallet-driven `commit_audit` and `fund_audit` signing from the browser is still not wired; API + CLI paths are verified.
+4. The UI new-audit form submits a real draft through `/api/v1/ui/audits/prepare`; it does not yet sign the commitment or funding transactions with the wallet selector.
 5. `cron-job.org` is not configured; GitHub Actions `keepalive.yml` pings `/healthz` every 10 minutes.
-6. Render free cold start ~50 seconds; warm before demo.
+6. Render free cold start ~50 seconds; the demo was captured against a warm local build using the same Neon data and live certificate.
 7. A06/A07 share the Flint family; documented availability substitution. Gate still passes 7 families/2 vendors.
 8. `escrow.dissent-demo.testnet` is created but unused; funding/bounty logic lives in the registry contract. Documented in the deployment notes.
 
@@ -134,12 +134,24 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 - X/demo posting: **assets only**; do not post.
 - Paid services / new card charges: **not authorized**.
 
+## Demo status
+
+- Output: `demo/dissent-demo.mp4`
+- Duration: **100.08s**, 1280×720, H.264/AAC, 4,200,670 bytes
+- SHA-256: `0f86840bf291e53267bd502bf5db403d144f3434ab7fba5fe01d4a6597cff79a`
+- Narration: `demo/NARRATION.md`; production notes: `demo/PRODUCTION_NOTES.md`; machine timing: `demo/timings.json`
+- Voice: ElevenLabs library voice blocked by free-tier `paid_plan_required`; delivered with public-domain Piper/LJSpeech fallback. No paid TTS was used.
+- Music: Kevin MacLeod — “Floating Cities”, CC BY 4.0, attributed in README and production notes.
+- Captions: burned in, max two lines; sampled review at 5s/30s/55s/75s.
+- E2E: 3 Playwright tests pass against both local and deployed preview.
+- Preview deploy for the latest UI/queue changes is pending the final commit.
+
 ## Next task
 
-**Phase 6 — functional frontend integration and E2E gate.**
+**Finish the remaining UI wallet journey and deploy the final commit.**
 
-1. Connect `/app/audits` and `/app/audits/[id]` to session-scoped API/DB data; retain fixtures only where clearly labelled.
-2. Make the new-audit form call the prepare route/session service, then sign `commit_audit` with the wallet selector.
-3. Add quote/fund steps and verify receipts; show live progress and results.
-4. Add Playwright primary journey and failure tests; record preview URL/commit.
-5. Run a clean follow-up live audit after the preimage fix and update the public certificate link.
+1. Wire wallet `signAndSendTransaction` for `commit_audit` after the draft is created.
+2. Wire quote issuance and wallet `fund_audit`, then verify receipts and show live progress.
+3. Add UI tests for the wallet transaction path (wallet-extension mocking or the agent-supplied signed-tx path).
+4. Deploy the final commit and re-run the Playwright suite on the preview.
+5. If the operator supplies an ElevenLabs free-tier-compatible voice ID or upgrades the plan, regenerate `demo/dissent-demo.mp4` with the requested voice.
