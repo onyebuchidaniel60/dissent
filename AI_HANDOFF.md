@@ -4,7 +4,7 @@
 **Current phase:** Phase 10 — proprietary execution **demonstrated on Tidepool testnet**. A real quote was audited, returned `TRADE`, executed through the capped vault (`spend_ft_as`) and settled `SUCCESS` on Tidepool. Demo regeneration is intentionally deferred pending operator approval.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
-**Deployed app commit:** `245bf9a` (`feat: replace Ref adapter with Tidepool precheck and fail-closed readiness`).
+**Deployed app commit:** `46bf788` (`feat: execute proprietary TRADE through NEP-141 Tidepool vault`).
 **Production/mainnet authority:** **not granted**. No mainnet transaction, production release or external posting is authorized.
 
 ## Live testnet artifacts
@@ -20,7 +20,7 @@
 - **Bounty accounting (client audit):** 7 accepted-finding allocations totaling `0.025 NEAR` recorded on testnet; no payout claim executed.
 - **Bounty accounting (proprietary audit):** 8 accepted-finding allocations totaling `0.0325 NEAR` recorded; no payout claim executed.
 - **Public verify (client):** `https://dissent-web.onrender.com/verify/96426c09-87ec-4641-94ed-4edf0b7b34f1` (live).
-- **Public verify (proprietary):** `https://dissent-web.onrender.com/verify/0bf3728d-e457-4b2f-8fad-b53be9565498` (after the next preview deploy).
+- **Public verify (proprietary):** `https://dissent-web.onrender.com/verify/0bf3728d-e457-4b2f-8fad-b53be9565498` (live; `VERIFIED`, `execution_readiness=EXECUTED`).
 
 An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-depth evidence was unavailable and a preimage-hash bug produced a false contradiction. The bug is fixed in `src/lib/evidence/service.ts`; the earlier anchored certificate is retained unchanged as an immutable test artifact.
 
@@ -130,6 +130,9 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 | Live vault execution | `spend_ft_as` PASS; tx `DxvoRKhCnyYyKrmAopnVYPKZJB7g8ev5Er1wtW5JbSp`; `execution_readiness=EXECUTED` |
 | Tidepool settlement | `SUCCESS`; `0.035245 USDC` out; 3 swap txs recorded |
 | Local Playwright | 3/3 PASS, including the execution receipt at 390/1440 |
+| Preview deploy | `46bf788` live; `/healthz`, `/readyz`, both verifier pages 200 |
+| Preview Playwright | 3/3 PASS, including the execution receipt at 390/1440 |
+| Public verifier | `VERIFIED`; `execution_readiness=EXECUTED`; vault tx and Tidepool swap hashes returned |
 
 ## Budget consumed
 
