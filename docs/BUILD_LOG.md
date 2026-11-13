@@ -167,7 +167,7 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - **Resolved:** the vault was upgraded in place to v2 with a fixed NEP-141 token, `spend_ft_as`, and a 1 NEAR Function Call Key scoped to `spend_as` + `spend_ft_as`.
 - Vault v2 upgrade tx `6t3pMThsSsDmEVgoj4eS9MJoqm3T2gq7ynXYFkXcqQh2`; fixed token `wnear.tidepool-sandbox.testnet`.
 - wNEAR storage for the vault tx `84A2LxRgaFjzCsZmbLbLi3LraT3uHgAj5eoU39Cmwfoj`; `0.02 wNEAR` funded from the Tidepool faucet via demo client (tx `HeXLMzbWsRpz9YdoQvvYnHME9Wex8ay3zSN74kSxJcyQ`).
-- New agent key `ed25519:EXg79…`, scope `spend_as` + `spend_ft_as`, tx `87kQ9F4qoqPrVWL5AnQsVJ2KUCJRVuWvPTA4ELjniMCF`.
+- New agent key `ed25519:EXg79…`, scope `spend_as` + `spend_ft_as`, tx `87kQ9F4qoqPrVWL5AnQsVJ2KUCJRVuWvPTA4ELjniMCF`. The older `spend_as`-only key was deleted (tx `8zNjA3TdqUzPZAK2qLbGhqYtEqDPDV6txAZCgd4jTuZV`).
 - **Live proprietary run:** audit `0bf3728d-e457-4b2f-8fad-b53be9565498` (`AUD-EF5A-D289`); Tidepool quote `0.01 wNEAR → 0.035246 USDC`; deposit address `da05f315c22877093292f756960595b27477c96eeba2d1e63864b95d69e5103a`.
 - Certificate/quote approvals: cert tx `GuLp4J2otGy1qFGasaGE8fjK2GaPNjBQjnyFkDxCnqKt`; allowlist tx `5jy5pU6o3DupmpZg5rvdWVJvNX6E2oLSMLbAQSa8wh3c`; deposit-address wNEAR storage tx `B1ARAptQ9eFLjougo9tGa5AUhxQBGWHSBop8jYcSPXe9`.
 - Commitment tx `JDCw46stcex49zroJ94y2EPNzcx86PqZGk8eyeHKsfAh`; funding tx `8xyFbb2hWiH1k7f137W3zvvZ3tB4ocqirHeTTvAvsa2T`; fee quote tx `HXQwwWrh1KJBqVc5cixzMecqKTtNjKbCFjDzbihdqJeu`.

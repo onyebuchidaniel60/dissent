@@ -232,7 +232,7 @@ Use NEAR Sandbox/near-workspaces for local development and automated tests. Depl
 - v1 deploy transaction: `8V4A7CypSu6SS3NWywnJFhCqqfUzDxo9xYr1azdzqMBN`
 - v2 in-place code upgrade + `new` transaction: `6t3pMThsSsDmEVgoj4eS9MJoqm3T2gq7ynXYFkXcqQh2`
 - Agent account: `vault-agent.dissent-demo.testnet`
-- Agent permission: Function Call Key `ed25519:EXg79VLkxUoVqa4PHw6aQ4TjYyz9ktzJAjPqeRX8B2h9`, scoped to `vault.dissent-demo.testnet` methods `spend_as` and `spend_ft_as`, allowance 1 NEAR (tx `87kQ9F4qoqPrVWL5AnQsVJ2KUCJRVuWvPTA4ELjniMCF`). The older `spend_as`-only key remains but is not used by the current runtime.
+- Agent permission: Function Call Key `ed25519:EXg79VLkxUoVqa4PHw6aQ4TjYyz9ktzJAjPqeRX8B2h9`, scoped to `vault.dissent-demo.testnet` methods `spend_as` and `spend_ft_as`, allowance 1 NEAR (tx `87kQ9F4qoqPrVWL5AnQsVJ2KUCJRVuWvPTA4ELjniMCF`). The older `spend_as`-only key was deleted (tx `8zNjA3TdqUzPZAK2qLbGhqYtEqDPDV6txAZCgd4jTuZV`), leaving only the new scoped key and the agent full-access key, which is not in the app runtime.
 - Per-transaction cap: `0.5 NEAR`; daily cap: `1 NEAR`; `paused=false`.
 - Fixed NEP-141 token: `wnear.tidepool-sandbox.testnet` (24 decimals).
 - wNEAR storage registered for the vault (tx `84A2LxRgaFjzCsZmbLbLi3LraT3uHgAj5eoU39Cmwfoj`).
