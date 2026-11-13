@@ -101,10 +101,14 @@ The frozen decision requires at least one open-weight model in a NEAR AI Cloud T
 
 A real testnet audit has been committed, funded, attacked by all eight specialists, reviewed and anchored:
 
-- Public verifier: `https://dissent-web.onrender.com/verify/f7783fa3-a71e-49ae-ab06-4ca5ac1b7670`
-- Verdict: `ABSTAIN` — executable pool-depth evidence was unavailable; missing data was not converted into `NOT_HIT`.
-- Certificate hash: `092e94db24d81e4d9cdb62c16269add73d9b82a18d166d70b6e6054b41e4e4d6`
-- Registry transaction: `BRajqZsAKZPt96BrbFy7y1BRKeLyaE9vymnq2mQFqkkN`
+- Public verifier: `https://dissent-web.onrender.com/verify/96426c09-87ec-4641-94ed-4edf0b7b34f1`
+- Audit: `AUD-C963-E660` (`394c2192-8d9f-4463-99f2-a15d45dc54a2`)
+- Verdict: `TRADE` — all eight runs completed, material conditions were evaluable, evidence re-fetch passed, divergence was `0`, and all reviews closed.
+- Certificate hash: `149c529602c40894643444ee69c9af4e2984774ed77a08e7fc56237345538139`
+- Registry transaction: `6G7Yd3uvZozLC9SbXtNW5jxFetV4TLqgTMFxN76MmYJF`
+- Bounty accounting: 7 accepted-finding allocations totaling `0.025 NEAR` on testnet; no payout claim executed.
+
+An earlier development audit ended `ABSTAIN` when execution-depth evidence was unavailable. It remains anchored as an immutable test artifact.
 
 This is a development audit; the UI fixture set remains separately labelled.
 

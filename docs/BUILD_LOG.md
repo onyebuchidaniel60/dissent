@@ -94,8 +94,8 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Evidence re-fetch completed; source outcomes recorded.
 - Sycophancy/novelty and finding review completed; 8 findings accepted, 3 rejected/contradicted in the development audit.
 - Deterministic adjudication returned `ABSTAIN` (material execution-depth condition unverifiable; a condition-preimage hash bug also produced a false contradiction).
-- Certificate `f7783fa3-a71e-49ae-ab06-4ca5ac1b7670`, hash `092e94db24d81e4d9cdb62c16269add73d9b82a18d166d70b6e6054b41e4e4d6`, anchored at tx `BRajqZsAKZPt96BrbFy7y1BRKeLyaE9vymnq2mQFqkkN`.
-- Public verify API recomputes hash and reads registry: `VERIFIED`.
+- The first development audit ended `ABSTAIN` with certificate `f7783fa3…`/`092e94…` anchored at `BRajqZs…`. A clean follow-up audit `394c2192…` (`AUD-C963-E660`) completed all eight runs, re-fetched all five evidence records as `VERIFIED`, produced `TRADE` with divergence `0`, and anchored certificate `96426c09…`/`149c5296…` at tx `6G7Yd3uv…`; 7 bounty allocations totaling `0.025 NEAR` were recorded.
+- Public verify API recomputes hash and reads registry: `VERIFIED` for the clean `TRADE` audit.
 - 8 bounty allocations totaling `0.03625 NEAR` recorded on testnet; no claim executed.
 - Fixed condition-preimage hash bug for subsequent audits; anchored certificate retained unchanged.
 - Added results/certificate/events APIs and client-scoped access.

@@ -9,17 +9,17 @@
 
 ## Live testnet artifacts
 
-- **Audit ID:** `08939501-b745-407e-8899-7b886ce4e213` (`AUD-F6DB-A20A`)
-- **Commitment transaction:** `EPyCZw3yCiEyVfrpjBvdFVHsRHdnzpsHaLwKLEEPW6YK`
-- **Funding transaction:** `J4D85KnMNB3RsyDR5ZtotUqxqD8nw5LMqGTwGms6yySY`
-- **Certificate ID:** `f7783fa3-a71e-49ae-ab06-4ca5ac1b7670`
-- **Certificate hash:** `092e94db24d81e4d9cdb62c16269add73d9b82a18d166d70b6e6054b41e4e4d6`
-- **Certificate anchor transaction:** `BRajqZsAKZPt96BrbFy7y1BRKeLyaE9vymnq2mQFqkkN`
-- **Verdict:** `ABSTAIN`. Material condition FC-002 (executable pool depth) was `UNVERIFIABLE` in the available evidence; the audit did not substitute `NOT_HIT`.
-- **Bounty accounting:** 8 accepted-finding allocations totaling `0.03625 NEAR` recorded on testnet; no payout claim executed.
-- **Public verify:** `https://dissent-web.onrender.com/verify/f7783fa3-a71e-49ae-ab06-4ca5ac1b7670` (available after the next deployment).
+- **Audit ID:** `394c2192-8d9f-4463-99f2-a15d45dc54a2` (`AUD-C963-E660`)
+- **Commitment transaction:** `JkqwT3Zc9scWxKxkq2jyLwqCALhkfeVrbNbASxhExiJ`
+- **Funding transaction:** `WmHPmBt742SRm4QfuZBJFa4zCtdVPWjWScTJ813uQhz`
+- **Certificate ID:** `96426c09-87ec-4641-94ed-4edf0b7b34f1`
+- **Certificate hash:** `149c529602c40894643444ee69c9af4e2984774ed77a08e7fc56237345538139`
+- **Certificate anchor transaction:** `6G7Yd3uvZozLC9SbXtNW5jxFetV4TLqgTMFxN76MmYJF`
+- **Verdict:** `TRADE`. All eight runs completed, both material conditions were evaluable, all five evidence refs re-fetched as `VERIFIED`, divergence was `0`, and all review/non-contradiction gates passed.
+- **Bounty accounting:** 7 accepted-finding allocations totaling `0.025 NEAR` recorded on testnet; no payout claim executed.
+- **Public verify:** `https://dissent-web.onrender.com/verify/96426c09-87ec-4641-94ed-4edf0b7b34f1` (available after the next deployment).
 
-**Known development-audit issue:** the first live audit's condition-preimage evidence hash was computed with an extra field, producing a false `CONTRADICTED` review and contributing to `ABSTAIN`. The hash computation is fixed in `src/lib/evidence/service.ts` for subsequent audits. The anchored certificate is immutable and is retained as a development/test artifact; it is not rewritten.
+An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-depth evidence was unavailable and a preimage-hash bug produced a false contradiction. The bug is fixed in `src/lib/evidence/service.ts`; the earlier anchored certificate is retained unchanged as an immutable test artifact.
 
 ## Intake status
 
@@ -117,7 +117,7 @@
 ## Known issues / limitations
 
 1. TEE attestation is waived, not verified. No TEE badge is displayed.
-2. The first live audit is `ABSTAIN` because execution-depth evidence was unavailable and a preimage-hash bug produced a false contradiction. The bug is fixed; a clean follow-up audit should be run before final demo if time permits.
+2. The clean follow-up live audit is `TRADE` with all evidence verified. The earlier `ABSTAIN` development audit remains anchored; it is not rewritten.
 3. UI still renders deterministic fixture audits for most client screens. API and live certificate pages are functional; Phase 6 must connect the form/list/detail/results screens to the real API and session.
 4. The UI new-audit form currently validates locally and previews hashes; it does not yet submit or sign through the wallet selector.
 5. `cron-job.org` is not configured; GitHub Actions `keepalive.yml` pings `/healthz` every 10 minutes.

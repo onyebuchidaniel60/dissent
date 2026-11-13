@@ -92,6 +92,18 @@ export async function startQueue(): Promise<PgBoss | null> {
       },
     );
 
+    await boss.work<{ auditId: string }>(
+      "evidence.verify",
+      { pollingIntervalSeconds: 5, batchSize: 1 },
+      async (jobs) => {
+        for (const job of jobs) {
+          const { reviewAndAdjudicate } = await import("@/lib/finalize");
+          await reviewAndAdjudicate(job.data.auditId);
+        }
+        return { ok: true };
+      },
+    );
+
     current.instance = boss;
     console.info("[queue] in-process pg-boss started");
     return boss;
