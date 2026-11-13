@@ -14,12 +14,14 @@ const config: ExecutionConfig = {
   agentKey: "ed25519:test",
   recipientId: "tidepool-deposit.testnet",
   amountYocto: "500000000000000000000000",
+  ftTokenId: "wnear.tidepool-sandbox.testnet",
   vaultSupportsNep141: true,
 };
 
 function vault(overrides?: Partial<VaultClient>): VaultClient {
   return {
-    spendAs: vi.fn(async () => ({ transactionHash: "tx-123" })),
+    spendAs: vi.fn(async () => ({ transactionHash: "tx-native" })),
+    spendFtAs: vi.fn(async () => ({ transactionHash: "tx-123" })),
     ...overrides,
   };
 }
@@ -30,6 +32,7 @@ describe("execution adapter", () => {
     const adapter = new TidepoolExecutionAdapter({ vault: client, config });
     const result = await adapter.execute("cert-1", "REFUSE");
     expect(result).toEqual({ status: "REFUSED", reason: "VERDICT_NOT_TRADE" });
+    expect(client.spendFtAs).not.toHaveBeenCalled();
     expect(client.spendAs).not.toHaveBeenCalled();
   });
 
@@ -38,17 +41,19 @@ describe("execution adapter", () => {
     const adapter = new TidepoolExecutionAdapter({ vault: client, config });
     const result = await adapter.execute("cert-1", "TRADE");
     expect(result).toEqual({ status: "EXECUTED", tx_hash: "tx-123" });
-    expect(client.spendAs).toHaveBeenCalledWith({
+    expect(client.spendFtAs).toHaveBeenCalledWith({
       certificateId: "cert-1",
       recipientId: "tidepool-deposit.testnet",
       amountYocto: "500000000000000000000000",
       memo: "Dissent certificate_id=cert-1",
+      tokenId: "wnear.tidepool-sandbox.testnet",
     });
+    expect(client.spendAs).not.toHaveBeenCalled();
   });
 
   it("returns the vault revert reason", async () => {
     const client = vault({
-      spendAs: vi.fn(async () => {
+      spendFtAs: vi.fn(async () => {
         throw new Error("amount exceeds per-transaction cap");
       }),
     });
@@ -66,7 +71,13 @@ describe("execution adapter", () => {
     });
     const result = await adapter.execute("cert-1", "TRADE");
     expect(result.status).toBe("REFUSED");
-    expect(client.spendAs).not.toHaveBeenCalled();
+    expect(client.spendFtAs).not.toHaveBeenCalled();
+  });
+
+  it("reports NOT_CONFIGURED when execution is disabled", () => {
+    expect(
+      executionReadiness({ verdict: "TRADE", config: { ...config, enabled: false }, venueAvailable: true }),
+    ).toEqual({ status: "NOT_CONFIGURED", reason: "EXECUTION_DISABLED" });
   });
 
   it("reports NOT_CONFIGURED when the venue is unavailable", () => {

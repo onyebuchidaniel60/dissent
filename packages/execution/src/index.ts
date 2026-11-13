@@ -17,8 +17,13 @@ export type SpendRequest = {
   memo: string;
 };
 
+export type SpendFtRequest = SpendRequest & {
+  tokenId: string;
+};
+
 export interface VaultClient {
   spendAs(request: SpendRequest): Promise<{ transactionHash: string }>;
+  spendFtAs(request: SpendFtRequest): Promise<{ transactionHash: string }>;
 }
 
 export type ExecutionConfig = {
@@ -28,6 +33,7 @@ export type ExecutionConfig = {
   agentKey: string | null;
   recipientId: string | null;
   amountYocto: string | null;
+  ftTokenId: string;
   vaultSupportsNep141: boolean;
 };
 
@@ -39,6 +45,7 @@ export function executionConfigFromEnv(): ExecutionConfig {
     agentKey: process.env.NEAR_VAULT_AGENT_KEY ?? null,
     recipientId: process.env.TIDEPOOL_DEPOSIT_ADDRESS ?? null,
     amountYocto: process.env.PROPRIETARY_THESIS_AMOUNT_YOCTO ?? null,
+    ftTokenId: process.env.TIDEPOOL_WNEAR_TOKEN_ID ?? "wnear.tidepool-sandbox.testnet",
     vaultSupportsNep141: process.env.VAULT_SUPPORTS_NEP141 === "true",
   };
 }
@@ -49,6 +56,9 @@ export function executionReadiness(input: {
   venueAvailable?: boolean;
 }): { status: "NOT_APPLICABLE" | "READY" | "NOT_CONFIGURED"; reason?: string } {
   if (input.verdict !== "TRADE") return { status: "NOT_APPLICABLE" };
+  if (!input.config.enabled) {
+    return { status: "NOT_CONFIGURED", reason: "EXECUTION_DISABLED" };
+  }
   if (
     !input.config.vaultAccountId ||
     !input.config.agentAccountId ||
@@ -96,11 +106,12 @@ export class TidepoolExecutionAdapter {
     }
 
     try {
-      const result = await this.vault.spendAs({
+      const result = await this.vault.spendFtAs({
         certificateId,
         recipientId: this.config.recipientId,
         amountYocto: this.config.amountYocto,
         memo: `Dissent certificate_id=${certificateId}`,
+        tokenId: this.config.ftTokenId,
       });
       return { status: "EXECUTED", tx_hash: result.transactionHash };
     } catch (error) {
@@ -132,11 +143,19 @@ export class NearVaultClient implements VaultClient {
   private readonly vaultAccountId: string;
 
   async spendAs(request: SpendRequest): Promise<{ transactionHash: string }> {
+    return this.callSpend("spend_as", request);
+  }
+
+  async spendFtAs(request: SpendFtRequest): Promise<{ transactionHash: string }> {
+    return this.callSpend("spend_ft_as", request);
+  }
+
+  private async callSpend(method: "spend_as" | "spend_ft_as", request: SpendRequest): Promise<{ transactionHash: string }> {
     const outcome = await this.account.signAndSendTransaction({
       receiverId: this.vaultAccountId,
       actions: [
         actions.functionCall(
-          "spend_as",
+          method,
           {
             certificate_id: request.certificateId,
             recipient_id: request.recipientId,

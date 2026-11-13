@@ -13,6 +13,7 @@ import {
   certificates,
   conditionAssessments,
   evidenceRecords,
+  executionReceipts,
   failureConditions,
   findingEvidenceLinks,
   findings,
@@ -35,7 +36,15 @@ import {
   rawBountyYocto,
 } from "@/lib/policy";
 import { MODEL_ASSIGNMENTS } from "@/lib/model-assignments";
-import { currentExecutionReadiness } from "@/lib/proprietary/venue";
+import {
+  currentExecutionReadiness,
+  fetchTidepoolStatus,
+} from "@/lib/proprietary/venue";
+import {
+  createExecutionAdapter,
+  executionConfigFromEnv,
+  type ExecutionResult,
+} from "../../packages/execution/src/index";
 
 type EvidenceOutcome =
   | "VERIFIED"
@@ -451,16 +460,85 @@ export async function reviewAndAdjudicate(auditId: string): Promise<{
     verdict = "TRADE";
   }
 
-  const certificateId = randomUUID();
+  const isProprietaryExecution =
+    process.env.PROPRIETARY_EXECUTION_AUDIT_ID === audit.id && verdict === "TRADE";
+  const certificateId = isProprietaryExecution ? audit.id : randomUUID();
   const execution = await currentExecutionReadiness(verdict);
+  const execConfig = executionConfigFromEnv();
+  let executionResult: ExecutionResult | null = null;
+  let tidepoolStatus: Awaited<ReturnType<typeof fetchTidepoolStatus>> = null;
+  let executionReadinessStatus: string = execution.status;
+  let executionReason = execution.reason ?? null;
+
+  if (isProprietaryExecution && execution.status === "READY") {
+    const adapter = createExecutionAdapter();
+    executionResult = await adapter.execute(certificateId, verdict);
+    executionReadinessStatus = executionResult.status;
+    executionReason = executionResult.reason ?? null;
+
+    if (executionResult.status === "EXECUTED" && execConfig.recipientId) {
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        try {
+          tidepoolStatus = await fetchTidepoolStatus(execConfig.recipientId);
+        } catch {
+          tidepoolStatus = null;
+        }
+        if (
+          tidepoolStatus &&
+          ["SUCCESS", "REFUNDED", "FAILED"].includes(tidepoolStatus.status)
+        ) {
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 3_000));
+      }
+    }
+
+    await getDb().insert(executionReceipts).values({
+      auditId,
+      certificateId,
+      status: executionResult.status,
+      txHash: executionResult.tx_hash ?? null,
+      reason: executionResult.reason ?? null,
+      recipientAccountId: execConfig.recipientId,
+      amountYocto: execConfig.amountYocto,
+    });
+  } else if (isProprietaryExecution) {
+    executionResult = {
+      status: "NOT_CONFIGURED",
+      reason: execution.reason ?? "EXECUTION_NOT_READY",
+    };
+    await getDb().insert(executionReceipts).values({
+      auditId,
+      certificateId,
+      status: "NOT_CONFIGURED",
+      reason: executionResult.reason ?? null,
+      recipientAccountId: execConfig.recipientId,
+      amountYocto: execConfig.amountYocto,
+    });
+  }
+
   const executionReadiness = {
-    status: execution.status,
-    reason: execution.reason ?? null,
+    status: executionReadinessStatus,
+    reason: executionReason,
     venue_available: execution.venue.available,
     venue_checked_at: execution.venue.checkedAt,
     vault_configured: execution.vault_configured,
     execution_enabled: execution.execution_enabled,
   };
+  const executionRecord = isProprietaryExecution
+    ? {
+        status: executionResult?.status ?? "NOT_ATTEMPTED",
+        venue: "TIDEPOOL_TESTNET",
+        certificate_id: certificateId,
+        tx_hash: executionResult?.tx_hash ?? null,
+        token_id: execConfig.ftTokenId,
+        amount_yocto: execConfig.amountYocto,
+        deposit_address: execConfig.recipientId,
+        tidepool_status: tidepoolStatus?.status ?? null,
+        tidepool_swap_tx_hashes: tidepoolStatus?.swapDetails?.nearTxHashes ?? [],
+        reason: executionResult?.reason ?? null,
+      }
+    : null;
   const certificateBody = {
     certificate_version: "1.0",
     certificate_id: certificateId,
@@ -475,6 +553,7 @@ export async function reviewAndAdjudicate(auditId: string): Promise<{
     issued_at: new Date().toISOString(),
     tee_waiver: "WAIVED_BUDGET_CONSTRAINT",
     execution_readiness: executionReadiness,
+    execution: executionRecord,
     gates,
     divergence: {
       index: divergenceIndex,
@@ -512,7 +591,8 @@ export async function reviewAndAdjudicate(auditId: string): Promise<{
     policy_version: POLICY_VERSION,
     issued_at: certificateBody.issued_at,
     network: "testnet",
-    execution_readiness: executionReadiness.status,
+    execution_readiness: executionReadinessStatus,
+    execution: executionRecord,
     coverage_summary: {
       conditions: conditions.length,
       accepted_findings: reviewedFindingRows.filter((finding) => finding.reviewStatus === "ACCEPTED").length,

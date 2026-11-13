@@ -1,7 +1,7 @@
 # AI_HANDOFF.md — Dissent
 
 **Last updated:** 2026-11-13
-**Current phase:** Phase 10 — proprietary trading arm implemented (vault, execution adapter, readiness schema, gated loop, operator UI). Live swap is **hard-blocked** because Tidepool requires a NEP-141 wNEAR deposit and the current vault only transfers native NEAR. Demo was intentionally not regenerated.
+**Current phase:** Phase 10 — proprietary execution **demonstrated on Tidepool testnet**. A real quote was audited, returned `TRADE`, executed through the capped vault (`spend_ft_as`) and settled `SUCCESS` on Tidepool. Demo regeneration is intentionally deferred pending operator approval.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
 **Deployed app commit:** `245bf9a` (`feat: replace Ref adapter with Tidepool precheck and fail-closed readiness`).
@@ -16,24 +16,28 @@
 - **Certificate hash:** `149c529602c40894643444ee69c9af4e2984774ed77a08e7fc56237345538139`
 - **Certificate anchor transaction:** `6G7Yd3uvZozLC9SbXtNW5jxFetV4TLqgTMFxN76MmYJF`
 - **Verdict:** `TRADE`. All eight runs completed, both material conditions were evaluable, all five evidence refs re-fetched as `VERIFIED`, divergence was `0`, and all review/non-contradiction gates passed.
-- **Bounty accounting:** 7 accepted-finding allocations totaling `0.025 NEAR` recorded on testnet; no payout claim executed.
-- **Public verify:** `https://dissent-web.onrender.com/verify/96426c09-87ec-4641-94ed-4edf0b7b34f1` (live).
+- **Phase 10 live certificate:** `0bf3728d-e457-4b2f-8fad-b53be9565498` (`AUD-EF5A-D289`), hash `d5f1b00d3702d9e5fcee194f601f9537f64c237ac176150a398a6a7d75b6584d`, anchor tx `3WQ6aQnJzsQRcRVTHsVGKUbrx2k1ueMFUwvWDY85XS9o`, `execution_readiness=EXECUTED`. Vault tx `DxvoRKhCnyYyKrmAopnVYPKZJB7g8ev5Er1wtW5JbSp`; Tidepool `SUCCESS` with `0.035245 USDC` out and swap txs `AYoAmq…`, `67jpWF…`, `7XAHSg…`.
+- **Bounty accounting (client audit):** 7 accepted-finding allocations totaling `0.025 NEAR` recorded on testnet; no payout claim executed.
+- **Bounty accounting (proprietary audit):** 8 accepted-finding allocations totaling `0.0325 NEAR` recorded; no payout claim executed.
+- **Public verify (client):** `https://dissent-web.onrender.com/verify/96426c09-87ec-4641-94ed-4edf0b7b34f1` (live).
+- **Public verify (proprietary):** `https://dissent-web.onrender.com/verify/0bf3728d-e457-4b2f-8fad-b53be9565498` (after the next preview deploy).
 
 An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-depth evidence was unavailable and a preimage-hash bug produced a false contradiction. The bug is fixed in `src/lib/evidence/service.ts`; the earlier anchored certificate is retained unchanged as an immutable test artifact.
 
 ## Phase 10 — proprietary trading arm
 
 - Specs updated before code: `PROJECT_SPEC.md`, `ARCHITECTURE.md` §15, `AGENTS.md`, `docs/ECONOMICS_SPEC.md`, `docs/SMART_CONTRACT_SPEC.md`.
-- Vault deployed: `vault.dissent-demo.testnet`; deploy tx `8V4A7CypSu6SS3NWywnJFhCqqfUzDxo9xYr1azdzqMBN`.
-- Caps: `0.5 NEAR` per transaction / `1 NEAR` daily. Tidepool is the intended venue; its deposit addresses are per-quote.
-- Agent account `vault-agent.dissent-demo.testnet` has only a Function Call Key scoped to `vault.dissent-demo.testnet::spend_as`; RPC permission check passed.
-- Current clean certificate `96426c09-87ec-4641-94ed-4edf0b7b34f1` approved on the vault.
-- `packages/execution` implements `TidepoolExecutionAdapter`; returns `REFUSED` on non-TRADE, `EXECUTED` on a mocked TRADE when the vault supports NEP-141, `REVERTED` with the vault reason, and `NOT_CONFIGURED` (`VAULT_NATIVE_NEAR_ONLY`) for the current vault. `EXECUTION_ENABLED=false`.
-- Certificate schema now includes `execution_readiness` with `NOT_APPLICABLE`, `READY`, `NOT_CONFIGURED`, `EXECUTED` (+ optional tx). Existing anchored certificates are unchanged.
-- `/operator/proprietary` shows venue precheck, execution flags, vault/agent, and execution receipts. It is gated by the operator allowlist and passes 390/1440 Playwright checks.
-- Proprietary loop is pg-boss-scheduled only when `PROPRIETARY_LOOP_ENABLED=true` (default false). It returns `BLOCKED_VENUE` rather than fabricating a market observation.
-- **Hard blocker:** Tidepool is reachable (`/v0/health`, `/v0/tokens`, dry quote 200), but its wNEAR `ORIGIN_CHAIN` deposit requires a NEP-141 `ft_transfer` with storage registration. The current vault only transfers native NEAR. No live swap was attempted; a new TRADE certificate would be `NOT_CONFIGURED` with `VAULT_NATIVE_NEAR_ONLY`.
-- Tests: vault unit tests 5/5 pass; execution adapter suite 7/7 pass; full Vitest 10/10 pass; build passes; Playwright 3/3 passes locally and on the deployed preview, including `/operator/proprietary` at 390/1440.
+- Vault `vault.dissent-demo.testnet` upgraded in place to v2 at tx `6t3pMThsSsDmEVgoj4eS9MJoqm3T2gq7ynXYFkXcqQh2`; v1 deploy `8V4A7CypSu6SS3NWywnJFhCqqfUzDxo9xYr1azdzqMBN`.
+- Caps: `0.5 NEAR` per transaction / `1 NEAR` daily. The vault holds native NEAR plus Tidepool test wNEAR (`wnear.tidepool-sandbox.testnet`, 24 decimals), fixed at initialization.
+- Agent account `vault-agent.dissent-demo.testnet` now has a Function Call Key `ed25519:EXg79…` scoped to `vault.dissent-demo.testnet` methods `spend_as` and `spend_ft_as`, allowance 1 NEAR (tx `87kQ9…`). The older `spend_as`-only key remains but is unused. No full-access key is in the execution runtime.
+- Vault wNEAR storage tx `84A2…`; funded with `0.02 wNEAR` from the Tidepool faucet via demo client (tx `HeXLM…`).
+- Live proprietary run: audit `0bf3728d-e457-4b2f-8fad-b53be9565498`; quote `0.01 wNEAR → 0.035246 USDC`, deposit address `da05f315c22877093292f756960595b27477c96eeba2d1e63864b95d69e5103a`; certificate approved tx `GuLp…`; deposit address allowlisted tx `5jy5…`; wNEAR storage for the deposit address tx `B1AR…`; commitment `JDCw…`; funding `8xyF…`.
+- The certificate has `execution_readiness=EXECUTED`, the vault tx and Tidepool swap hashes. The certificate ID is the audit UUID, pre-approved before the attackers ran. `PROPRIETARY_EXECUTION_AUDIT_ID` is the fail-closed gate; client audits never execute.
+- `packages/execution` implements `TidepoolExecutionAdapter`; returns `REFUSED` on non-TRADE/disabled, `EXECUTED` on a mocked TRADE, `REVERTED` with the vault reason, and `NOT_CONFIGURED` when the venue/vault/token is missing. It calls `vault.spend_ft_as`.
+- Certificate schema includes `execution_readiness` with `NOT_APPLICABLE`, `READY`, `NOT_CONFIGURED`, `EXECUTED` (+ optional tx); the full certificate has an `execution` object, and the public certificate exposes the vault tx and Tidepool swap hashes.
+- `/operator/proprietary` shows venue precheck, NEP-141 vault state, execution flags, certificate/quote details and execution receipts. It is gated by the operator allowlist.
+- Proprietary loop originates from a live Tidepool quote (not pool state), then runs the same eight-attacker pipeline. The pg-boss scheduler remains default false; the live run was executed by `scripts/proprietary-live.ts`.
+- Tests: vault 8/8, execution adapter 11/11, full Vitest 11/11, build passes; Playwright 3/3 passes locally and on the deployed preview. Demo regeneration remains deferred pending operator approval.
 
 ## Intake status
 
@@ -119,11 +123,19 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 | Public verify API | PASS (`VERIFIED` hash + registry match) |
 | Bounty allocations | 8 recorded, `0.03625 NEAR` |
 | Reference responsive sweep | PASS at 360/390/768/1024/1440 |
+| Vault v2 unit tests | 8/8 PASS |
+| Execution adapter tests | 11/11 PASS |
+| Full Vitest | 11/11 PASS |
+| Live proprietary audit | 8/8 attackers; both conditions `EVALUABLE`/`NOT_HIT`; 8 gates pass; divergence `0`; verdict `TRADE` |
+| Live vault execution | `spend_ft_as` PASS; tx `DxvoRKhCnyYyKrmAopnVYPKZJB7g8ev5Er1wtW5JbSp`; `execution_readiness=EXECUTED` |
+| Tidepool settlement | `SUCCESS`; `0.035245 USDC` out; 3 swap txs recorded |
+| Local Playwright | 3/3 PASS, including the execution receipt at 390/1440 |
 
 ## Budget consumed
 
 - New spend: **$0.00**.
-- OpenRouter remaining at handoff: **$7.584022** (from $30 pre-purchased).
+- OpenRouter remaining at handoff: **$7.5465** (from $30 pre-purchased).
+- Proprietary live run consumed approximately **$0.017** of pre-purchased credit.
 - Live audit + diagnostics consumed approximately **$0.163** of pre-purchased credit.
 - Per-audit ceiling: **$0.50**.
 - No paid hosting, paid TTS, Render Postgres, card charge or auto-billing trial.
@@ -138,8 +150,9 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 6. Render free cold start ~50 seconds; the demo was captured against a warm local build using the same Neon data and live certificate.
 7. A06/A07 share the Flint family; documented availability substitution. Gate still passes 7 families/2 vendors.
 8. `escrow.dissent-demo.testnet` is created but unused; funding/bounty logic lives in the registry contract. Documented in the deployment notes.
-9. Phase 10 live execution is blocked by a vault/venue incompatibility: Tidepool requires NEP-141 wNEAR deposits; the vault only transfers native NEAR. The vault, Function Call Key, Tidepool adapter, readiness schema and operator UI are implemented; no live execution receipt exists.
-10. `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false`; flipping them is documented as a preview/demo action in `AI_HANDOFF.md` and `docker`/Render configuration.
+9. Phase 10 live execution is demonstrated. The preview remains fail-closed (`EXECUTION_ENABLED=false`, `PROPRIETARY_LOOP_ENABLED=false`); a future live run needs a fresh quote, vault approvals and `PROPRIETARY_EXECUTION_AUDIT_ID`.
+10. The demo video predates the trading beat. Regeneration is intentionally deferred until the operator approves after reviewing the live `EXECUTED` certificate and Tidepool settlement.
+11. `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false` for the preview; the live run was an explicit operator action using `scripts/proprietary-live.ts`.
 
 ## Authority boundaries
 

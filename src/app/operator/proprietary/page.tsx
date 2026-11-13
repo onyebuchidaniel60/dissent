@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { desc } from "drizzle-orm";
 import { AlertTriangle, ArrowLeft, CheckCircle2, CircleAlert, LockKeyhole, RefreshCw, Wallet } from "lucide-react";
 
 import { PageHeader, Panel } from "@/components/ui";
@@ -12,9 +13,17 @@ export default async function ProprietaryPage() {
   const venue = await checkTidepoolVenue();
   const loopEnabled = proprietaryLoopEnabled();
   const executionEnabled = process.env.EXECUTION_ENABLED === "true";
+  const vaultSupportsNep141 = process.env.VAULT_SUPPORTS_NEP141 === "true";
   const vault = process.env.NEAR_VAULT_ACCOUNT_ID ?? null;
   const agent = process.env.NEAR_VAULT_AGENT_ACCOUNT_ID ?? null;
-  const receipts = await getDb().select().from(executionReceipts).limit(20);
+  const ftToken = process.env.TIDEPOOL_WNEAR_TOKEN_ID ?? "wnear.tidepool-sandbox.testnet";
+  const receipts = await getDb()
+    .select()
+    .from(executionReceipts)
+    .orderBy(desc(executionReceipts.createdAt))
+    .limit(20);
+  const latestReceipt = receipts[0];
+  const executed = latestReceipt?.status === "EXECUTED";
 
   return (
     <>
@@ -41,6 +50,9 @@ export default async function ProprietaryPage() {
         </span>
         <span className={`tag ${venue.available ? "tag--ok" : "tag--warn"}`}>
           venue {venue.available ? "available" : "blocked"}
+        </span>
+        <span className={`tag ${vaultSupportsNep141 ? "tag--ok" : "tag--warn"}`}>
+          vault {vaultSupportsNep141 ? "NEP-141" : "native-only"}
         </span>
       </div>
 
@@ -69,7 +81,7 @@ export default async function ProprietaryPage() {
                   </p>
                   <p className="mt-2 text-[12px] leading-relaxed text-muted">
                     {venue.available
-                      ? "Tidepool returned health, token and quote data. Execution still requires a TRADE verdict, an approved certificate, a NEP-141-capable vault and EXECUTION_ENABLED=true."
+                      ? "Tidepool returned health, token and quote data. Execution still requires a TRADE verdict, an approved certificate, an allowlisted quote deposit address and EXECUTION_ENABLED=true."
                       : `No live swap was attempted. Reason: ${venue.reason ?? "TIDEPOOL_UNAVAILABLE"}. Missing venue data is not a negative market result.`}
                   </p>
                   <p className="mono mt-2 text-[9px] text-muted-2">
@@ -91,6 +103,12 @@ export default async function ProprietaryPage() {
                   {agent ?? "not configured"}
                 </p>
               </div>
+              <div className="rounded-xl border border-line bg-white/[0.02] p-3 sm:col-span-2">
+                <p className="small-caps text-muted-2">Execution asset</p>
+                <p className="mt-1 break-all font-mono text-[10px] text-ink">
+                  {ftToken} · {vaultSupportsNep141 ? "spend_ft_as enabled" : "NEP-141 support not configured"}
+                </p>
+              </div>
             </div>
           </Panel>
 
@@ -110,6 +128,7 @@ export default async function ProprietaryPage() {
                       <th scope="col">Status</th>
                       <th scope="col">Transaction</th>
                       <th scope="col">Amount</th>
+                      <th scope="col">Note</th>
                       <th scope="col">Created</th>
                     </tr>
                   </thead>
@@ -117,7 +136,12 @@ export default async function ProprietaryPage() {
                     {receipts.map((receipt) => (
                       <tr key={receipt.id}>
                         <td data-label="Certificate">
-                          <span className="mono text-[10px]">{receipt.certificateId.slice(0, 12)}…</span>
+                          <Link
+                            href={`/verify/${receipt.certificateId}`}
+                            className="mono min-w-0 break-all text-[10px] underline decoration-line underline-offset-2 hover:text-ink"
+                          >
+                            {receipt.certificateId.slice(0, 12)}…
+                          </Link>
                         </td>
                         <td data-label="Status">
                           <span className={`tag ${receipt.status === "EXECUTED" ? "tag--ok" : "tag--warn"}`}>
@@ -125,10 +149,15 @@ export default async function ProprietaryPage() {
                           </span>
                         </td>
                         <td data-label="Transaction">
-                          <span className="mono text-[10px]">{receipt.txHash ?? "—"}</span>
+                          <span className="mono min-w-0 break-all text-[10px]">{receipt.txHash ?? "—"}</span>
                         </td>
                         <td data-label="Amount">
                           <span className="mono text-[10px]">{receipt.amountYocto ?? "—"}</span>
+                        </td>
+                        <td data-label="Note">
+                          <span className="mono min-w-0 max-w-[18ch] break-all text-right text-[9px] text-muted">
+                            {receipt.reason ?? "—"}
+                          </span>
                         </td>
                         <td data-label="Created">
                           <span className="mono text-[10px] text-muted-2">
@@ -147,8 +176,9 @@ export default async function ProprietaryPage() {
                 </span>
                 <h2 className="empty-title">No execution receipt yet.</h2>
                 <p className="empty-copy">
-                  Venue precheck is blocked, so the proprietary loop cannot originate a live thesis
-                  or call the vault. The audit pipeline and vault remain configured.
+                  No execution receipt yet. The loop originates only from a live Tidepool quote;
+                  a TRADE certificate, an approved quote deposit address and a NEP-141-capable
+                  vault are required before the agent can call `spend_ft_as`.
                 </p>
               </div>
             )}
@@ -176,7 +206,11 @@ export default async function ProprietaryPage() {
               </li>
               <li className="gate" data-pass="true">
                 <CheckCircle2 aria-hidden="true" />
-                Agent key is a Function Call Key scoped to spend_as
+                Agent key is a Function Call Key scoped to spend_as and spend_ft_as
+              </li>
+              <li className="gate" data-pass="true">
+                <CheckCircle2 aria-hidden="true" />
+                Vault token contract fixed to Tidepool wNEAR at initialization
               </li>
               <li className="gate" data-pass="false">
                 <CircleAlert aria-hidden="true" />
@@ -192,12 +226,37 @@ export default async function ProprietaryPage() {
             </div>
           </Panel>
 
-          <Panel title="Why this is blocked" subtitle="No fake market, no fake trade.">
-            <p className="text-[12px] leading-relaxed text-muted">
-              Both required Ref Finance testnet API probes failed before HTTP because the host did
-              not resolve. The execution adapter remains implemented and unit-tested against the
-              vault interface, but no live swap is attempted until real pool data exists.
-            </p>
+          <Panel
+            title={executed ? "Execution path" : "Awaiting execution"}
+            subtitle={executed ? "A real vault transfer, not a simulated trade." : "No fake market, no fake trade."}
+          >
+            {executed && latestReceipt ? (
+              <div className="space-y-3">
+                <p className="text-[12px] leading-relaxed text-muted">
+                  The vault executed `spend_ft_as` for the approved quote deposit address. The
+                  certificate is bound to the same certificate ID and records the vault transaction.
+                </p>
+                <p className="break-all font-mono text-[10px] text-ink">
+                  vault tx: {latestReceipt.txHash ?? "—"}
+                </p>
+                <p className="break-all font-mono text-[10px] text-muted">
+                  certificate: {latestReceipt.certificateId}
+                </p>
+                <Link
+                  href={`/verify/${latestReceipt.certificateId}`}
+                  className="button button--ghost button--small"
+                >
+                  Open certificate verifier
+                </Link>
+              </div>
+            ) : (
+              <p className="text-[12px] leading-relaxed text-muted">
+                The proprietary loop can originate a live quote, but no vault transfer is attempted
+                until the audit returns TRADE, the certificate and quote deposit address are
+                approved on-chain, and the vault reports a NEP-141 balance. A failed check is
+                `NOT_CONFIGURED` or `REVERTED`, never a simulated trade.
+              </p>
+            )}
           </Panel>
         </div>
       </div>

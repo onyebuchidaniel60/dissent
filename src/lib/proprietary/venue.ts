@@ -9,10 +9,127 @@ export type VenueStatus = {
   sample?: unknown;
 };
 
-const BASE = "https://www.usetidepool.tech";
+const BASE = process.env.TIDEPOOL_BASE_URL ?? "https://www.usetidepool.tech";
 const HEALTH_URL = `${BASE}/v0/health`;
 const TOKENS_URL = `${BASE}/v0/tokens`;
 const QUOTE_URL = `${BASE}/v0/quote`;
+const STATUS_URL = `${BASE}/v0/status`;
+const API_KEY = "dissent-demo";
+
+export type TidepoolQuoteResponse = {
+  correlationId: string;
+  timestamp: string;
+  quoteRequest: {
+    originAsset: string;
+    destinationAsset: string;
+    amount: string;
+    depositType: string;
+    recipient: string;
+    refundTo: string;
+  };
+  quote: {
+    amountIn: string;
+    amountInFormatted: string;
+    amountInUsd: string;
+    amountOut: string;
+    amountOutFormatted: string;
+    amountOutUsd: string;
+    minAmountOut: string;
+    depositAddress: string;
+    deadline: string;
+    timeWhenInactive: string;
+  };
+  signature: string;
+};
+
+export type TidepoolStatus = {
+  status:
+    | "KNOWN_DEPOSIT_TX"
+    | "PENDING_DEPOSIT"
+    | "INCOMPLETE_DEPOSIT"
+    | "PROCESSING"
+    | "SUCCESS"
+    | "REFUNDED"
+    | "FAILED";
+  updatedAt: string;
+  swapDetails?: {
+    nearTxHashes?: string[];
+    originChainTxHashes?: Array<{ hash: string; explorerUrl?: string }>;
+    destinationChainTxHashes?: Array<{ hash: string; explorerUrl?: string }>;
+    amountOut?: string;
+    amountOutFormatted?: string;
+    amountOutUsd?: string;
+  };
+};
+
+export async function fetchTidepoolLiveQuote(input?: {
+  amountYocto?: string;
+  recipient?: string;
+  refundTo?: string;
+  deadlineMinutes?: number;
+}): Promise<TidepoolQuoteResponse> {
+  const amountYocto = input?.amountYocto ?? process.env.PROPRIETARY_THESIS_AMOUNT_YOCTO ?? "10000000000000000000000";
+  const recipient =
+    input?.recipient ?? process.env.PROPRIETARY_RECIPIENT ?? process.env.DEMO_CLIENT_ACCOUNT_ID ?? "dissent-demo.testnet";
+  const refundTo = input?.refundTo ?? process.env.NEAR_VAULT_ACCOUNT_ID ?? "vault.dissent-demo.testnet";
+  const deadline = new Date(Date.now() + (input?.deadlineMinutes ?? 120) * 60_000).toISOString();
+
+  const response = await fetch(QUOTE_URL, {
+    method: "POST",
+    redirect: "error",
+    signal: AbortSignal.timeout(30_000),
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "X-API-Key": API_KEY,
+      "User-Agent": "Dissent/1.0 (Tidepool proprietary loop)",
+    },
+    body: JSON.stringify({
+      dry: false,
+      swapType: "EXACT_INPUT",
+      slippageTolerance: 100,
+      originAsset: "nep141:wnear.tidepool-sandbox.testnet",
+      depositType: "ORIGIN_CHAIN",
+      depositMode: "SIMPLE",
+      destinationAsset: "nep141:usdc.tidepool-sandbox.testnet",
+      amount: amountYocto,
+      refundTo,
+      refundType: "ORIGIN_CHAIN",
+      recipient,
+      recipientType: "DESTINATION_CHAIN",
+      deadline,
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`TIDEPOOL_QUOTE_HTTP_${response.status}`);
+  }
+  const data = (await response.json()) as TidepoolQuoteResponse;
+  if (!data.quote?.depositAddress || !/^[0-9a-f]{64}$/i.test(data.quote.depositAddress)) {
+    throw new Error("TIDEPOOL_QUOTE_MISSING_DEPOSIT_ADDRESS");
+  }
+  if (data.quote.amountIn !== amountYocto) {
+    throw new Error("TIDEPOOL_QUOTE_AMOUNT_MISMATCH");
+  }
+  if (new Date(data.quote.deadline).getTime() <= Date.now()) {
+    throw new Error("TIDEPOOL_QUOTE_EXPIRED");
+  }
+  return data;
+}
+
+export async function fetchTidepoolStatus(depositAddress: string): Promise<TidepoolStatus | null> {
+  const response = await fetch(`${STATUS_URL}?depositAddress=${encodeURIComponent(depositAddress)}`, {
+    redirect: "error",
+    signal: AbortSignal.timeout(20_000),
+    headers: {
+      Accept: "application/json",
+      "X-API-Key": API_KEY,
+      "User-Agent": "Dissent/1.0 (Tidepool status)",
+    },
+  });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(`TIDEPOOL_STATUS_HTTP_${response.status}`);
+  return (await response.json()) as TidepoolStatus;
+}
 
 async function probeJson(url: string, init?: RequestInit): Promise<{ ok: boolean; sample?: unknown; reason?: string }> {
   try {
@@ -41,7 +158,7 @@ async function probeJson(url: string, init?: RequestInit): Promise<{ ok: boolean
 export async function checkTidepoolVenue(): Promise<VenueStatus> {
   const quote = await probeJson(QUOTE_URL, {
     method: "POST",
-    headers: { "content-type": "application/json", "X-API-Key": "dissent-demo" },
+    headers: { "content-type": "application/json", "X-API-Key": API_KEY },
     body: JSON.stringify({
       dry: true,
       swapType: "EXACT_INPUT",

@@ -5,12 +5,22 @@ import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { workspaces } from "@/db/schema";
 import { prepareAudit } from "@/lib/audit-service";
-import { checkTidepoolVenue, proprietaryLoopEnabled } from "@/lib/proprietary/venue";
+import {
+  checkTidepoolVenue,
+  fetchTidepoolLiveQuote,
+  proprietaryLoopEnabled,
+  type TidepoolQuoteResponse,
+} from "@/lib/proprietary/venue";
 
 export type ProprietaryLoopResult =
   | { status: "DISABLED" }
   | { status: "BLOCKED_VENUE"; reason: string }
-  | { status: "ORIGINATED"; auditId: string; publicAuditId: string };
+  | {
+      status: "ORIGINATED";
+      auditId: string;
+      publicAuditId: string;
+      quote: TidepoolQuoteResponse;
+    };
 
 /**
  * Phase 10 loop guard. A live thesis is only originated after the Ref Finance
@@ -34,6 +44,16 @@ export async function runProprietaryLoop(): Promise<ProprietaryLoopResult> {
 
   if (!workspace) return { status: "BLOCKED_VENUE", reason: "DEMO_WORKSPACE_MISSING" };
 
+  let quote: TidepoolQuoteResponse;
+  try {
+    quote = await fetchTidepoolLiveQuote();
+  } catch (error) {
+    return {
+      status: "BLOCKED_VENUE",
+      reason: error instanceof Error ? error.message : "TIDEPOOL_QUOTE_FAILED",
+    };
+  }
+
   const prepared = await prepareAudit(
     {
       keyId: "proprietary-loop",
@@ -44,23 +64,30 @@ export async function runProprietaryLoop(): Promise<ProprietaryLoopResult> {
     },
     {
       thesis: {
-        asset: { chain: "near", asset_id: "nep141:wrap.near", symbol: "NEAR" },
-        action: "ADD_LIQUIDITY",
-        direction: "LONG",
-        rationale:
-          "Testnet proprietary thesis: NEAR/USDC LP yield remains attractive while executable depth and USDC peg stay within committed bounds.",
-        position: { amount: "0.5", unit: "NEAR", notional_usd: null },
-        time_horizon: { value: 7, unit: "DAY" },
+        asset: {
+          chain: "near",
+          asset_id: "nep141:wnear.tidepool-sandbox.testnet",
+          symbol: "wNEAR",
+        },
+        action: "SELL",
+        direction: "SHORT",
+        rationale: `Tidepool testnet quote at ${quote.timestamp}: ${quote.quote.amountInFormatted} wNEAR (${quote.quote.amountInUsd} USD) swaps to ${quote.quote.amountOutFormatted} USDC. The proprietary arm takes a small defensive wNEAR/USDC position and will execute only if the eight-attacker audit returns TRADE. The thesis is invalidated if NEAR spot rises above the committed ceiling or USDC depegs beyond the committed bound.`,
+        position: {
+          amount: quote.quote.amountInFormatted,
+          unit: "wNEAR",
+          notional_usd: quote.quote.amountInUsd,
+        },
+        time_horizon: { value: 1, unit: "DAY" },
         execution_venue: "TIDEPOOL_TESTNET",
       },
       conditions: [
         {
           condition_id: "PROP-001",
-          description: "NEAR/USDC pool APY falls below the committed yield floor",
-          metric: "LP_APY_PCT",
-          operator: "LT",
-          threshold: "5",
-          unit: "PERCENT",
+          description: "NEAR spot price is above USD 5.00 at the evaluation snapshot",
+          metric: "PRICE_USD",
+          operator: "GT",
+          threshold: "5.00",
+          unit: "USD",
           evaluation_window: { value: 1, unit: "DAY" },
           severity: "CRITICAL",
         },
@@ -83,5 +110,6 @@ export async function runProprietaryLoop(): Promise<ProprietaryLoopResult> {
     status: "ORIGINATED",
     auditId: prepared.audit.id,
     publicAuditId: prepared.audit.publicAuditId,
+    quote,
   };
 }

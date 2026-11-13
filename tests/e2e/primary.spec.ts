@@ -85,6 +85,9 @@ test("wallet session sees live audits and can create a session-authenticated dra
     expect(response?.status()).toBe(200);
     await expect(page.getByRole("heading", { name: /originate, audit/i })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Venue precheck" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Execution path" })).toBeVisible();
+    await expect(page.getByText(/vault tx:/)).toBeVisible();
+    await expect(page.getByText("EXECUTED").first()).toBeVisible();
     const metrics = await page.evaluate(() => ({
       documentWidth: document.documentElement.scrollWidth,
       viewportWidth: document.documentElement.clientWidth,

@@ -1,6 +1,6 @@
 use near_sdk::json_types::U128;
 use near_sdk::store::LookupMap;
-use near_sdk::{env, near, AccountId, NearToken, PanicOnDefault, Promise};
+use near_sdk::{env, near, AccountId, Gas, NearToken, PanicOnDefault, Promise};
 
 const DAY_NS: u64 = 86_400_000_000_000;
 const EVENT_STANDARD: &str = "dissent-vault";
@@ -15,6 +15,7 @@ pub struct VaultConfig {
     pub per_tx_cap_yocto: U128,
     pub daily_cap_yocto: U128,
     pub paused: bool,
+    pub ft_token_id: AccountId,
 }
 
 #[near(contract_state)]
@@ -30,17 +31,19 @@ pub struct DissentVault {
     paused: bool,
     recipients: LookupMap<AccountId, bool>,
     certificates: LookupMap<String, bool>,
+    ft_token_id: AccountId,
 }
 
 #[near]
 impl DissentVault {
-    #[init]
+    #[init(ignore_state)]
     pub fn new(
         owner_id: AccountId,
         agent_id: AccountId,
         treasury_id: AccountId,
         per_tx_cap_yocto: U128,
         daily_cap_yocto: U128,
+        ft_token_id: AccountId,
     ) -> Self {
         assert!(per_tx_cap_yocto.0 > 0, "per-transaction cap must be positive");
         assert!(daily_cap_yocto.0 > 0, "daily cap must be positive");
@@ -59,6 +62,7 @@ impl DissentVault {
             paused: false,
             recipients: LookupMap::new(b"r"),
             certificates: LookupMap::new(b"c"),
+            ft_token_id,
         }
     }
 
@@ -140,45 +144,12 @@ impl DissentVault {
         amount_yocto: U128,
         memo: String,
     ) -> Promise {
-        let predecessor = env::predecessor_account_id();
-        assert_eq!(predecessor, self.agent_id, "caller is not the vault agent");
-        assert!(!self.paused, "vault is paused");
-        assert!(
-            self.certificates.get(&certificate_id).copied().unwrap_or(false),
-            "certificate_id is not approved"
-        );
-        assert!(
-            self.recipients.get(&recipient_id).copied().unwrap_or(false),
-            "recipient is not allowlisted"
-        );
-        assert!(
-            memo.contains(&certificate_id),
-            "memo must contain the approved certificate_id"
-        );
-        assert!(amount_yocto.0 > 0, "amount must be positive");
-        assert!(
-            amount_yocto.0 <= self.per_tx_cap_yocto,
-            "amount exceeds per-transaction cap"
-        );
-
-        let day = env::block_timestamp() / DAY_NS;
-        if day != self.day_bucket {
-            self.day_bucket = day;
-            self.spent_today_yocto = 0;
-        }
-        assert!(
-            self.spent_today_yocto + amount_yocto.0 <= self.daily_cap_yocto,
-            "amount exceeds daily cap"
-        );
-        assert!(
-            env::account_balance().as_yoctonear() >= amount_yocto.0,
-            "insufficient vault balance"
-        );
-
-        self.spent_today_yocto += amount_yocto.0;
+        self.assert_spend_allowed(&certificate_id, &recipient_id, amount_yocto.0, &memo);
+        self.record_spend(amount_yocto.0);
         emit_event(
             "dissent_vault_spend",
             serde_json::json!({
+                "asset": "native_near",
                 "certificate_id": certificate_id,
                 "recipient_id": recipient_id,
                 "amount_yocto": amount_yocto.0.to_string(),
@@ -186,6 +157,62 @@ impl DissentVault {
             }),
         );
         Promise::new(recipient_id).transfer(NearToken::from_yoctonear(amount_yocto.0))
+    }
+
+    /// Spend the configured NEP-141 token (Tidepool wNEAR). The cap is tracked in
+    /// yoctoNEAR-equivalent units; wNEAR is 1:1 with NEAR. The token contract is
+    /// fixed at initialization so the agent cannot redirect the vault to an
+    /// arbitrary token contract.
+    pub fn spend_ft_as(
+        &mut self,
+        certificate_id: String,
+        recipient_id: AccountId,
+        amount_yocto: U128,
+        memo: String,
+    ) -> Promise {
+        self.assert_spend_allowed(&certificate_id, &recipient_id, amount_yocto.0, &memo);
+        self.record_spend(amount_yocto.0);
+        emit_event(
+            "dissent_vault_spend",
+            serde_json::json!({
+                "asset": self.ft_token_id,
+                "certificate_id": certificate_id,
+                "recipient_id": recipient_id,
+                "amount_yocto": amount_yocto.0.to_string(),
+                "spent_today_yocto": self.spent_today_yocto.to_string()
+            }),
+        );
+        Promise::new(self.ft_token_id.clone()).function_call(
+            "ft_transfer".to_string(),
+            serde_json::json!({
+                "receiver_id": recipient_id,
+                "amount": amount_yocto.0.to_string(),
+                "memo": memo,
+            })
+            .to_string()
+            .into_bytes(),
+            NearToken::from_yoctonear(1),
+            Gas::from_tgas(30),
+        )
+    }
+
+    /// Owner-only conversion of native NEAR held by the vault into the configured
+    /// NEP-141 token. This does not count against the trading caps; it only changes
+    /// the vault's asset form. The token contract must have storage registered for
+    /// the vault before this call.
+    pub fn wrap(&mut self, amount_yocto: U128) -> Promise {
+        self.assert_owner();
+        assert!(amount_yocto.0 > 0, "wrap amount must be positive");
+        assert!(
+            env::account_balance().as_yoctonear() >= amount_yocto.0,
+            "insufficient vault balance"
+        );
+        Promise::new(self.ft_token_id.clone()).function_call(
+            "near_deposit".to_string(),
+            b"{}".to_vec(),
+            NearToken::from_yoctonear(amount_yocto.0),
+            Gas::from_tgas(30),
+        )
     }
 
     pub fn get_config(&self) -> VaultConfig {
@@ -196,7 +223,12 @@ impl DissentVault {
             per_tx_cap_yocto: U128(self.per_tx_cap_yocto),
             daily_cap_yocto: U128(self.daily_cap_yocto),
             paused: self.paused,
+            ft_token_id: self.ft_token_id.clone(),
         }
+    }
+
+    pub fn get_ft_token_id(&self) -> AccountId {
+        self.ft_token_id.clone()
     }
 
     pub fn get_balance(&self) -> U128 {
@@ -226,6 +258,52 @@ impl DissentVault {
             self.owner_id,
             "caller is not the vault owner"
         );
+    }
+
+    fn assert_spend_allowed(
+        &self,
+        certificate_id: &str,
+        recipient_id: &AccountId,
+        amount_yocto: u128,
+        memo: &str,
+    ) {
+        assert_eq!(
+            env::predecessor_account_id(),
+            self.agent_id,
+            "caller is not the vault agent"
+        );
+        assert!(!self.paused, "vault is paused");
+        assert!(
+            self.certificates.get(certificate_id).copied().unwrap_or(false),
+            "certificate_id is not approved"
+        );
+        assert!(
+            self.recipients.get(recipient_id).copied().unwrap_or(false),
+            "recipient is not allowlisted"
+        );
+        assert!(
+            memo.contains(certificate_id),
+            "memo must contain the approved certificate_id"
+        );
+        assert!(amount_yocto > 0, "amount must be positive");
+        assert!(
+            amount_yocto <= self.per_tx_cap_yocto,
+            "amount exceeds per-transaction cap"
+        );
+        assert!(
+            self.spent_today_yocto + amount_yocto <= self.daily_cap_yocto
+                || self.day_bucket != env::block_timestamp() / DAY_NS,
+            "amount exceeds daily cap"
+        );
+    }
+
+    fn record_spend(&mut self, amount_yocto: u128) {
+        let day = env::block_timestamp() / DAY_NS;
+        if day != self.day_bucket {
+            self.day_bucket = day;
+            self.spent_today_yocto = 0;
+        }
+        self.spent_today_yocto += amount_yocto;
     }
 }
 
@@ -260,6 +338,7 @@ mod tests {
             accounts(2),
             U128(500_000_000_000_000_000_000_000),
             U128(1_000_000_000_000_000_000_000_000),
+            accounts(3),
         )
     }
 
@@ -270,6 +349,32 @@ mod tests {
         vault.set_recipient(accounts(3), true);
         assert!(vault.is_certificate_approved("cert-1".to_string()));
         assert!(vault.is_recipient(accounts(3)));
+    }
+
+    #[test]
+    fn reports_configured_ft_token() {
+        let vault = setup();
+        assert_eq!(vault.get_ft_token_id(), accounts(3));
+    }
+
+    #[test]
+    fn spend_ft_as_records_the_spend_and_emits_an_event() {
+        let mut vault = setup();
+        vault.approve_certificate("cert-1".to_string());
+        vault.set_recipient(accounts(4), true);
+        let mut context = VMContextBuilder::new();
+        context
+            .current_account_id(accounts(0))
+            .predecessor_account_id(accounts(1))
+            .account_balance(NearToken::from_near(10));
+        testing_env!(context.build());
+        vault.spend_ft_as(
+            "cert-1".to_string(),
+            accounts(4),
+            U128(10),
+            "cert-1".to_string(),
+        );
+        assert_eq!(vault.get_spent_today(), U128(10));
     }
 
     #[test]
@@ -286,6 +391,25 @@ mod tests {
         vault.spend_as(
             "cert-1".to_string(),
             accounts(3),
+            U128(1),
+            "cert-1".to_string(),
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "recipient is not allowlisted")]
+    fn rejects_unlisted_ft_recipient() {
+        let mut vault = setup();
+        vault.approve_certificate("cert-1".to_string());
+        let mut context = VMContextBuilder::new();
+        context
+            .current_account_id(accounts(0))
+            .predecessor_account_id(accounts(1))
+            .account_balance(NearToken::from_near(10));
+        testing_env!(context.build());
+        vault.spend_ft_as(
+            "cert-1".to_string(),
+            accounts(4),
             U128(1),
             "cert-1".to_string(),
         );

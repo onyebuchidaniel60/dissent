@@ -16,6 +16,7 @@ export type CertificateView = {
   anchorStatus: string;
   chainTxHash: string | null;
   publicCertificate: Record<string, unknown>;
+  execution: Record<string, unknown> | null;
   chainRecord: {
     certificate_hash?: string;
     verdict?: string;
@@ -46,7 +47,10 @@ export async function getCertificateView(certificateId: string): Promise<Certifi
     chainRecord = null;
   }
 
-  const body = row.certificateJson as { verdict?: string };
+  const body = row.certificateJson as {
+    verdict?: string;
+    execution?: Record<string, unknown> | null;
+  };
   return {
     id: row.id,
     auditId: row.auditId,
@@ -56,6 +60,7 @@ export async function getCertificateView(certificateId: string): Promise<Certifi
     anchorStatus: row.anchorStatus,
     chainTxHash: row.chainTxHash,
     publicCertificate: row.publicCertificateJson as Record<string, unknown>,
+    execution: body.execution ?? null,
     chainRecord,
     chainHashMatches: chainRecord?.certificate_hash === row.certificateHash,
     chainVerdict: chainRecord?.verdict ?? body.verdict ?? null,

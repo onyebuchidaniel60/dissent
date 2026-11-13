@@ -245,7 +245,7 @@ Controls:
 - TEE deployment and response signature verification are **waived** under C4. No TEE badge is rendered; the certificate records `WAIVED_BUDGET_CONSTRAINT`. The model-family, vendor and open-weight gates remain enforced.
 - Job idempotency, unique constraints, immutable audit events, bounded retry.
 - On-chain contract role checks, one-time IDs, amount caps, escrow accounting, no admin arbitrary withdraw in normal path; multisig/timelock required for mainnet production.
-- No live trading executor in MVP; any non-TRADE or failed audit blocks any future executor.
+- No mainnet trading executor. The testnet proprietary executor is capped, certificate-bound, allowlisted, audit-scoped and disabled by default; any non-TRADE or failed audit blocks execution.
 - Redact API keys, wallet secrets, client portfolio, prompts and private evidence from logs/video.
 
 ## 12. Deployment
@@ -271,26 +271,37 @@ Pino JSON logs with `request_id`, `audit_id`, `run_id`, job ID, provider, model,
 
 ## 15. Execution architecture (testnet proprietary arm)
 
-**Vault contract:** `vault.dissent-demo.testnet` (Rust + `near-sdk`) holds testnet NEAR and exposes:
+**Vault contract:** `vault.dissent-demo.testnet` (Rust + `near-sdk`) holds testnet NEAR and a fixed NEP-141 token, `wnear.tidepool-sandbox.testnet`. It was upgraded in place to add token-aware spending:
 
-- `spend_as(certificate_id, recipient_id, amount_yocto, memo)` — the only method callable by the execution agent's Function Call Key.
-- On-chain checks: predecessor is the configured agent ID; `amount_yocto` is within the per-transaction cap; the UTC-day spend remains within the daily cap; `recipient_id` is on the approved allowlist; `memo` contains the approved `certificate_id`; the certificate ID is approved by the owner after finalization; the contract has sufficient balance.
-- Reverts carry readable reasons (cap breach, allowlist miss, unknown certificate, bad memo, insufficient balance).
-- Owner-only `approve_certificate`, `set_recipient`, `set_caps`, `withdraw`; funding is payable.
+- `spend_as(certificate_id, recipient_id, amount_yocto, memo)` — native-NEAR transfer.
+- `spend_ft_as(certificate_id, recipient_id, amount_yocto, memo)` — transfers the fixed NEP-141 token to `recipient_id` with the certificate ID in the transfer memo.
+- On-chain checks (both methods): predecessor is the configured agent ID; the vault is not paused; `amount_yocto` is within the per-transaction cap; the UTC-day spend remains within the daily cap; `recipient_id` is on the approved allowlist; `memo` contains the approved `certificate_id`; the certificate ID is approved by the owner; the token contract is fixed at initialization.
+- Reverts carry readable reasons (cap breach, allowlist miss, unknown certificate, bad memo, insufficient balance, token transfer failure).
+- Owner-only `approve_certificate`, `revoke_certificate`, `set_recipient`, `set_caps`, `set_paused`, `withdraw`. The `wrap` helper is only usable with a token that exposes `near_deposit`; Tidepool's test wNEAR does not, so the vault is funded by the Tidepool faucet and an `ft_transfer` from the demo client.
 
-**Agent key:** a dedicated testnet account receives only a **Function Call Key scoped to `vault.spend_as`**. The full-access key belongs to the deployer and is never loaded into the execution runtime, an attacker prompt, or a model tool. `NEAR_VAULT_AGENT_KEY` stores the function-call key.
+**Agent key:** a dedicated testnet account holds a **Function Call Key scoped to `vault.spend_as` and `vault.spend_ft_as`**, with a 1 NEAR allowance. The full-access vault key is not loaded into the execution runtime, an attacker prompt, or a model tool. `NEAR_VAULT_AGENT_KEY` stores the function-call key.
+
+**Certificate and quote approval:** the owner (testnet deployer identity) approves the certificate ID and the per-quote Tidepool deposit address on the vault. A proprietary certificate uses the audit UUID as its certificate ID, which makes pre-approval possible before the attackers finish. `PROPRIETARY_EXECUTION_AUDIT_ID` is a fail-closed runtime gate: even if `EXECUTION_ENABLED=true`, only that audit can spend. Client audits never execute.
 
 **Execution adapter:** `packages/execution` exposes `execute(certificate_id, verdict)`:
 
-- Refuses any verdict other than `TRADE`.
-- Gated by `EXECUTION_ENABLED=true` (default `false`).
-- Uses a Tidepool `/v0/quote` deposit address for the selected pair and calls `vault.spend_as` with the thesis position amount.
-- The current vault only transfers native NEAR; Tidepool wNEAR deposits require a NEP-141 `ft_transfer` with storage registration. Until the vault is upgraded to token-aware wNEAR spending, execution remains `NOT_CONFIGURED`.
-- Returns `EXECUTED` with a tx hash or `REVERTED` with the contract reason. It never retries a failed transfer.
-- The vault enforces caps and allowlists on-chain; the adapter is not the security boundary.
+- Refuses any verdict other than `TRADE` and when `EXECUTION_ENABLED` is not `true`.
+- Returns `NOT_CONFIGURED` if the vault, venue, quote address, amount or NEP-141 capability is missing.
+- Calls `vault.spend_ft_as` with the thesis position amount and the per-quote Tidepool deposit address.
+- Returns `EXECUTED` with the vault tx hash or `REVERTED` with the contract reason. It never retries a failed transfer.
+- The vault enforces caps, allowlists, certificate approval and the fixed token contract on-chain; the adapter is not the security boundary.
 
-**Venue precheck:** check Tidepool health, token catalogue and a dry wNEAR/USDC quote at `https://www.usetidepool.tech`. If the venue is unreachable, or the vault cannot fund its NEP-141 deposit, do not fake a trade. The certificate records `NOT_CONFIGURED` and execution remains disabled.
+**Execution flow:**
 
-**Proprietary loop:** a pg-boss scheduled task (every 5 minutes, `PROPRIETARY_LOOP_ENABLED=true`, default `false`) reads Ref testnet NEAR/USDC pool state, originates a thesis, submits it through the same audit pipeline, and invokes the execution adapter only after a `TRADE` certificate. A `REFUSE`/`ABSTAIN` is logged without execution. Proprietary inference spend is tracked in a separate cost ledger from client audits.
+1. The proprietary loop requests a live Tidepool `ORIGIN_CHAIN` quote for `0.01 wNEAR → USDC`, with `refundTo=vault.dissent-demo.testnet` and `recipient=demo-client.testnet`.
+2. The operator registers NEP-141 storage for the quote's implicit deposit address, approves the audit UUID as a vault certificate and allowlists the deposit address.
+3. The audit runs the same eight-attacker, evidence re-fetch and deterministic adjudication pipeline as a client thesis.
+4. On `TRADE`, the finalizer calls the adapter, records an `execution_receipts` row, and includes the vault tx hash and Tidepool swap hashes in the certificate body.
+5. The certificate's `execution_readiness` is `EXECUTED`; the registry anchor commits the certificate hash after execution. A failed transfer is `REVERTED`; incomplete configuration is `NOT_CONFIGURED`; a non-TRADE verdict never calls the adapter.
+6. Tidepool status is polled after the vault transfer. The swap settles on the testnet verifier and the maker; the on-chain deposit tx remains the execution proof.
 
-**Boundary:** testnet only. No mainnet trade execution, no arbitrary recipient, no full-access key in any runtime, no model wallet access.
+**Venue precheck:** Tidepool health, token catalogue and a dry wNEAR/USDC quote at `https://www.usetidepool.tech`. If the venue is unreachable, execution is `NOT_CONFIGURED`. Ref Finance testnet is permanently unavailable and is not a supported venue.
+
+**Proprietary loop:** the loop originates from a live Tidepool quote, not from pool state. The `PROPRIETARY_LOOP_ENABLED` scheduler remains default `false`; a live run is an explicit operator action that sets `PROPRIETARY_EXECUTION_AUDIT_ID` to the originated audit. The loop stores the quote in the audit rationale and returns the per-quote deposit address to the operator script.
+
+**Boundary:** testnet only. No mainnet trade execution, no arbitrary recipient, no arbitrary token contract, no full-access key in any runtime, no model wallet access. Caps remain `0.5 NEAR` per transaction and `1 NEAR` per UTC day.

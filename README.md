@@ -4,11 +4,11 @@
 
 Dissent challenges an AI trading agent's thesis before the agent acts. A client commits a thesis and machine-testable failure conditions on NEAR testnet, funds a fixed testnet audit fee, and receives eight isolated adversarial analyses. Evidence is re-fetched, attackers are reviewed for sycophancy, and a deterministic policy issues `TRADE`, `REFUSE` or `ABSTAIN`. The certificate preserves coverage, minority findings and disagreement instead of turning them into a majority vote.
 
-> **Current checkpoint:** Phase 1 — route-complete skeleton and preview deployment. The UI is real and navigable; wallet sessions, live inference, contract verification and certificate anchoring are labelled as later-phase work. Fixture data is marked `DEMO FIXTURE`.
+> **Current checkpoint:** Phase 10 — live client audit and a live proprietary Tidepool testnet execution. The eight-attacker pipeline, evidence re-fetch, deterministic adjudication, NEAR anchoring, public verifier and capped testnet vault are implemented. The demo video predates the trading beat and is intentionally not regenerated until operator review.
 
 ## Product boundaries
 
-Dissent is an audit and verification layer — not an exchange, broker, custodian, wallet, investment adviser or profit guarantee. The hackathon MVP does not execute live trades or move mainnet funds. Failure, missing coverage and unresolved critical evidence produce `ABSTAIN`, not an assumed pass.
+Dissent is an audit and verification layer — not an exchange, broker, custodian, wallet, investment adviser or profit guarantee. The hackathon MVP does not execute mainnet trades or move mainnet funds. The Phase 10 proprietary arm executes only testnet trades through a capped vault after a `TRADE` certificate. Failure, missing coverage and unresolved critical evidence produce `ABSTAIN`, not an assumed pass.
 
 ## Stack
 
@@ -172,10 +172,10 @@ MIT. See [`LICENSE`](LICENSE).
 
 The proprietary arm originates Dissent-owned theses, runs them through the same eight-attacker audit, and can execute a **testnet-only** transfer through a capped vault after a `TRADE` certificate.
 
-- Vault: `vault.dissent-demo.testnet` (0.5 NEAR per transaction / 1 NEAR daily).
-- Execution agent: `vault-agent.dissent-demo.testnet`, with a Function Call Key scoped only to `vault.spend_as`.
+- Vault: `vault.dissent-demo.testnet` (0.5 NEAR per transaction / 1 NEAR daily; holds Tidepool test wNEAR).
+- Execution agent: `vault-agent.dissent-demo.testnet`, with a Function Call Key scoped to `vault.spend_as` and `vault.spend_ft_as`.
 - Adapter: `packages/execution` — Tidepool adapter; refuses non-TRADE, returns `REVERTED` with the vault reason, gated by `EXECUTION_ENABLED` (default `false`).
 - Loop: pg-boss scheduled task, gated by `PROPRIETARY_LOOP_ENABLED` (default `false`).
 - Operator view: `/operator/proprietary`.
-- **Current blocker:** Tidepool is reachable, but its wNEAR ORIGIN_CHAIN deposits require a NEP-141 `ft_transfer` with storage registration. The current vault only transfers native NEAR. No live swap is attempted; new TRADE certificates record `execution_readiness=NOT_CONFIGURED` (`VAULT_NATIVE_NEAR_ONLY`). Existing certificates are unchanged.
-- No mainnet execution. `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` must stay `false` until a reachable testnet venue and operator review exist.
+- **Live evidence:** a proprietary `0.01 wNEAR → USDC` quote was audited, returned `TRADE`, and executed through `vault.spend_ft_as` at tx `DxvoRKhCnyYyKrmAopnVYPKZJB7g8ev5Er1wtW5JbSp`. Certificate `0bf3728d-e457-4b2f-8fad-b53be9565498` records `execution_readiness=EXECUTED`, hash `d5f1b00d3702d9e5fcee194f601f9537f64c237ac176150a398a6a7d75b6584d`, anchored at `3WQ6aQnJzsQRcRVTHsVGKUbrx2k1ueMFUwvWDY85XS9o`. Tidepool settled `0.035245 USDC` with swap txs `AYoAmq…`, `67jpWF…`, `7XAHSg…`.
+- No mainnet execution. The live run was an explicit operator action with `PROPRIETARY_EXECUTION_AUDIT_ID` set; `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false` for the preview.

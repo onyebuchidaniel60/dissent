@@ -188,46 +188,72 @@ Use NEAR Sandbox/near-workspaces for local development and automated tests. Depl
 ## 10. Testnet vault contract (Phase 10)
 
 **Account:** `vault.dissent-demo.testnet`
-**Purpose:** bounded testnet transfers for the proprietary execution arm. The intended venue is Tidepool. Ref Finance testnet is permanently unavailable and is not a supported venue. It does not custody client assets and does not execute mainnet transfers.
+**Purpose:** bounded testnet transfers for the proprietary execution arm. The venue is Tidepool. Ref Finance testnet is permanently unavailable and is not a supported venue. The vault does not custody client assets and does not execute mainnet transfers.
 
 ### State
 
 - `owner_id`, `agent_id`, `treasury_id`
 - `per_tx_cap_yocto`, `daily_cap_yocto`
 - `spent_today_yocto`, `day_bucket`
+- `paused`
 - `recipients: LookupMap<AccountId, bool>`
 - `certificates: LookupMap<String, bool>`
+- `ft_token_id: AccountId` — fixed at initialization to `wnear.tidepool-sandbox.testnet`
 
 ### Methods
 
-- `new(owner_id, agent_id, treasury_id, per_tx_cap_yocto, daily_cap_yocto)` — initialize once.
+- `new(owner_id, agent_id, treasury_id, per_tx_cap_yocto, daily_cap_yocto, ft_token_id)` — `#[init(ignore_state)]`; used for the in-place v2 upgrade.
 - `deposit()` — payable; adds testnet NEAR to the vault.
-- `spend_as(certificate_id, recipient_id, amount_yocto, memo)` — callable only by `agent_id`; requires the certificate ID to be approved, the recipient to be allowlisted, the memo to contain the certificate ID, the amount to be within the per-transaction cap and the UTC-day remaining cap, and sufficient balance. Emits an event and transfers the amount to `recipient_id`.
+- `spend_as(certificate_id, recipient_id, amount_yocto, memo)` — callable only by `agent_id`; requires the certificate ID to be approved, the recipient to be allowlisted, the memo to contain the certificate ID, the amount to be within the per-transaction cap and the UTC-day remaining cap, and sufficient native balance. Emits an event and transfers native NEAR to `recipient_id`.
+- `spend_ft_as(certificate_id, recipient_id, amount_yocto, memo)` — same checks; calls `ft_transfer` on the fixed `ft_token_id` with the certificate ID in the memo. Used for Tidepool wNEAR.
+- `wrap(amount_yocto)` — owner-only helper for a token that exposes `near_deposit`; **not usable with Tidepool test wNEAR**, which is minted by the Tidepool faucet. The vault is funded by faucet + `ft_transfer`.
 - `approve_certificate(certificate_id)` / `revoke_certificate(certificate_id)` — owner only.
 - `set_recipient(recipient_id, allowed)` — owner only.
 - `set_caps(per_tx_cap_yocto, daily_cap_yocto)` — owner only, bounded by the funded balance policy.
+- `set_paused(paused)` — owner only.
 - `withdraw(amount_yocto)` — owner only, to `treasury_id`.
-- Views: `get_config`, `get_balance`, `get_spent_today`, `is_recipient`, `is_certificate_approved`.
+- Views: `get_config`, `get_ft_token_id`, `get_balance`, `get_spent_today`, `is_recipient`, `is_certificate_approved`.
 
 ### Invariants
 
-1. Only the configured agent account can call `spend_as`.
-2. The execution agent receives only a Function Call Key scoped to `spend_as`; the full-access deployer key is never in the execution runtime.
-3. Caps are enforced on-chain, not in the adapter.
+1. Only the configured agent account can call `spend_as` or `spend_ft_as`.
+2. The execution agent receives only a Function Call Key scoped to `vault.spend_as` and `vault.spend_ft_as`; the full-access deployer key is never in the execution runtime.
+3. Caps are enforced on-chain, not in the adapter. Caps are tracked in yoctoNEAR-equivalent units; wNEAR is 1:1 with NEAR.
 4. Recipient must be allowlisted; arbitrary destinations are rejected.
 5. Memo must contain the approved certificate ID; unapproved certificates are rejected.
-6. Reverts include readable reasons.
-7. No method authorizes mainnet execution or arbitrary treasury withdrawal.
+6. The NEP-141 token contract is fixed at initialization; the agent cannot redirect the vault to an arbitrary token.
+7. The adapter never executes for a client audit: `PROPRIETARY_EXECUTION_AUDIT_ID` must match the audit and the certificate ID is the audit UUID.
+8. Reverts include readable reasons.
+9. No method authorizes mainnet execution or arbitrary treasury withdrawal.
 
 ### Vault deployment record (Phase 10)
 
 - Vault account: `vault.dissent-demo.testnet`
-- Deploy transaction: `8V4A7CypSu6SS3NWywnJFhCqqfUzDxo9xYr1azdzqMBN`
+- v1 deploy transaction: `8V4A7CypSu6SS3NWywnJFhCqqfUzDxo9xYr1azdzqMBN`
+- v2 in-place code upgrade + `new` transaction: `6t3pMThsSsDmEVgoj4eS9MJoqm3T2gq7ynXYFkXcqQh2`
 - Agent account: `vault-agent.dissent-demo.testnet`
-- Agent permission: Function Call Key scoped to `vault.dissent-demo.testnet::spend_as` only; verified via RPC.
-- Per-transaction cap: `0.5 NEAR`; daily cap: `1 NEAR`.
-- Tidepool quote deposit address allowlisted: `76e9fdee35e85f863076d379d2117297449b4d5965c5a461d3c11c3a8af57f73` (tx `DRu6sA1Jzxciudc3ofNPobjgJkAnVFTJhhcq1zG78Nai`). This is per-quote; the owner must approve each new address. The old Ref Finance recipient was revoked (tx `CsvM84SVVPEdHEVTgESSVHgxfGqqPZNv24FtHFDMzTg`).
-- Approved current clean certificate: `96426c09-87ec-4641-94ed-4edf0b7b34f1` (tx `AMEWXAiFKUZa9wiZTde3JrdjkvFEBPMzd8GL85ApvKWW`).
-- Vault balance after deployment: `2.998422576908042600000000 NEAR`.
-- `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false`.
-- Venue precheck: Tidepool is reachable (`/v0/health`, `/v0/tokens`, dry quote 200). A real wNEAR/USDC quote returned deposit address `76e9fdee35e85f863076d379d2117297449b4d5965c5a461d3c11c3a8af57f73` and 0.034845 USDC for 0.01 wNEAR. However, ORIGIN_CHAIN deposits require NEP-141 `ft_transfer` plus storage registration; the current vault only transfers native NEAR. Execution is **NOT_CONFIGURED** (`VAULT_NATIVE_NEAR_ONLY`); no live swap was attempted.
+- Agent permission: Function Call Key `ed25519:EXg79VLkxUoVqa4PHw6aQ4TjYyz9ktzJAjPqeRX8B2h9`, scoped to `vault.dissent-demo.testnet` methods `spend_as` and `spend_ft_as`, allowance 1 NEAR (tx `87kQ9F4qoqPrVWL5AnQsVJ2KUCJRVuWvPTA4ELjniMCF`). The older `spend_as`-only key remains but is not used by the current runtime.
+- Per-transaction cap: `0.5 NEAR`; daily cap: `1 NEAR`; `paused=false`.
+- Fixed NEP-141 token: `wnear.tidepool-sandbox.testnet` (24 decimals).
+- wNEAR storage registered for the vault (tx `84A2LxRgaFjzCsZmbLbLi3LraT3uHgAj5eoU39Cmwfoj`).
+- Vault funded with `0.02 wNEAR` from the Tidepool faucet via the demo client (tx `HeXLMzbWsRpz9YdoQvvYnHME9Wex8ay3zSN74kSxJcyQ`).
+- Native balance after upgrade: approximately `2.9967571058856245 NEAR`.
+
+### Live proprietary execution evidence
+
+- Audit: `0bf3728d-e457-4b2f-8fad-b53be9565498` (`AUD-EF5A-D289`); thesis originated from Tidepool quote `0.01 wNEAR → 0.035246 USDC`.
+- Quote deposit address: `da05f315c22877093292f756960595b27477c96eeba2d1e63864b95d69e5103a`.
+- Certificate (audit UUID) approved on vault: tx `GuLp4J2otGy1qFGasaGE8fjK2GaPNjBQjnyFkDxCnqKt`.
+- Quote deposit address allowlisted: tx `5jy5pU6o3DupmpZg5rvdWVJvNX6E2oLSMLbAQSa8wh3c`.
+- wNEAR storage for the deposit address: tx `B1ARAptQ9eFLjougo9tGa5AUhxQBGWHSBop8jYcSPXe9`.
+- Audit commitment: tx `JDCw46stcex49zroJ94y2EPNzcx86PqZGk8eyeHKsfAh`.
+- Audit funding: tx `8xyFbb2hWiH1k7f137W3zvvZ3tB4ocqirHeTTvAvsa2T`; fee quote issuance: `HXQwwWrh1KJBqVc5cixzMecqKTtNjKbCFjDzbihdqJeu`.
+- Verdict: `TRADE`; all eight attacker runs completed, both conditions were `EVALUABLE`/`NOT_HIT`, all gates passed, and divergence was `0`. Eight accepted findings; zero minority findings.
+- Vault execution (`spend_ft_as`): tx `DxvoRKhCnyYyKrmAopnVYPKZJB7g8ev5Er1wtW5JbSp`; the wNEAR `ft_transfer` event names the deposit address and carries the certificate ID in its memo.
+- Certificate: `0bf3728d-e457-4b2f-8fad-b53be9565498`; hash `d5f1b00d3702d9e5fcee194f601f9537f64c237ac176150a398a6a7d75b6584d`; `execution_readiness=EXECUTED`; anchor tx `3WQ6aQnJzsQRcRVTHsVGKUbrx2k1ueMFUwvWDY85XS9o`.
+- Tidepool settlement: `SUCCESS`; `0.01 wNEAR` deposited, `0.035245 USDC` received by `demo-client.testnet`; swap txs `AYoAmqUxGmZRqcbkBZ75xG5J1KN1Y4r479oZ9Vdu7BLq`, `67jpWFr6arcpwUfgTUk8BkJpQD9Gezmw1VFcGoEs8pjK`, `7XAHSgATu8F2ednWuCxfmswetXnvNjyh1iPSmogXQGbv`.
+- Vault state after execution: `0.01 wNEAR` remaining; `spent_today_yocto=10000000000000000000000` (0.01 NEAR-equivalent), within the 0.5/1 NEAR caps.
+- The live run is executed by `scripts/proprietary-live.ts`; the run log and exact commands are recorded in `AI_HANDOFF.md` and `docs/BUILD_LOG.md`.
+- `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` default to `false`; the live run was an explicit operator action with `PROPRIETARY_EXECUTION_AUDIT_ID` set to the audit above. The preview remains disabled.
+- Old Ref Finance recipient `ref-finance-101.testnet` was revoked in the v1 vault (tx `CsvM84SVVPEdHEVTgESSVHgxfGqqPZNv24FtHFDMzTg`); the v2 vault starts with an empty allowlist. Ref Finance is not supported.
+- No mainnet deployment or mainnet execution is authorized.

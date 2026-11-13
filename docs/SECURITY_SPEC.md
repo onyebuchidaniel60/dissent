@@ -1,7 +1,7 @@
 # Dissent — Security Specification and Threat Model
 
-**Version:** 1.0  
-**Scope:** Hackathon MVP (no live trading, no mainnet funds)  
+**Version:** 1.0
+**Scope:** Hackathon MVP (testnet-only proprietary execution via a capped vault; no mainnet funds)
 **Security posture:** Fail closed for any financial or verdict-critical uncertainty
 
 ## 1. Assets and trust boundaries

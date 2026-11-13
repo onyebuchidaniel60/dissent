@@ -1813,7 +1813,8 @@ textarea {
     display: inline-flex;
   }
 
-  .header-actions .button {
+  .header-actions .button,
+  .header-actions .header-session {
     display: none;
   }
 

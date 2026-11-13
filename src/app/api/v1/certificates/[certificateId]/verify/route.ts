@@ -37,6 +37,9 @@ export async function GET(
       certificate_id: view.id,
       audit_id: view.auditId,
       public_certificate: view.publicCertificate,
+      execution_readiness:
+        (view.publicCertificate as { execution_readiness?: string }).execution_readiness ?? null,
+      execution: view.execution,
       stored_hash: view.storedHash,
       recomputed_hash: view.recomputedHash,
       hash_matches: view.hashMatches,

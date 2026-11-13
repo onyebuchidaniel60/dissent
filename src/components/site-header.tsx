@@ -51,7 +51,9 @@ export function SiteHeader() {
           </nav>
 
           <div className="header-actions">
-            <WalletConnectButton className="button button--primary button--small" />
+            <div className="header-session">
+              <WalletConnectButton className="button button--primary button--small" />
+            </div>
             <button
               type="button"
               className="mobile-menu-button"

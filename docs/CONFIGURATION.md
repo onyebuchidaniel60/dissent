@@ -56,14 +56,17 @@ Client-safe variables must use the framework's explicit public prefix and contai
 |---|---|---|
 | `NEAR_VAULT_ACCOUNT_ID` | `vault.dissent-demo.testnet` | Capped testnet vault |
 | `NEAR_VAULT_AGENT_ACCOUNT_ID` | `vault-agent.dissent-demo.testnet` | Execution agent identity |
-| `NEAR_VAULT_AGENT_KEY` | empty | Function Call Key scoped to `spend_as`; never a full-access key |
+| `NEAR_VAULT_AGENT_KEY` | empty | Function Call Key scoped to `spend_as` and `spend_ft_as`; never a full-access key |
 | `TIDEPOOL_BASE_URL` | `https://www.usetidepool.tech` | Tidepool testnet API |
 | `TIDEPOOL_DEPOSIT_ADDRESS` | per quote | Tidepool wNEAR/USDC quote deposit address |
+| `TIDEPOOL_WNEAR_TOKEN_ID` | `wnear.tidepool-sandbox.testnet` | Fixed NEP-141 token in the vault |
 | `VAULT_SUPPORTS_NEP141` | `false` | Must be `true` before wNEAR execution |
 | `EXECUTION_ENABLED` | `false` | Must be explicitly `true` for a testnet execution |
 | `PROPRIETARY_LOOP_ENABLED` | `false` | Enables the 5-minute pg-boss loop |
 | `VAULT_PER_TX_CAP_YOCTO` | `500000000000000000000000` | 0.5 NEAR |
 | `VAULT_DAILY_CAP_YOCTO` | `1000000000000000000000000` | 1 NEAR |
-| `PROPRIETARY_THESIS_AMOUNT_YOCTO` | `500000000000000000000000` | Thesis position amount for execution |
+| `PROPRIETARY_THESIS_AMOUNT_YOCTO` | `10000000000000000000000` | 0.01 wNEAR thesis position for execution |
+| `PROPRIETARY_RECIPIENT` | `demo-client.testnet` | Destination for the USDC leg of the quote |
+| `PROPRIETARY_EXECUTION_AUDIT_ID` | empty | Per-run gate: only this audit may execute |
 
-Tidepool is reachable, but the vault is native-NEAR-only. Execution remains `NOT_CONFIGURED` until the vault supports wNEAR/NEP-141 storage and transfer. Do not enable execution or fake a trade.
+Tidepool is reachable. The vault holds Tidepool test wNEAR and exposes `spend_ft_as`; execution remains gated by `PROPRIETARY_EXECUTION_AUDIT_ID`, an approved certificate, an allowlisted quote deposit address, a TRADE verdict and `EXECUTION_ENABLED=true`. Do not enable execution for a client audit or fake a trade.

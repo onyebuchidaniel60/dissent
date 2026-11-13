@@ -41,7 +41,7 @@ Request:
     "rationale": "...",
     "position": {"amount": "100", "unit": "NEAR", "notional_usd": "250"},
     "time_horizon": {"value": 7, "unit": "DAY"},
-    "execution_venue": "REF_FINANCE"
+    "execution_venue": "TIDEPOOL_TESTNET"
   },
   "conditions": [
     {
@@ -130,7 +130,7 @@ Purpose: public hash verification.
 
 Auth: none; rate-limited.
 
-Success: public certificate metadata, on-chain transaction/reference, locally recomputed hash, on-chain stored hash and `VERIFIED`/`MISMATCH`/`NOT_FOUND`. Never expose unredacted thesis or private evidence.
+Success: public certificate metadata, `execution_readiness`, the public `execution` object (vault tx hash, deposit address, Tidepool status and swap hashes when present), on-chain transaction/reference, locally recomputed hash, on-chain stored hash and `VERIFIED`/`MISMATCH`/`NOT_FOUND`. Never expose unredacted thesis or private evidence.
 
 ### `POST /operator/audits/{audit_id}/retry`
 Purpose: retry one eligible failed attacker/review stage.

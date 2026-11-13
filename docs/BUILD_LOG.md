@@ -164,6 +164,18 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Tidepool docs (`llms.txt`, `AGENTS.md`, `openapi.json`) read from `www.usetidepool.tech`; health/tokens/dry quote return 200.
 - Real wNEAR/USDC quote: 0.01 wNEAR → 0.034845 USDC, deposit address `76e9fdee35e85f863076d379d2117297449b4d5965c5a461d3c11c3a8af57f73`.
 - Vault allowlist updated for that Tidepool deposit address (tx `DRu6sA1Jzxciudc3ofNPobjgJkAnVFTJhhcq1zG78Nai`); Ref Finance recipient revoked (tx `CsvM84SVVPEdHEVTgESSVHgxfGqqPZNv24FtHFDMzTg`).
-- **Hard blocker:** Tidepool wNEAR deposits require NEP-141 `ft_transfer` with storage registration; the current vault only transfers native NEAR. No live swap or execution receipt was fabricated. `NOT_CONFIGURED` with `VAULT_NATIVE_NEAR_ONLY` is used.
-- Demo intentionally not regenerated; operator review required.
-- Preview deployed at `245bf9a`; `/healthz`, `/readyz` and Playwright 3/3 pass. `/operator/proprietary` renders the Tidepool reachable / vault-incompatible state at 390/1440.
+- **Resolved:** the vault was upgraded in place to v2 with a fixed NEP-141 token, `spend_ft_as`, and a 1 NEAR Function Call Key scoped to `spend_as` + `spend_ft_as`.
+- Vault v2 upgrade tx `6t3pMThsSsDmEVgoj4eS9MJoqm3T2gq7ynXYFkXcqQh2`; fixed token `wnear.tidepool-sandbox.testnet`.
+- wNEAR storage for the vault tx `84A2LxRgaFjzCsZmbLbLi3LraT3uHgAj5eoU39Cmwfoj`; `0.02 wNEAR` funded from the Tidepool faucet via demo client (tx `HeXLMzbWsRpz9YdoQvvYnHME9Wex8ay3zSN74kSxJcyQ`).
+- New agent key `ed25519:EXg79…`, scope `spend_as` + `spend_ft_as`, tx `87kQ9F4qoqPrVWL5AnQsVJ2KUCJRVuWvPTA4ELjniMCF`.
+- **Live proprietary run:** audit `0bf3728d-e457-4b2f-8fad-b53be9565498` (`AUD-EF5A-D289`); Tidepool quote `0.01 wNEAR → 0.035246 USDC`; deposit address `da05f315c22877093292f756960595b27477c96eeba2d1e63864b95d69e5103a`.
+- Certificate/quote approvals: cert tx `GuLp4J2otGy1qFGasaGE8fjK2GaPNjBQjnyFkDxCnqKt`; allowlist tx `5jy5pU6o3DupmpZg5rvdWVJvNX6E2oLSMLbAQSa8wh3c`; deposit-address wNEAR storage tx `B1ARAptQ9eFLjougo9tGa5AUhxQBGWHSBop8jYcSPXe9`.
+- Commitment tx `JDCw46stcex49zroJ94y2EPNzcx86PqZGk8eyeHKsfAh`; funding tx `8xyFbb2hWiH1k7f137W3zvvZ3tB4ocqirHeTTvAvsa2T`; fee quote tx `HXQwwWrh1KJBqVc5cixzMecqKTtNjKbCFjDzbihdqJeu`.
+- Eight attacker runs completed; both conditions `EVALUABLE`/`NOT_HIT`; all eight gates passed; divergence `0`; 8 accepted findings, 0 minority.
+- Vault `spend_ft_as` tx `DxvoRKhCnyYyKrmAopnVYPKZJB7g8ev5Er1wtW5JbSp`; wNEAR `ft_transfer` event names the deposit address and includes the certificate ID.
+- Certificate `0bf3728d-e457-4b2f-8fad-b53be9565498` with `execution_readiness=EXECUTED`, hash `d5f1b00d3702d9e5fcee194f601f9537f64c237ac176150a398a6a7d75b6584d`, anchor tx `3WQ6aQnJzsQRcRVTHsVGKUbrx2k1ueMFUwvWDY85XS9o`.
+- Tidepool status `SUCCESS`; `0.035245 USDC` received by `demo-client.testnet`; swap txs `AYoAmqUxGmZRqcbkBZ75xG5J1KN1Y4r479oZ9Vdu7BLq`, `67jpWFr6arcpwUfgTUk8BkJpQD9Gezmw1VFcGoEs8pjK`, `7XAHSgATu8F2ednWuCxfmswetXnvNjyh1iPSmogXQGbv`.
+- Vault after execution: `0.01 wNEAR`; `spent_today=0.01`; within caps.
+- Tests: vault 8/8, execution adapter 11/11, full Vitest 11/11; build passes.
+- Demo intentionally not regenerated; operator review required before adding the trading beat.
+- Preview deployed at `245bf9a`; `/healthz`, `/readyz` and Playwright 3/3 pass. The new execution UI and env are deployed after the live run; see the next checkpoint.

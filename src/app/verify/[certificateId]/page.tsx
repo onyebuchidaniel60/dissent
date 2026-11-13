@@ -162,6 +162,7 @@ export default async function VerifyPage({
                 ["Policy version", value(view.publicCertificate, "policy_version")],
                 ["Anchor status", view.anchorStatus],
                 ["Network", value(view.publicCertificate, "network")],
+                ["Execution", value(view.publicCertificate, "execution_readiness")],
               ].map(([label, text]) => (
                 <div key={label} className="rounded-xl border border-line bg-white/[0.02] p-3">
                   <dt className="small-caps text-muted-2">{label}</dt>
@@ -216,6 +217,47 @@ export default async function VerifyPage({
                 <span>Network</span>
                 <strong>testnet</strong>
               </div>
+              {view.execution ? (
+                <>
+                  <div className="rail-row">
+                    <span>Execution readiness</span>
+                    <strong className={view.execution.status === "EXECUTED" ? "text-ok" : "text-warn"}>
+                      {value(view.execution, "status")}
+                    </strong>
+                  </div>
+                  <div className="rail-row">
+                    <span>Venue</span>
+                    <strong>{value(view.execution, "venue")}</strong>
+                  </div>
+                  <div className="rail-row">
+                    <span>Tidepool status</span>
+                    <strong>{value(view.execution, "tidepool_status")}</strong>
+                  </div>
+                  <div className="rail-row">
+                    <span>Execution tx</span>
+                    <strong className="break-all font-mono text-[9px]">
+                      {value(view.execution, "tx_hash")}
+                    </strong>
+                  </div>
+                  {Array.isArray(view.execution.tidepool_swap_tx_hashes) &&
+                  view.execution.tidepool_swap_tx_hashes.length > 0 ? (
+                    <div className="mt-3 space-y-2">
+                      <p className="small-caps text-muted-2">Tidepool swap transactions</p>
+                      {view.execution.tidepool_swap_tx_hashes.map((hash) => (
+                        <a
+                          key={String(hash)}
+                          href={`https://explorer.testnet.near.org/transactions/${String(hash)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block break-all font-mono text-[9px] text-ok underline decoration-line underline-offset-2"
+                        >
+                          {String(hash)}
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
+                </>
+              ) : null}
             </Panel>
 
             <Panel title="Public boundary" subtitle="Why this page is safe to share.">

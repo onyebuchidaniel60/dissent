@@ -241,7 +241,7 @@ Rules:
 - A failed attacker is `FAILED`, never `NOT_HIT`.
 - An unavailable source is `UNVERIFIABLE`, never proof of absence.
 - Repeated API requests use idempotency keys. Repeated contract finalization and bounty settlements are blocked by unique IDs.
-- No automatic trade execution is connected to MVP verdicts.
+- No automatic **mainnet** trade execution is connected to MVP verdicts. The Phase 10 testnet arm executes only through the capped vault after a `TRADE` certificate.
 
 ### Finding acceptance states
 `SUBMITTED → EVIDENCE_REVIEW → SYCOPHANCY_REVIEW → ACCEPTED | REJECTED | NEEDS_REVIEW`.
@@ -282,7 +282,7 @@ The policy file is versioned and included by hash in the certificate. A later po
 - Sycophancy Auditor evaluates method quality, not whether the attacker agrees or disagrees.
 - The adjudicator is deterministic and versioned; model assistance can classify inputs but cannot make the final verdict.
 - The certificate preserves the full coverage matrix and material minority findings.
-- No real financial execution is enabled in the MVP.
+- No real **mainnet** financial execution is enabled in the MVP. The Phase 10 arm is testnet-only, capped and gated by `EXECUTION_ENABLED`.
 
 ## 7. Success criteria
 
