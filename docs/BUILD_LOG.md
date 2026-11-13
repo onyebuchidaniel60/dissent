@@ -162,3 +162,4 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Tests: vault 5/5, execution 6/6, full Vitest 9/9; `pnpm build` passes.
 - **Hard blocker:** `api.testnet.ref-finance.com` DNS resolution fails. Both required precheck endpoints fail before HTTP. No live swap or execution receipt was fabricated. `NOT_CONFIGURED` is used for the new readiness state.
 - Demo intentionally not regenerated; operator review required.
+- Preview deployed at `f2ee8db`; `/healthz`, `/readyz` and Playwright 3/3 pass. `/operator/proprietary` renders the blocked venue state at 390/1440.

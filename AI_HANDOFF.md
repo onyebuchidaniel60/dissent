@@ -4,7 +4,7 @@
 **Current phase:** Phase 10 — proprietary trading arm implemented (vault, execution adapter, readiness schema, gated loop, operator UI). Live swap is **hard-blocked** because the Ref Finance testnet API does not resolve. Demo was intentionally not regenerated.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
-**Deployed app commit:** `cf2b663` (`feat: finalize live UI surfaces and deliver reviewed demo`).
+**Deployed app commit:** `f2ee8db` (`feat: add capped vault and gated proprietary execution arm`).
 **Production/mainnet authority:** **not granted**. No mainnet transaction, production release or external posting is authorized.
 
 ## Live testnet artifacts
@@ -33,7 +33,7 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 - `/operator/proprietary` shows venue precheck, execution flags, vault/agent, and execution receipts. It is gated by the operator allowlist and passes 390/1440 Playwright checks.
 - Proprietary loop is pg-boss-scheduled only when `PROPRIETARY_LOOP_ENABLED=true` (default false). It returns `BLOCKED_VENUE` rather than fabricating a market observation.
 - **Hard blocker:** `api.testnet.ref-finance.com` cannot be resolved; both required precheck endpoints failed at DNS. No live swap was attempted. `execution_readiness` for a new TRADE certificate would be `NOT_CONFIGURED` with `REF_FINANCE_TESTNET_API_UNAVAILABLE`.
-- Tests: vault unit tests 5/5 pass; execution adapter suite 6/6 pass; full Vitest 9/9 pass; build passes.
+- Tests: vault unit tests 5/5 pass; execution adapter suite 6/6 pass; full Vitest 9/9 pass; build passes; Playwright 3/3 passes locally and on the deployed preview, including `/operator/proprietary` at 390/1440.
 
 ## Intake status
 
@@ -160,7 +160,7 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 - Music: Kevin MacLeod — “Floating Cities”, CC BY 4.0, attributed in README and production notes.
 - Captions: burned in, max two lines; sampled review at 5s/30s/55s/75s.
 - E2E: 3 Playwright tests pass against both local and deployed preview.
-- Preview deploy: `cf2b663` live at `https://dissent-web.onrender.com`; health/readiness and the three E2E checks pass.
+- Preview deploy: `f2ee8db` live at `https://dissent-web.onrender.com`; health/readiness and the three E2E checks pass.
 
 ## Next task
 
