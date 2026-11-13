@@ -35,6 +35,7 @@ import {
   rawBountyYocto,
 } from "@/lib/policy";
 import { MODEL_ASSIGNMENTS } from "@/lib/model-assignments";
+import { currentExecutionReadiness } from "@/lib/proprietary/venue";
 
 type EvidenceOutcome =
   | "VERIFIED"
@@ -451,6 +452,15 @@ export async function reviewAndAdjudicate(auditId: string): Promise<{
   }
 
   const certificateId = randomUUID();
+  const execution = await currentExecutionReadiness(verdict);
+  const executionReadiness = {
+    status: execution.status,
+    reason: execution.reason ?? null,
+    venue_available: execution.venue.available,
+    venue_checked_at: execution.venue.checkedAt,
+    vault_configured: execution.vault_configured,
+    execution_enabled: execution.execution_enabled,
+  };
   const certificateBody = {
     certificate_version: "1.0",
     certificate_id: certificateId,
@@ -464,6 +474,7 @@ export async function reviewAndAdjudicate(auditId: string): Promise<{
     network: "testnet",
     issued_at: new Date().toISOString(),
     tee_waiver: "WAIVED_BUDGET_CONSTRAINT",
+    execution_readiness: executionReadiness,
     gates,
     divergence: {
       index: divergenceIndex,
@@ -501,6 +512,7 @@ export async function reviewAndAdjudicate(auditId: string): Promise<{
     policy_version: POLICY_VERSION,
     issued_at: certificateBody.issued_at,
     network: "testnet",
+    execution_readiness: executionReadiness.status,
     coverage_summary: {
       conditions: conditions.length,
       accepted_findings: reviewedFindingRows.filter((finding) => finding.reviewStatus === "ACCEPTED").length,

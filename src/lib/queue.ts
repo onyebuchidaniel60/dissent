@@ -67,6 +67,7 @@ export async function startQueue(): Promise<PgBoss | null> {
       "audit.adjudicate",
       "certificate.anchor",
       "bounty.settle",
+      "proprietary.loop",
     ];
     for (const queue of queues) {
       await boss.createQueue(queue, {
@@ -103,6 +104,14 @@ export async function startQueue(): Promise<PgBoss | null> {
         return { ok: true };
       },
     );
+
+    if (process.env.PROPRIETARY_LOOP_ENABLED === "true") {
+      await boss.schedule("proprietary.loop", "*/5 * * * *");
+      await boss.work("proprietary.loop", { pollingIntervalSeconds: 20, batchSize: 1 }, async () => {
+        const { runProprietaryLoop } = await import("@/lib/proprietary/loop");
+        return runProprietaryLoop();
+      });
+    }
 
     current.instance = boss;
     console.info("[queue] in-process pg-boss started");

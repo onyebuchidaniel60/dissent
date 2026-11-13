@@ -33,8 +33,8 @@ export default async function OperatorPage() {
         accent="is explicit."
         description="Operator surfaces expose configuration and bounded recovery — never a hidden verdict override or a wallet key. Counts below are preview state."
         actions={
-          <Link href="/operator/providers" className="button button--primary">
-            Provider health
+          <Link href="/operator/proprietary" className="button button--primary">
+            Proprietary arm
             <ArrowRight size={14} aria-hidden="true" />
           </Link>
         }

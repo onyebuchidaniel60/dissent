@@ -1,8 +1,8 @@
 # Dissent — NEAR Smart Contract Specification
 
-**Contract workspace:** `contracts/dissent-registry`  
-**Language:** Rust + maintained `near-sdk`  
-**Target for hackathon:** NEAR testnet only  
+**Contract workspace:** `contracts/dissent-registry`
+**Language:** Rust + maintained `near-sdk`
+**Target for hackathon:** NEAR testnet only
 **Live trading:** Out of scope
 
 ## 1. Scope and contracts
@@ -184,3 +184,50 @@ Use NEAR Sandbox/near-workspaces for local development and automated tests. Depl
 - Clean follow-up certificate anchor: `6G7Yd3uvZozLC9SbXtNW5jxFetV4TLqgTMFxN76MmYJF` (TRADE).
 - Escrow/bounty accounting is implemented inside the registry contract. `escrow.dissent-demo.testnet` was created but is reserved and unused.
 - No mainnet deployment is authorized.
+
+## 10. Testnet vault contract (Phase 10)
+
+**Account:** `vault.dissent-demo.testnet`
+**Purpose:** bounded testnet NEAR transfers to the approved Ref Finance testnet router for the proprietary execution arm. It does not custody client assets and does not execute mainnet transfers.
+
+### State
+
+- `owner_id`, `agent_id`, `treasury_id`
+- `per_tx_cap_yocto`, `daily_cap_yocto`
+- `spent_today_yocto`, `day_bucket`
+- `recipients: LookupMap<AccountId, bool>`
+- `certificates: LookupMap<String, bool>`
+
+### Methods
+
+- `new(owner_id, agent_id, treasury_id, per_tx_cap_yocto, daily_cap_yocto)` — initialize once.
+- `deposit()` — payable; adds testnet NEAR to the vault.
+- `spend_as(certificate_id, recipient_id, amount_yocto, memo)` — callable only by `agent_id`; requires the certificate ID to be approved, the recipient to be allowlisted, the memo to contain the certificate ID, the amount to be within the per-transaction cap and the UTC-day remaining cap, and sufficient balance. Emits an event and transfers the amount to `recipient_id`.
+- `approve_certificate(certificate_id)` / `revoke_certificate(certificate_id)` — owner only.
+- `set_recipient(recipient_id, allowed)` — owner only.
+- `set_caps(per_tx_cap_yocto, daily_cap_yocto)` — owner only, bounded by the funded balance policy.
+- `withdraw(amount_yocto)` — owner only, to `treasury_id`.
+- Views: `get_config`, `get_balance`, `get_spent_today`, `is_recipient`, `is_certificate_approved`.
+
+### Invariants
+
+1. Only the configured agent account can call `spend_as`.
+2. The execution agent receives only a Function Call Key scoped to `spend_as`; the full-access deployer key is never in the execution runtime.
+3. Caps are enforced on-chain, not in the adapter.
+4. Recipient must be allowlisted; arbitrary destinations are rejected.
+5. Memo must contain the approved certificate ID; unapproved certificates are rejected.
+6. Reverts include readable reasons.
+7. No method authorizes mainnet execution or arbitrary treasury withdrawal.
+
+### Vault deployment record (Phase 10)
+
+- Vault account: `vault.dissent-demo.testnet`
+- Deploy transaction: `8V4A7CypSu6SS3NWywnJFhCqqfUzDxo9xYr1azdzqMBN`
+- Agent account: `vault-agent.dissent-demo.testnet`
+- Agent permission: Function Call Key scoped to `vault.dissent-demo.testnet::spend_as` only; verified via RPC.
+- Per-transaction cap: `0.5 NEAR`; daily cap: `1 NEAR`.
+- Allowlisted recipient: `ref-finance-101.testnet` (approval tx `EwQkvnnnnreFUZru5pvPaVPWNaY7p16ybMYQnu9XUvQt`).
+- Approved current clean certificate: `96426c09-87ec-4641-94ed-4edf0b7b34f1` (tx `AMEWXAiFKUZa9wiZTde3JrdjkvFEBPMzd8GL85ApvKWW`).
+- Vault balance after deployment: `2.998422576908042600000000 NEAR`.
+- `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false`.
+- Venue precheck: **BLOCKED** — `api.testnet.ref-finance.com` does not resolve; both required endpoints failed at DNS. No live swap was attempted.

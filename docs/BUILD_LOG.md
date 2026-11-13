@@ -148,3 +148,17 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Music: Kevin MacLeod — “Floating Cities”, CC BY 4.0; attributed in README and production notes.
 - Captions burned in; audio/video decode and volume checked; no secrets or private URLs visible.
 - Final release: preview only. No production or mainnet authorization.
+
+## Phase 10 — proprietary trading arm
+
+- Specs updated before code: MUST-HAVE proprietary arm/vault execution, execution architecture, proprietary cost ledger, frozen AGENTS decision, vault interface section.
+- Vault `vault.dissent-demo.testnet` deployed at `8V4A7CypSu6SS3NWywnJFhCqqfUzDxo9xYr1azdzqMBN`; caps 0.5 NEAR/tx, 1 NEAR/day.
+- Agent `vault-agent.dissent-demo.testnet` has only a Function Call Key scoped to `vault.dissent-demo.testnet::spend_as`; verified via RPC.
+- Allowlisted recipient `ref-finance-101.testnet`; current clean certificate `96426c09…` approved.
+- `packages/execution` implements the adapter and `executionReadiness`.
+- Certificate body/public certificate include `execution_readiness` for new certificates. Existing anchored certificates untouched.
+- `/operator/proprietary` UI added; 390/1440 overflow checks and operator gate pass.
+- Queue registers the 5-minute proprietary loop only when `PROPRIETARY_LOOP_ENABLED=true`; default false.
+- Tests: vault 5/5, execution 6/6, full Vitest 9/9; `pnpm build` passes.
+- **Hard blocker:** `api.testnet.ref-finance.com` DNS resolution fails. Both required precheck endpoints fail before HTTP. No live swap or execution receipt was fabricated. `NOT_CONFIGURED` is used for the new readiness state.
+- Demo intentionally not regenerated; operator review required.

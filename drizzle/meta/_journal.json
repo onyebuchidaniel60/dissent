@@ -43,6 +43,13 @@
       "when": 1794584214586,
       "tag": "0005_spooky_morg",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794592377124,
+      "tag": "0006_flimsy_vivisector",
+      "breakpoints": true
     }
   ]
 }

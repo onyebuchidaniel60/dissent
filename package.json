@@ -19,7 +19,8 @@
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "provision:client": "tsx scripts/provision-client.ts"
+    "provision:client": "tsx scripts/provision-client.ts",
+    "test:vault": "cargo test --manifest-path contracts/dissent-vault/Cargo.toml"
   },
   "dependencies": {
     "@near-wallet-selector/core": "10.1.4",

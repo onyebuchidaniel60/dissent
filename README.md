@@ -167,3 +167,15 @@ See [`docs/SECURITY_SPEC.md`](docs/SECURITY_SPEC.md) and the in-app [`/docs`](ht
 ## License
 
 MIT. See [`LICENSE`](LICENSE).
+
+## Proprietary testnet arm
+
+The proprietary arm originates Dissent-owned theses, runs them through the same eight-attacker audit, and can execute a **testnet-only** transfer through a capped vault after a `TRADE` certificate.
+
+- Vault: `vault.dissent-demo.testnet` (0.5 NEAR per transaction / 1 NEAR daily).
+- Execution agent: `vault-agent.dissent-demo.testnet`, with a Function Call Key scoped only to `vault.spend_as`.
+- Adapter: `packages/execution` — refuses non-TRADE, returns `REVERTED` with the vault reason, gated by `EXECUTION_ENABLED` (default `false`).
+- Loop: pg-boss scheduled task, gated by `PROPRIETARY_LOOP_ENABLED` (default `false`).
+- Operator view: `/operator/proprietary`.
+- **Current blocker:** `api.testnet.ref-finance.com` does not resolve. Both required Ref Finance testnet pool-API probes fail at DNS, so no live swap is attempted. New TRADE certificates record `execution_readiness=NOT_CONFIGURED`; existing certificates are unchanged.
+- No mainnet execution. `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` must stay `false` until a reachable testnet venue and operator review exist.

@@ -62,12 +62,15 @@ export default async function OperatorLayout({ children }: { children: React.Rea
           <span className="tag tag--red">Operator-only surface</span>
           <span className="tag tag--ok">allowlisted · {maskAccount(session!.accountId)}</span>
         </div>
-        <nav className="flex flex-wrap items-center gap-3 text-[10px] font-bold uppercase tracking-[0.12em] text-muted">
+        <nav className="flex w-full min-w-0 flex-wrap items-center gap-3 text-[10px] font-bold uppercase tracking-[0.12em] text-muted sm:w-auto">
           <Link href="/operator" className="hover:text-ink">
             Overview
           </Link>
           <Link href="/operator/providers" className="hover:text-ink">
             Providers
+          </Link>
+          <Link href="/operator/proprietary" className="hover:text-ink">
+            Proprietary
           </Link>
           <Link href="/operator/audits/demo-audit-001" className="hover:text-ink">
             Audit operations

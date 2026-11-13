@@ -55,12 +55,12 @@ An AI agent proposes a NEAR DeFi trade, specifies a thesis and machine-testable 
 - Audit another agent's proposed staking, lending, liquidity, or swap decision.
 - Review an existing portfolio for concentration and correlated protocol risk.
 - Create a reproducible investment-thesis artifact for human review.
-- Run Dissent-originated research through the same audit pipeline (future proprietary-trading phase).
+- Run Dissent-originated research through the same audit pipeline in the proprietary trading arm.
 
 ### Explicit non-goals
 - Dissent is not a trading venue, broker, exchange, wallet, custodian, or investment adviser.
 - Dissent does not guarantee profit, safety, or future performance.
-- Dissent does not execute trades in the hackathon MVP.
+- Dissent does not execute mainnet trades. The hackathon MVP includes testnet-only proprietary execution through a capped vault and approved venue adapter.
 - Dissent does not create an open marketplace for external attackers.
 - Dissent does not treat model consensus, model confidence, or a high finding count as truth.
 - Dissent does not automatically trust client-supplied evidence or arbitrary URLs.
@@ -85,7 +85,9 @@ An AI agent proposes a NEAR DeFi trade, specifies a thesis and machine-testable 
 - NEAR certificate hash registration.
 - Testnet bounty accounting and at least one verifiable testnet settlement path if the escrow contract passes tests; no mainnet money movement in MVP.
 - Reputation ledger with metrics derived from accepted/rejected findings.
-- Seeded deterministic demo audit plus a real live audit run; fixtures must be labelled as fixtures.
+- Seeded deterministic audit plus a real live audit run; fixtures must be labelled as fixtures.
+- Proprietary market scanning and Dissent-originated theses through the same audit pipeline.
+- Vault-controlled testnet trade execution using approved venue adapters, gated by `EXECUTION_ENABLED` and a TRADE verdict.
 - Setup, testing, deployment, security, API, and operator documentation.
 
 ### SHOULD HAVE
@@ -103,10 +105,9 @@ An AI agent proposes a NEAR DeFi trade, specifies a thesis and machine-testable 
 - Optional email notifications.
 
 ### FUTURE
-- Proprietary market scanning and Dissent-originated theses.
 - Tier 1 pre-screen followed by Tier 2 full audit for the proprietary arm.
 - Mainnet bounty settlement after security review and explicit release authorization.
-- Vault-controlled trade execution using approved venue adapters.
+- Mainnet trade execution after a separate security review and explicit authorization.
 - NEAR Intents 1Click standard deposit flow after independent integration testing.
 - Externalized attacker pool only after quality can be priced and independently verified.
 
@@ -310,7 +311,7 @@ One Dissent submission spans four tracks; it is not four separate projects.
 |---|---|---|
 | AI Security & Defense — primary | Pre-execution audit and safety gate for AI-controlled financial actions | Client conditions committed before review; `TRADE`/`REFUSE`/`ABSTAIN`; evidence checks; testnet settlement controls; no unrestricted agent key |
 | Investment Thesis — primary | Reproducible, falsifiable, evidence-linked thesis artifact | Structured conditions, source-linked claims, coverage table, dissent-preserving certificate and verifiable hash |
-| Agent Economy — secondary | Dissent earns audit fees and allocates rewards to internal specialist agents | Testnet client fee funding, accepted-finding bounty settlement, per-attacker compute-cost ledger and reputation; proprietary P&L remains future |
+| Agent Economy — secondary | Dissent earns audit fees and allocates rewards to internal specialist agents | Testnet client fee funding, accepted-finding bounty settlement, per-attacker compute-cost ledger and reputation; proprietary testnet execution via the capped vault; mainnet P&L remains future |
 | AI Swarms — secondary | Eight internally managed specialist attackers with decorrelated failure modes | Distinct methods, minimum three model families/two vendors, TEE-attested open-weight model, source diversity, sibling isolation |
 
 The project must be submitted once with the four selected tracks. Do not build separate repositories/projects to represent individual tracks.

@@ -652,6 +652,24 @@ export const reputationEvents = pgTable(
   ],
 );
 
+export const executionReceipts = pgTable(
+  "execution_receipts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    auditId: uuid("audit_id")
+      .notNull()
+      .references(() => audits.id, { onDelete: "cascade" }),
+    certificateId: text("certificate_id").notNull(),
+    status: text("status").notNull(),
+    txHash: text("tx_hash"),
+    reason: text("reason"),
+    recipientAccountId: text("recipient_account_id"),
+    amountYocto: numeric("amount_yocto", { precision: 78, scale: 0 }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("execution_receipts_audit_idx").on(table.auditId)],
+);
+
 export const auditEvents = pgTable(
   "audit_events",
   {

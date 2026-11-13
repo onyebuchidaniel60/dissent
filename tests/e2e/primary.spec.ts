@@ -11,6 +11,7 @@ const PUBLIC_ROUTES = [
   "/app/attackers",
   "/app/reputation",
   "/app/settings/api-keys",
+  "/operator/proprietary",
 ];
 
 test("public routes render without horizontal page overflow", async ({ page }) => {
@@ -77,6 +78,19 @@ test("wallet session sees live audits and can create a session-authenticated dra
   await page.goto("/operator", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "Live testnet runs" })).toBeVisible();
   await expect(page.getByText("Operator-only surface").first()).toBeVisible();
+
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    const response = await page.goto("/operator/proprietary", { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(200);
+    await expect(page.getByRole("heading", { name: /originate, audit/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Venue precheck" })).toBeVisible();
+    const metrics = await page.evaluate(() => ({
+      documentWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    }));
+    expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
+  }
 
   await context.close();
 });

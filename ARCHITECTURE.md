@@ -264,9 +264,32 @@ Pino JSON logs with `request_id`, `audit_id`, `run_id`, job ID, provider, model,
 
 ## 14. Explicitly deferred architecture
 
-- Proprietary market scanner is not on the critical path.
-- Trading executor is not part of MVP.
-- NEAR Intents signed-intent (NEP-413) path is incompatible with a Function Call Key because the signing standard requires the owner's full-access key. Do not give such a key to the execution agent. A later vault design must use a standard quote/deposit path the vault can authorize, with destination/amount/expiry checks, or a different venue.
+- NEAR Intents signed-intent (NEP-413) path is incompatible with a Function Call Key because the signing standard requires the owner's full-access key. Do not give such a key to the execution agent. The testnet execution arm uses the capped vault and Ref Finance adapter instead.
 - 1Click is mainnet-only; it has no testnet. Do not use it as a hackathon integration test dependency.
 - Pyth Core NEAR feed is disabled unless a currently maintained contract/feed is verified.
 - TEE attestation is deferred and **waived** for the zero-new-spend build (`WAIVED_BUDGET_CONSTRAINT`). Re-enable only with a direct, authorized NEAR AI Cloud account, current verification tooling and a fresh operator decision. Do not display a TEE badge until then.
+
+## 15. Execution architecture (testnet proprietary arm)
+
+**Vault contract:** `vault.dissent-demo.testnet` (Rust + `near-sdk`) holds testnet NEAR and exposes:
+
+- `spend_as(certificate_id, recipient_id, amount_yocto, memo)` — the only method callable by the execution agent's Function Call Key.
+- On-chain checks: predecessor is the configured agent ID; `amount_yocto` is within the per-transaction cap; the UTC-day spend remains within the daily cap; `recipient_id` is on the approved allowlist; `memo` contains the approved `certificate_id`; the certificate ID is approved by the owner after finalization; the contract has sufficient balance.
+- Reverts carry readable reasons (cap breach, allowlist miss, unknown certificate, bad memo, insufficient balance).
+- Owner-only `approve_certificate`, `set_recipient`, `set_caps`, `withdraw`; funding is payable.
+
+**Agent key:** a dedicated testnet account receives only a **Function Call Key scoped to `vault.spend_as`**. The full-access key belongs to the deployer and is never loaded into the execution runtime, an attacker prompt, or a model tool. `NEAR_VAULT_AGENT_KEY` stores the function-call key.
+
+**Execution adapter:** `packages/execution` exposes `execute(certificate_id, verdict)`:
+
+- Refuses any verdict other than `TRADE`.
+- Gated by `EXECUTION_ENABLED=true` (default `false`).
+- Calls `vault.spend_as` with the thesis position amount and the configured Ref Finance testnet router recipient.
+- Returns `EXECUTED` with a tx hash or `REVERTED` with the contract reason. It never retries a failed transfer.
+- The vault enforces caps and allowlists on-chain; the adapter is not the security boundary.
+
+**Venue precheck:** before wiring a live swap, check the Ref Finance testnet pool API. If it is empty, 404 or unresolvable, do not fake a trade. The certificate records `NOT_CONFIGURED` (venue missing) and the execution path remains disabled. Do not set `READY` when the venue is unavailable.
+
+**Proprietary loop:** a pg-boss scheduled task (every 5 minutes, `PROPRIETARY_LOOP_ENABLED=true`, default `false`) reads Ref testnet NEAR/USDC pool state, originates a thesis, submits it through the same audit pipeline, and invokes the execution adapter only after a `TRADE` certificate. A `REFUSE`/`ABSTAIN` is logged without execution. Proprietary inference spend is tracked in a separate cost ledger from client audits.
+
+**Boundary:** testnet only. No mainnet trade execution, no arbitrary recipient, no full-access key in any runtime, no model wallet access.

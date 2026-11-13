@@ -36,6 +36,17 @@ All amounts are integer yoctoNEAR. No mainnet value is involved.
 - Per-attacker budget is an internal ledger allocation, not a claim that each agent owns or pays from its own wallet.
 - Enforce per-audit and daily/monthly ceilings before submitting calls; circuit-break when a ceiling is reached.
 
+### Proprietary trading cost tracking
+
+The proprietary arm uses the same model providers and audit pipeline, but its inference spend is attributed separately from client audit spend:
+
+- Every proprietary thesis run records `cost_ledger = PROPRIETARY` in the run/cost record.
+- Client audits record `cost_ledger = CLIENT`.
+- The per-audit `$0.50` ceiling applies to each proprietary thesis as well.
+- A separate daily/monthly proprietary ceiling is enforced before originating a new thesis.
+- Provider invoices are still paid by Dissent's provider account; the ledger is an internal attribution, not a claim that each agent owns a wallet.
+- Vault testnet execution transfers are not revenue and do not affect the inference ledger.
+
 ## 4. Bounty allocation
 
 The normative formula is in `ADJUDICATION_SPEC.md`:

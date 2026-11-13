@@ -49,3 +49,19 @@ Client-safe variables must use the framework's explicit public prefix and contai
 - **Groq:** 30 RPM, 8K TPM, 1,000 RPD, 200K TPD. TPD is the binding constraint for A02 (~2 audits/day). The adapter uses a per-provider token bucket so one audit cannot exhaust the day.
 - **NearBlocks:** public API rate limits documented at request time; no key is assumed.
 - **FastNEAR:** public RPC; no key is assumed for the preview.
+
+## Proprietary execution (Phase 10)
+
+| Variable | Default | Notes |
+|---|---|---|
+| `NEAR_VAULT_ACCOUNT_ID` | `vault.dissent-demo.testnet` | Capped testnet vault |
+| `NEAR_VAULT_AGENT_ACCOUNT_ID` | `vault-agent.dissent-demo.testnet` | Execution agent identity |
+| `NEAR_VAULT_AGENT_KEY` | empty | Function Call Key scoped to `spend_as`; never a full-access key |
+| `REF_FINANCE_TESTNET_ROUTER` | `ref-finance-101.testnet` | Allowlisted recipient |
+| `EXECUTION_ENABLED` | `false` | Must be explicitly `true` for a testnet execution |
+| `PROPRIETARY_LOOP_ENABLED` | `false` | Enables the 5-minute pg-boss loop |
+| `VAULT_PER_TX_CAP_YOCTO` | `500000000000000000000000` | 0.5 NEAR |
+| `VAULT_DAILY_CAP_YOCTO` | `1000000000000000000000000` | 1 NEAR |
+| `PROPRIETARY_THESIS_AMOUNT_YOCTO` | `500000000000000000000000` | Thesis position amount for execution |
+
+The Ref Finance testnet API precheck currently fails at DNS, so `EXECUTION_ENABLED` and the loop remain disabled. Do not enable them or fake a trade.
