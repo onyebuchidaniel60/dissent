@@ -22,6 +22,7 @@ This matrix is normative for MVP test planning. For every failure, preserve the 
 | Queue | Worker crashes after provider response but before persist | Look up provider request ID; preserve or rerun new generation | `PARTIAL` until resolved | Fault injection |
 | Attacker | Provider timeout/rate limit | Bounded backoff; record failure | `FAILED` if exhausted | Mock 429/timeout |
 | Attacker | Provider substitution breaks diversity | Do not count as valid diversity | `TEE_UNVERIFIED` or `FAILED` | Diversity unit test |
+| Attacker | TEE verification disabled by documented budget waiver | Record `WAIVED_BUDGET_CONSTRAINT`; no TEE badge or confidential-inference claim; family/vendor/open-weight gates still apply | `WAIVED` | Waiver test and certificate assertion |
 | Attacker | Malformed JSON/schema mismatch | One repair, one fresh retry; then fail | `INVALID_OUTPUT`/`FAILED` | Schema fixtures |
 | Attacker | Duplicate/unknown condition IDs | Reject entire response | `INVALID_OUTPUT` | Semantic validator |
 | Attacker | Missing Section B justification | Flag and one bounded follow-up | Incomplete if still rejected | Auditor test |

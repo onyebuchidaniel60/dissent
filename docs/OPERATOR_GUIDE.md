@@ -3,10 +3,11 @@
 ## Before enabling live audit runs
 - Confirm model assignment file meets 3-family/2-vendor rule.
 - Validate each API credential and configured cost ceiling.
-- Complete NEAR AI attestation and response-signature check.
+- Confirm the TEE waiver is recorded as `WAIVED_BUDGET_CONSTRAINT`; do not display a TEE badge or claim confidential inference. The family/vendor/open-weight gates remain enforced.
 - Confirm two or more evidence adapters return the chosen demo asset's data with timestamps/provenance.
 - Confirm testnet registry and escrow account IDs and source commit.
-- Confirm client wallet/agent signer process and transaction verification.
+- Confirm the wallet-address allowlist and the client agent-supplied signing process.
+- Confirm the client agent-supplied transaction path and server-side receipt verification.
 - Set a fixed testnet audit fee, expiry, bounty split and payout allowlist.
 - Confirm queue concurrency and retry caps.
 

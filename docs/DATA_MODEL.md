@@ -9,7 +9,7 @@
 ## 1. Relationship overview
 
 ```text
-User ──< WorkspaceMember >── Workspace ──< ClientApiKey
+WalletSession ──< WorkspaceMember >── Workspace ──< ClientApiKey
                                 |
                                 └──< Audit ──1 Thesis
                                       |  ├──< FailureCondition
@@ -30,12 +30,15 @@ PolicyVersion ──< Adjudication / Certificate
 
 ## 2. Tables
 
-### `users`
-- `id` UUID PK
-- `auth_subject` text UNIQUE NOT NULL (identity-provider subject)
-- `email` text nullable; `display_name` text nullable
-- `status` enum `ACTIVE | DISABLED`
-- `created_at`, `updated_at` timestamptz NOT NULL
+### `wallet_sessions`
+- `id` UUID PK; `session_id` text UNIQUE NOT NULL
+- `account_id` text NOT NULL (NEAR account ID)
+- `session_hash` bytea NOT NULL UNIQUE (hash of the opaque cookie value)
+- `nonce_hash` bytea NOT NULL (single-use challenge hash)
+- `created_at`, `expires_at` timestamptz NOT NULL; `revoked_at` nullable
+- `last_seen_at` nullable
+- No emails, passwords, password resets or magic-link tokens are stored.
+- Operator authorization is derived from `ADMIN_WALLET_ADDRESSES` on the server, not from a database role alone.
 
 ### `workspaces`
 - `id` UUID PK; `name` text NOT NULL
@@ -43,16 +46,17 @@ PolicyVersion ──< Adjudication / Certificate
 - `created_at`, `updated_at`
 
 ### `workspace_members`
-- `workspace_id` FK → workspaces; `user_id` FK → users
+- `workspace_id` FK → workspaces; `account_id` text NOT NULL
 - `role` enum `OWNER | OPERATOR | READ_ONLY`
-- composite PK `(workspace_id,user_id)`
+- composite PK `(workspace_id,account_id)`
 
 ### `client_api_keys`
 - `id` UUID PK; `workspace_id` FK
 - `key_prefix` text NOT NULL; `key_hash` bytea NOT NULL UNIQUE
 - `scopes` text[] NOT NULL; `status` `ACTIVE | REVOKED | EXPIRED`
-- `expires_at` nullable; `last_used_at` nullable; `created_by` FK users
+- `expires_at` nullable; `last_used_at` nullable
 - `created_at`, `revoked_at` nullable
+- `created_by_account_id` text nullable (wallet account, no user FK)
 - Do not store or log plaintext API key. Show once at creation.
 
 ### `audits`

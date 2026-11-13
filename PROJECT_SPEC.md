@@ -293,7 +293,16 @@ The demo must prove: a client commitment confirmed on NEAR before attack; eight 
 The hackathon flow includes a fixed, operator-configured **testnet** audit fee. The client first commits conditions on the registry, then funds the audit bounty vault using a quote-bound `fund_audit` transaction. Attacker jobs begin only after both transactions are verified. This is a testnet product-flow demonstration, not real revenue. Provider invoices are paid by Dissent's provider accounts; per-attacker inference costs are attributed to internal compute sub-ledgers unless provider billing genuinely supports separate agent payers. See [`docs/ECONOMICS_SPEC.md`](docs/ECONOMICS_SPEC.md).
 
 
-## 8. NEAR Hackathon track alignment
+## 8. Documented build deviations (2026-11-13)
+
+These are operator-authorized deviations from the baseline above, recorded rather than silently resolved:
+
+1. **TEE attestation (`WAIVED_BUDGET_CONSTRAINT`):** the direct NEAR AI Cloud API is not authorized under the zero-new-spend constraint, and OpenRouter's `near-ai` route is not an attested gateway. The TEE sub-clause is waived. No TEE badge or confidential-inference claim is made. The minimum three-family / two-vendor / one-open-weight gates remain enforced.
+2. **Hosting/queue:** Render free Web Service + Neon free PostgreSQL replaces Railway. pg-boss runs in-process because the free plan has no background worker; concurrency is capped for the 512 MB instance.
+3. **Providers:** OpenRouter primary + Groq secondary through one generic OpenAI-compatible adapter. No OpenAI/Anthropic SDKs.
+4. **Human auth:** NEAR Wallet Selector + signed-nonce session cookie only. No email/password, Better Auth, magic link or public signup.
+
+## 9. NEAR Hackathon track alignment
 
 One Dissent submission spans four tracks; it is not four separate projects.
 

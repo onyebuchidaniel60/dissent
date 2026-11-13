@@ -1,0 +1,20 @@
+name: Preview keep-alive
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    name: Ping /healthz
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Warm the Render preview
+        run: |
+          curl --fail --silent --show-error --max-time 90 \
+            https://dissent-web.onrender.com/healthz
