@@ -1,29 +1,41 @@
 # Testing Strategy
 
-The detailed test contract is in `PROJECT_SPEC.md` Section 21.
+## Unit tests
+- canonicalization/hash vectors (RFC 8785 + SHA-256);
+- condition parser and threshold/unit comparison;
+- audit state-transition matrix;
+- schema validation and cross-field semantics;
+- evidence freshness and claim-verification rules;
+- Section B novelty outcomes;
+- adjudication policy vectors T01–T16 and divergence boundaries;
+- bounty rounding/caps/idempotency;
+- authorization helpers and redaction.
 
-## Test layers
+## Integration tests
+- Drizzle repositories and transaction rollback;
+- pg-boss enqueue/outbox idempotency;
+- each source adapter using recorded fixtures and approved live smoke tests;
+- provider adapters with deterministic mock responses and budget guards;
+- NEAR RPC commitment/funding/finalization receipt verification;
+- contract methods in NEAR Sandbox;
+- NEAR AI Cloud attestation/signature verification with captured valid/invalid fixture bundles;
+- tenant authorization for all endpoints.
 
-1. **Unit:** Pure deterministic logic in `packages/core`.
-2. **Integration:** Fastify routes, DB transactions, worker leases, RYO adapter fixtures, OpenAI provider mocks, certificate persistence.
-3. **E2E:** Playwright user journeys against preview.
-4. **Security:** IDOR, role escalation, criteria leakage, evidence fabrication, prompt injection, secret redaction, idempotency and race tests.
-5. **Scenario:** Deterministic adjudication cases 1–10 in the project spec.
+## E2E tests
+1. Client creates audit → hashes previewed → client testnet wallet commits → receipt verifies → quote funded → eight runs launch.
+2. Audit status remains sealed while attackers run; no attacker results visible early.
+3. Results page shows condition coverage, outside findings, evidence, red-team review, dissent and final verdict.
+4. Public certificate verification compares canonical hash with NEAR record and reveals only approved public fields.
+5. Failure journeys: wrong signer, wrong hash, expired quote, payment mismatch, missing model/TEE, invalid response, evidence source down, duplicate retry, insufficient permissions.
 
-## Rules
+## Security tests
+IDOR, cross-workspace query, role escalation, XSS, CSRF, SSRF adapter bypass, arbitrary URL injection, prompt injection, secret leakage, schema smuggling, rate limits, replay, race conditions, duplicate payout, provider budget exhaustion, private certificate access.
 
-- The adjudicator tests use no LLM and no live RYO calls.
-- External provider calls in automated test suites are mocked unless a dedicated sandbox test is explicitly authorized.
-- Every simulated evidence field is labelled `SIMULATED` in user-visible views.
-- A failed test is not waived by changing expected output without updating the spec and decision record.
-- E2E evidence must identify the tested commit and environment.
+## Test data policy
+- Deterministic fixtures are labelled `DEMO_FIXTURE`.
+- Do not represent fixtures as live model or live market output.
+- Never use real client portfolio data in tests or recordings.
+- Testnet only; tests must not submit mainnet transactions.
 
-## Critical assertions
-
-- Attacker payload never contains criteria or peer findings.
-- Missing evidence never becomes zero or NO_BREAK.
-- Invalid evidence references cannot produce a valid BREAK.
-- Fewer than three valid findings means no verdict.
-- Data Gate BLOCK means no normal verdict.
-- Completed certificate replays to the same deterministic verdict.
-- Owner isolation blocks cross-user access.
+## Evidence of completion
+At every checkpoint save command, commit SHA, test count, pass/fail, logs/artifact paths, and any skipped test with its reason to `AI_HANDOFF.md` and `BUILD_LOG.md`.

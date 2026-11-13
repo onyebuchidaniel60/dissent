@@ -1,274 +1,256 @@
-# Dissent — Architecture Specification
+# Dissent — System Architecture and Technical Design
 
-**Status:** Fixed architecture baseline  
-**Source of truth:** `PROJECT_SPEC.md`  
-**Last updated:** 11 November 2026
+**Version:** 1.0 | **Architecture status:** Fixed implementation baseline
 
 ## 1. Architecture decisions
 
-| Decision | Selected approach | Constraint |
+### 1.1 Shape
+A modular monolith plus a dedicated background worker. One TypeScript codebase, one PostgreSQL database, a Postgres-backed durable job queue, and a small Rust NEAR contract workspace. Do not split into microservices for the hackathon.
+
+### 1.2 Concrete stack
+
+| Layer | Decision | Responsibility |
 |---|---|---|
-| Application shape | TypeScript monorepo; React/Vite web app + Fastify API/worker | No microservices |
-| API style | Versioned REST JSON under `/api/v1`; SSE for progress | Polling fallback required |
-| Database | Supabase-managed PostgreSQL | Postgres is system of record and durable queue |
-| Queue | `analysis_jobs` table + `FOR UPDATE SKIP LOCKED` leases | No Redis/Kafka/hosted queue in MVP |
-| Authentication | Supabase Auth email OTP/magic link | API verifies access JWT; no custom auth |
-| ORM/migrations | Drizzle | One ORM only |
-| Runtime validation | Zod + JSON Schema | All LLM/provider payloads validated at runtime |
-| RYO transport | Official REST interface | Do not invent endpoint/auth/request/response contracts; obtain official docs and credentials at intake |
-| LLM | OpenAI Responses API | One configured model ID; structured output; no LLM adjudicator |
-| Hosting | Vercel frontend, Render API/worker, Supabase DB/Auth | Preview isolated from production |
-| Observability | Pino structured logs + platform logs | Redact secrets and private criteria |
-| Tests | Vitest + Fastify.inject + Playwright | Deterministic fixtures for core adjudication |
+| Web | Next.js App Router + React + TypeScript | Dashboard, certificate pages, server-rendered UI |
+| UI | Tailwind CSS + accessible component primitives + Lucide | Consistent implementation; final visual language follows supplied references |
+| API | Next.js Route Handlers with typed service layer | Client REST API and dashboard actions |
+| Runtime | Node.js 22 LTS or later compatible LTS, pinned in `.nvmrc`/toolchain | Web and worker runtime |
+| Package manager | pnpm workspace | Reproducible monorepo installs |
+| Validation | Zod + JSON Schema Draft 2020-12 validator | Request/output validation and cross-field checks |
+| Database | PostgreSQL 16+ | Primary durable store, JSONB output snapshots, audit/event records |
+| ORM/migrations | Drizzle ORM + drizzle-kit | Typed queries and explicit migrations |
+| Queue | pg-boss (Postgres-backed) | Durable attacker/evidence/adjudication jobs; bounded retries |
+| AI providers | Official OpenAI SDK, official Anthropic SDK, `@nearai/inference-sdk` | Provider adapters and attested NEAR AI calls |
+| NEAR app integration | `near-api-js`/wallet selector or current official NEAR JS SDK selected at intake | Wallet transaction construction, RPC verification, contract calls |
+| Smart contracts | Rust + `near-sdk` | Commitment/certificate registry and testnet bounty escrow |
+| Contract tests | `near-workspaces` / sandbox plus Rust unit tests | Local contract testing and testnet integration |
+| Unit/integration tests | Vitest | Domain logic, adapters, API and database tests |
+| E2E | Playwright | Browser journeys and demo recording |
+| Logging | Pino structured logs | Audit operations and worker diagnostics |
+| Error monitoring | Sentry optional; disabled until credentials/consent | Operational error reporting |
+| Deployment | Docker; Railway web + worker + managed PostgreSQL as the default target | One project, separate web/worker processes, preview/staging |
 
-## 2. Logical component diagram
+Versions are pinned in lockfiles at implementation time. The agent must not install `latest` in production or silently upgrade dependencies. If the current maintained NEAR SDK conflicts with the workspace, record the incompatibility and choose the closest supported SDK release without changing the architecture.
 
-```text
-┌──────────────────────────────┐
-│ React + Vite browser client  │
-│ React Router / TanStack      │
-│ Query / Supabase Auth        │
-└──────────────┬───────────────┘
-               │ HTTPS JSON / SSE
-               ▼
-┌──────────────────────────────┐
-│ Fastify API (Render)         │
-│ JWT auth / ownership checks  │
-│ Zod contracts / rate limits  │
-│ API routes / request IDs     │
-└──────────────┬───────────────┘
-               │
-       ┌───────▼──────────┐
-       │ Supabase Postgres│
-       │ runs / snapshots │
-       │ jobs / criteria  │
-       │ findings / certs │
-       └───────▲──────────┘
-               │ durable job claim + lease
-               │
-┌──────────────┴───────────────┐
-│ Worker loop (same service)   │
-│                              │
-│ 1. RYO REST adapter          ├──────► RYO read-only API
-│ 2. Data Integrity Gate       │
-│ 3. Thesis Agent              ├──────► OpenAI Responses API
-│ 4. Criteria seal             │
-│ 5. Isolated attackers (N)    ├──────► OpenAI Responses API
-│ 6. Finding Validator         │
-│ 7. Deterministic Adjudicator │
-│ 8. Certificate + SHA-256     │
-└──────────────────────────────┘
-```
+### 1.3 Why this stack
+- A modular monolith keeps business rules in one versioned TypeScript package and reduces integration overhead.
+- PostgreSQL is already required for durable audits and provides a simple queue backend; Redis is unnecessary.
+- A dedicated worker prevents long-running model and evidence jobs from tying up HTTP requests.
+- Direct vendor SDKs preserve access to provider-specific structured output, rate-limit and attestation features.
+- The Rust contract is intentionally small; AI reasoning stays off-chain.
+- Railway is the default deployment target because it can host the web process, worker process, and Postgres under one operational project. If the operator lacks a Railway account/credits, do not silently substitute a paid host; deploy locally or use an operator-approved equivalent during intake.
 
-## 3. Monorepo boundaries
-
-### `apps/web`
-
-Owns presentation, route handling, session acquisition, server-state fetching, and user interactions. It must not contain RYO or OpenAI secrets, adjudication rules, privileged database access, or criteria-sealing authority.
-
-### `apps/api`
-
-Owns authentication verification, authorization, rate limiting, HTTP contracts, persistence, queue processing, external service adapters, orchestration, and observability. API routes are thin; business logic lives in domain modules.
-
-### `packages/contracts`
-
-Owns shared request/response Zod schemas and API error contracts. It must not import runtime credentials or app-specific database clients.
-
-### `packages/core`
-
-Owns deterministic pure logic: state transitions, canonical JSON, hashing, criteria matching, Data Integrity Gate, evidence pointer validation, adjudicator, and certificate verification. This package must not import the OpenAI SDK, Fastify, React, or RYO clients.
-
-### `packages/attacker-registry`
-
-Owns the six surface IDs, charters, enabled defeat vocabularies, permitted RYO tools, and evidence support requirements. Registry changes require a version increment and tests.
-
-### `packages/prompts`
-
-Owns versioned Thesis Agent and attacker prompt templates. Prompt changes require version increments and regression fixtures.
-
-### `packages/test-fixtures`
-
-Owns synthetic RYO responses, invalid provider responses, model outputs, and deterministic demo scenarios. Every synthetic item must be labelled `SIMULATED` in user-visible experiences.
-
-## 4. RYO adapter contract
-
-The adapter exposes a narrow internal interface for only the currently published tool names:
-
-- `market_overview`
-- `scan_market`
-- `analyze_token`
-- `deep_analysis`
-- `compare_tokens`
-- `check_safety`
-- `supported_tokens`
-
-The public hackathon description says these are accessible over MCP and REST. This project selects REST. Actual base URL, authentication mechanism, routes, parameters, response schemas, timeout/quotas, and any pagination must be loaded from organizer documentation during Phase 0. Never guess them.
-
-### Adapter invariants
-
-1. Tool names are a compile-time allowlist, not client input.
-2. Request parameters are validated against the documented schema.
-3. Provider responses are retained as immutable snapshots before model use.
-4. Provider-reported unavailable/error states remain explicit.
-5. Missing numeric values are never replaced with zero or an estimated value.
-6. A fallback source, if any is reported by RYO, is preserved in provenance.
-7. The adapter does not call unknown tools, user-supplied URLs, or execution methods.
-8. No dedicated `monitor_market_sentiment_shift` endpoint is assumed; it is not in the currently published seven-tool list.
-
-## 5. Evidence pipeline
+## 2. Logical architecture
 
 ```text
-RYO response
-   ↓
-Raw snapshot stored + canonical hash
-   ↓
-Provider schema validation
-   ↓
-Data Integrity Gate
-   ├─ BLOCK → run BLOCKED; no normal thesis/verdict
-   ├─ WARN  → continue with explicit limitation
-   └─ PASS  → continue
-   ↓
-Thesis Agent
-   ↓
-Thesis/evidence reference validation
-   ↓
-Criteria validation + atomic seal
-   ↓
-Build separate payload for each attacker
-   ↓
-Stateless attacker calls in parallel
-   ↓
-Finding schema + source pointer/value validation
-   ↓
-Deterministic adjudication
-   ↓
-Certificate canonicalization + hash + immutable persistence
+Client Agent / Human Operator
+          |
+          | HTTPS + scoped API key / session
+          v
+Next.js Web + REST API
+  |        |         |
+  |        |         +--> Auth / RBAC
+  |        +------------> Domain services
+  |                         |
+  |                         +--> PostgreSQL / audit log
+  |                         +--> pg-boss durable jobs
+  |                         +--> NEAR RPC / registry
+  |                         +--> approved data adapters
+  |
+  v
+Browser Console
+
+Worker Process
+  |
+  +--> Audit Orchestrator
+  |       +--> A01 isolated runtime
+  |       +--> A02 isolated runtime
+  |       +--> ...
+  |       +--> A08 isolated runtime
+  |
+  +--> Evidence Store / Re-fetch adapters
+  +--> Evidence Auditor
+  +--> Sycophancy Auditor
+  +--> Reproducibility runner
+  +--> Deterministic Adjudicator
+  +--> Certificate Generator
+  +--> Bounty / Reputation services
+
+NEAR Contracts (testnet MVP)
+  +--> Audit commitment + certificate registry
+  +--> Bounty escrow / settlement (separate module or contract)
 ```
 
-No LLM sees the complete raw database object. Payloads are projections from explicit allowlisted fields.
+Attackers can share the same physical worker process only if each run has a separate data-access context, fresh prompt/context, no shared mutable state and no read permission for sibling output tables. Stronger isolation is achieved through a worker-level sandbox/process boundary. All model inputs and tools are constructed server-side.
 
-## 6. Attacker isolation contract
+## 3. Domain modules
 
-For every attacker call, the worker creates a new request with:
+- `identity`: operator accounts, client workspaces, API key issuance/revocation, RBAC.
+- `audit-intake`: thesis/condition parsing, normalization, canonicalization, validation.
+- `commitments`: hash calculation, wallet transaction construction, NEAR receipt verification.
+- `orchestration`: state machine, run assignment, retries, event emission.
+- `attackers`: eight method definitions, prompts, model assignment, typed tools, output validation.
+- `models`: OpenAI, Anthropic and NEAR AI provider adapters, quotas, token/cost telemetry.
+- `data-sources`: FastNear, NEAR RPC, Pikespeak, NearBlocks, RedStone, price-market adapters.
+- `evidence`: pointer validation, payload hashing, freshness, re-fetch and provenance.
+- `red-team`: Evidence Auditor and Sycophancy Auditor.
+- `adjudication`: policy v1.0, verdict gates, divergence index and decision trace.
+- `certificates`: canonical serialization, hash, rendering, on-chain registration.
+- `economics`: client fee ledger, attacker compute budget ledger, bounty allocation and testnet settlement.
+- `reputation`: append-only performance events and derived metrics.
+- `admin`: provider/config health, run inspection, bounded retry and system events.
 
-- One attacker charter and surface ID.
-- The thesis projection with `kill_criteria` removed recursively.
-- Only source snapshots allowed by that attacker's registry entry.
-- The shared output schema and prompt version.
+## 4. Data architecture
 
-The request must not include:
+PostgreSQL is source of truth for application state. NEAR is source of truth for public commitment/certificate hashes and testnet settlement records. The database stores the condition preimage, thesis, outputs, evidence metadata, and certificate artifact. Raw evidence size is capped at 256 KB per captured payload for MVP; large source responses are normalized and only necessary excerpts plus source locator/hash are stored. A private S3-compatible storage adapter may be introduced later without changing domain interfaces.
 
-- Kill criteria or criterion descriptions.
-- Criteria IDs, criteria hash, or committed-at metadata.
-- Another attacker's prompt, output, or findings.
-- Adjudication rule, outcome, or verdict.
-- Any tool-calling permission.
+No portfolio secrets, API keys, private keys, full prompts or raw sensitive data go on-chain. Public certificate fields are explicitly redacted and content-hashed.
 
-Automated tests serialize the exact outbound payload and assert all forbidden keys and values are absent. Distinct provider calls must not share chat history or conversation IDs.
+## 5. Queue and concurrency
 
-## 7. Data Integrity Gate
+Use `pg-boss` with queues:
+- `audit.dispatch` — create eight attacker jobs only after commitment and testnet fee funding are both verified.
+- `attacker.run` — one job per attacker/run.
+- `evidence.verify` — re-fetch and classify each evidence record.
+- `redteam.review` — Evidence/Sycophancy tasks.
+- `audit.reproduce` — controlled rerun/replay.
+- `audit.adjudicate` — deterministic policy evaluation.
+- `certificate.anchor` — NEAR contract finalization.
+- `bounty.settle` — separately authorized settlement.
 
-Implemented in `packages/core`; deterministic only. It validates:
+Unique keys: `(audit_id, attacker_id, run_generation)` for attacker run; `(audit_id, evidence_id, verification_generation)` for evidence; `(audit_id, policy_version)` for adjudication; `finding_id + payout_generation` for settlement. Queue handlers must be idempotent. Exponential backoff is bounded; no infinite retries. Max attacker retries: 2 schema-repair retries + 1 complete rerun, all configurable and recorded.
 
-- Asset identity mapping.
-- Required fields for the selected analysis/attacker surfaces.
-- Snapshot hash integrity.
-- Provider schema validity.
-- Source-status and explicit missing data.
-- Timestamp/freshness thresholds.
-- Timeframe consistency.
-- Contradictory observations when the comparison is deterministic.
+Concurrency defaults: maximum 8 parallel attackers per audit, maximum 2 concurrent audits in demo; provider-specific rate limits apply. These are configuration defaults, not promises of provider capacity.
 
-`PASS`, `WARN`, and `BLOCK` are persisted with rule version and exact reasons. The gate does not grade the thesis.
+## 6. Model architecture
 
-## 8. Durable job queue
+Provider family requirements: at least three distinct families across at least two vendors, with at least one open-weight model served in NEAR AI Cloud TEE. Baseline assignment:
 
-Use PostgreSQL `analysis_jobs`; no external queue service.
+| Attacker | Primary provider family | Rationale |
+|---|---|---|
+| A01 Liquidity / Execution | OpenAI GPT family | Execution and arithmetic/tool analysis |
+| A02 Asset Safety | Anthropic Claude family | Contract and permission threat review |
+| A03 Logic / Coherence | OpenAI GPT family, distinct role prompt | Logical consistency |
+| A04 Correlation / Portfolio | Anthropic Claude family | Exposure interaction |
+| A05 Thesis Inversion | NEAR AI Cloud open-weight Qwen family | Independent inversion; attested TEE |
+| A06 Data Provenance | NEAR AI Cloud open-weight GLM family | Source comparison, distinct open-weight family |
+| A07 Timing / MEV | OpenAI GPT family | Execution window and transaction path |
+| A08 Base Rate | Anthropic Claude family | Historical prior analysis |
 
-- `POST /analyses` creates `analysis_runs`, `idempotency_records`, `analysis_jobs`, and `audit_events` in one transaction.
-- Worker claims eligible jobs using `FOR UPDATE SKIP LOCKED`.
-- Worker sets a lease and heartbeats it during long provider calls.
-- Expired lease can be reclaimed after a process crash.
-- Every processing step checks for an already-persisted artifact before repeating an external call.
-- External calls occur outside the row-lock transaction.
-- Finalization locks the run, validates all preconditions, creates certificate, and marks run completed atomically.
+Exact model IDs and versions are resolved during operator intake from available credentials/catalogue and frozen in `model_assignments.json`. A provider fallback is allowed only if it preserves minimum family/vendor diversity and is explicitly recorded; otherwise audit cannot return `TRADE`.
 
-## 9. Database access model
+Use official vendor SDKs. Structured output is validated with Zod and JSON Schema. Model self-reported `provider`, `model_id`, time, confidence and evidence hash are not trusted; the orchestrator overwrites provenance fields from the actual invocation record. Temperature changes do not count as model diversity.
 
-Use separate credentials where provider support permits:
+NEAR AI Cloud is integrated with the official inference SDK where possible. Verify deployment attestation before model use and response signature after each inference. Store attestation report hash, signer identity, model identifier, verification result and signed receipt reference. A plain response from an OpenAI-compatible base URL is not sufficient proof of TEE execution.
 
-- `APP_DATABASE_URL`: restricted user-scoped runtime role; no `BYPASSRLS`.
-- `WORKER_DATABASE_URL`: restricted worker role with required processing privileges; server-only.
-- `MIGRATION_DATABASE_URL`: privileged migration role; local/CI only and never included in web runtime.
+## 7. Evidence/data architecture
 
-Enable RLS and owner policies on user-owned tables. API queries must still scope every resource to verified `user_id`; RLS is defense in depth, not a substitute for authorization. Do not claim RLS protects a service-role connection that bypasses RLS.
+### Source adapters
+- **NEAR canonical RPC / FastNear RPC:** canonical account state, contract views, block and receipt inspection.
+- **FastNear API / Transactions API:** indexed balances, staking, token holdings and execution history.
+- **Pikespeak:** optional account/transfer/history/DeFi-position adapter; API credentials and quotas required.
+- **NearBlocks:** optional independent transaction/explorer adapter; verify current API endpoint and credentials during intake.
+- **RedStone NEAR connector:** candidate oracle adapter for signed data packages; verify token/feed coverage and production readiness before relying on it.
+- **Pyth:** disabled by default for NEAR. Pyth documentation states Pyth Core no longer supports NEAR from 26 Aug 2026; enable only after a separately verified working deployment and explicit adapter test.
+- **Market-data fallback:** independent external market data endpoint may provide a comparison observation but must be identified as market data, not described as a NEAR oracle.
+- **mcp-near-defi:** optional research tool only; do not make the core audit depend on it until its package/API behavior is smoke-tested. Implement adapter interfaces directly where possible.
 
-## 10. Authentication and request security
+Source diversity is per attacker and per claim. Each run logs sources actually queried. A different source name does not prove independence if the sources ultimately derive from the same upstream provider.
 
-- Supabase Auth issues access tokens.
-- Fastify verifies JWT signature against configured Supabase JWKS; validates issuer, audience, expiry, and subject.
-- `user_id` is derived from token, never request body.
-- CORS is exact-origin allowlisted.
-- All schemas reject unexpected mutable fields such as `verdict`, `run_status`, `criteria_hash`, `user_id`, and certificate payload.
-- Owner-scoped endpoints respond 404 for not-found and not-owned resources.
+### Freshness defaults (policy config)
+- Spot price: 60 seconds.
+- Pool depth/route quote: 30 seconds for execution-risk claims.
+- Account holdings: latest finalized block or 5 minutes, whichever is stricter for the claim.
+- Protocol/APY state: 5 minutes for current-rate claims.
+- Historical/base-rate datasets: exact interval and source timestamp recorded; freshness not measured like spot price.
+- Governance/contract permissions: latest finalized block and contract code hash.
 
-## 11. AI integration
+If data exceeds freshness limit, mark it stale and do not use it for a verified live-state claim.
 
-OpenAI Responses API is called only from the backend. Use `OPENAI_MODEL` set during operator intake and verify the model supports required structured output. Persist model ID, prompt version, request hash, output, usage data, and timestamps. All model outputs pass deterministic Zod and evidence validation.
+### Evidence record
+Each record has source adapter, provider, resource type/id, safe locator, query parameters (allowlisted), observed/retrieved times, block height/hash if applicable, normalized value, raw payload hash (server-calculated), payload reference, evidence type, freshness result, and known limitations.
 
-Thesis agent: one model call plus at most one constrained repair.  
-Attacker: one independent call per enabled surface plus at most one schema repair.  
-Adjudicator: no model call.
+## 8. API architecture
 
-The app does not present a language-model confidence value as a probability of profit.
+Base path `/api/v1`. All JSON responses include `request_id`; errors use `{ error: { code, message, details? }, request_id }`. Client requests authenticate with `Authorization: Bearer ds_live_...` (key prefix distinguishes test/live but key itself is high entropy and stored hashed). Human dashboard uses secure HTTP-only SameSite cookies.
 
-## 12. Certificate model
+Principal routes:
+- `POST /audits` — validate and create draft audit; idempotency required.
+- `POST /audits/{id}/commitment/prepare` and `/commitment/confirm` — build signing payload and verify the client-signed commit; no attacker execution until confirmed.
+- `POST /audits/{id}/fee/quote` and `/fee/confirm` — issue fixed testnet fee quote and verify `fund_audit`; dispatch only after both commitment and fee funding pass.
+- `GET /audits/{id}` — own audit status/progress.
+- `GET /audits/{id}/certificate` — own certificate artifact.
+- `GET /certificates/{id}/verify` — public, redacted verification summary.
+- `GET /audits/{id}/events` — paginated state/event history; own audit only.
+- `POST /audits/{id}/cancel` — before commitment only; after commitment request bounded stop without deleting audit.
+- `POST /admin/audits/{id}/retry` — admin, bounded, reason required.
+- `GET /admin/system/health` — admin only.
+- `GET /admin/attackers` and `/admin/reputation` — operator dashboard.
 
-Certificate is a canonical JSON record that includes:
+Webhooks are deferred. Polling endpoint is sufficient and avoids outbound-URL/SSRF exposure in MVP.
 
-- schema/rules/registry/prompt versions;
-- run ID and timestamp;
-- source tool names, parameter fingerprints, snapshot IDs/hashes/timestamps/status;
-- Data Integrity Gate report;
-- thesis and evidence pointers;
-- criteria and commitment hash/time;
-- enabled, skipped, and unavailable attackers;
-- all validated findings and validation reports;
-- aggregation rule applied and verdict;
-- coverage status and limitations;
-- invalidation condition and what would change the thesis;
-- certificate hash and optional supersedes link.
+## 9. Authentication and authorization
 
-Hash the canonical payload without its own `certificate_hash` field. The certificate's hash proves recorded-content integrity, not the truth of the source observation.
+- Client machine auth: opaque API keys generated with cryptographically secure randomness; display secret once; store SHA-256/HMAC hash only, prefix, scopes, client/workspace, created/last-used/revoked timestamps. Support rotation and revocation.
+- Client scopes: `audit:create`, `audit:read:own`, `certificate:read:own`. Keys cannot list all clients or access another client's audit.
+- Human operator auth: Better Auth (email/password or magic link depending on provider configured) with secure HTTP-only sessions; no open public signup. First admin provisioned by one-time CLI command or verified invitation.
+- RBAC: `OWNER`, `OPERATOR`, `READ_ONLY`; separate service principals for workers.
+- Every record query is scoped by client/workspace at the service/database layer; UI hiding is not authorization.
+- Public verify endpoint returns only explicitly public certificate data and no thesis preimage, client identifiers, portfolio or raw evidence.
 
-## 13. API and frontend transport
+## 10. UI structure
 
-Use REST JSON for commands/queries and SSE for live progress. SSE is a convenience; persisted run status remains authoritative. Frontend must recover after disconnect by fetching the current run record. No WebSocket service is needed.
+Reference image(s) are not attached in the current handoff; mark them **required at operator intake**. Phase 1 skeleton uses a neutral, accessible temporary style and real route structure; final visual implementation happens only after core E2E gate and direct inspection of supplied references.
 
-## 14. Deployment topology
+Routes:
+- `/` — product landing/overview, clear security model and demo entry.
+- `/app` — dashboard summary (recent audits, status counts, provider/chain health).
+- `/app/audits/new` — thesis + structured failure conditions wizard.
+- `/app/audits/[auditId]` — audit timeline and live progress.
+- `/app/audits/[auditId]/certificate` — certificate view: verdict, coverage, findings, dissent, verification.
+- `/verify/[certificateId]` — public redacted certificate integrity page.
+- `/app/attackers` — eight attacker roster, role and model provenance.
+- `/app/reputation` — historical quality metrics.
+- `/admin/providers` — connection/model/adapter health; secrets never displayed.
+- `/admin/audits` — audit search and safe recovery actions.
+- `/docs` — docs landing or verified external docs destination.
 
-- Vercel hosts the React/Vite frontend and preview deployments.
-- Render runs one Fastify service that exposes the API and starts the queue worker loop.
-- Supabase hosts Postgres and Auth.
-- Preview uses non-production Supabase and fixture-only or explicitly sandbox-authorized RYO credentials.
-- Production deployment is not authorized by default.
+Navigation: Overview, Audits, Attackers, Reputation; admin-only System/Providers. Footer: verified Documentation and public GitHub links only, plus appropriate contact/privacy/terms destinations. No placeholder `href="#"`, inert controls or fake metrics. Responsive: desktop workbench first, tablet stacked panels, mobile read-only result and simplified creation. Accessibility: semantic headings, labels, keyboard navigation, visible focus, contrast, live-region progress announcements, reduced-motion support.
 
-If the existing repository already has a compatible deploy target or stack, preserve working infrastructure where it satisfies these architectural constraints. Do not migrate solely for stylistic preference. Any material incompatibility is documented during Phase 0 and treated as a genuine blocker requiring operator resolution.
+## 11. Security architecture
 
-## 15. Explicitly excluded infrastructure
+Threat model: external client, compromised API key, malicious thesis or condition text, hostile RPC/indexer payload, prompt injection, model/provider compromise, attacker cross-context leakage, queue replay/race, database compromise, compromised deploy key, rogue admin, and unauthorized on-chain settlement.
 
-No Redis, Kafka, Kubernetes, vector DB, search cluster, payment service, wallet service, exchange SDK, external news provider, or analytics SaaS in the MVP.
+Controls:
+- Parameterized DB queries; strict request schema and length limits.
+- API rate limits by key/client/IP, audit concurrency quotas, token budgets and hard request size limit.
+- API key hash at rest; rotate/revoke; secrets only server-side.
+- Secure session cookies, CSRF protection for cookie-authenticated mutations, strict CORS, CSP, HSTS in production.
+- Output escaped on UI; sanitize Markdown; never render arbitrary HTML from model output.
+- No arbitrary URL fetch tool. All evidence retrieval via allowlisted adapter + typed resource identifiers; block private IPs, redirects to private networks, non-HTTPS, credential forwarding and unsupported schemes.
+- Prompt injection defense: retrieved content is quoted as untrusted data; no instructions from evidence can alter system rules/tools.
+- Tool capability allowlists per attacker; no shell, filesystem, arbitrary SQL, wallet signing, secrets access or model-to-model communication.
+- Per-run context isolation; DB row-level scoping in services; separate run namespaces; sealed output until all jobs close.
+- TEE deployment and response signature verification; failed verification blocks `TRADE`.
+- Job idempotency, unique constraints, immutable audit events, bounded retry.
+- On-chain contract role checks, one-time IDs, amount caps, escrow accounting, no admin arbitrary withdraw in normal path; multisig/timelock required for mainnet production.
+- No live trading executor in MVP; any non-TRADE or failed audit blocks any future executor.
+- Redact API keys, wallet secrets, client portfolio, prompts and private evidence from logs/video.
 
-## 16. Architecture invariants
+## 12. Deployment
 
-1. No LLM is the final judge.
-2. Criteria are committed before attacker execution.
-3. Attackers do not see criteria or peers.
-4. Missing data stays missing.
-5. Unsupported attack surfaces are explicitly recorded.
-6. Failed agents are not NO_BREAK.
-7. Fewer than three valid findings means no verdict.
-8. An incomplete or blocked run cannot be labelled TRADE.
-9. Certificates are immutable and verifiable.
-10. Preview is isolated from production data and secrets.
+Docker images: `web` (Next.js) and `worker` (pg-boss processor) from one repository; Postgres managed service. Default target Railway. Separate development, protected preview/staging, and production environments with distinct database/provider keys. Preview uses synthetic data and testnet only. Do not reuse production data/credentials. Preview must be stable, access-protected if it exposes non-public audit data, and updated at verified checkpoints. Record deployed URL and immutable Git commit SHA in `AI_HANDOFF.md`.
+
+No production deployment or mainnet contract transaction without explicit operator authorization recorded in `OPERATOR_INTAKE.md`.
+
+## 13. Observability
+
+Pino JSON logs with `request_id`, `audit_id`, `run_id`, job ID, provider, model, phase, duration, token usage and failure code. Do not log secrets, full private prompts, or raw portfolio contents. Store immutable `audit_events` for state transitions. Dashboards show queue lag, provider error/rate-limit, run completion, evidence fetch results, cost per audit, TEE verification, chain tx state. Sentry is optional and requires explicit configuration and data-redaction review.
+
+## 14. Explicitly deferred architecture
+
+- Proprietary market scanner is not on the critical path.
+- Trading executor is not part of MVP.
+- NEAR Intents signed-intent (NEP-413) path is incompatible with a Function Call Key because the signing standard requires the owner's full-access key. Do not give such a key to the execution agent. A later vault design must use a standard quote/deposit path the vault can authorize, with destination/amount/expiry checks, or a different venue.
+- 1Click is mainnet-only; it has no testnet. Do not use it as a hackathon integration test dependency.
+- Pyth Core NEAR feed is disabled unless a currently maintained contract/feed is verified.

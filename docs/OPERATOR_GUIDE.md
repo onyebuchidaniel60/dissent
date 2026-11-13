@@ -1,32 +1,21 @@
-# Operator Guide
+# Operator Guide — Dissent MVP
 
-This guide describes intended operator responsibilities after implementation.
+## Before enabling live audit runs
+- Confirm model assignment file meets 3-family/2-vendor rule.
+- Validate each API credential and configured cost ceiling.
+- Complete NEAR AI attestation and response-signature check.
+- Confirm two or more evidence adapters return the chosen demo asset's data with timestamps/provenance.
+- Confirm testnet registry and escrow account IDs and source commit.
+- Confirm client wallet/agent signer process and transaction verification.
+- Set a fixed testnet audit fee, expiry, bounty split and payout allowlist.
+- Confirm queue concurrency and retry caps.
 
-## Before enabling live analysis
+## Routine operation
+- Monitor queue depth, provider errors, inference-cost ceiling and evidence adapter health.
+- Do not edit a committed thesis or condition set. Create a new audit to change them.
+- Retry only failed/invalid runs within the configured cap; preserve original run record.
+- Never override a verdict by editing its database row. A policy correction requires a new version and a linked corrected audit/certificate record.
+- Pause provider or source adapters when integrity is uncertain; affected audits become incomplete/ABSTAIN unless an independent verified disqualifier supports REFUSE.
 
-- Confirm RYO developer documentation and credentials are current.
-- Confirm the exact RYO tool catalog/response schema and quotas.
-- Confirm OpenAI model ID and cost ceilings.
-- Verify preview/production secrets are isolated.
-- Verify database backups and access roles.
-- Keep public demo fixtures synthetic and labelled.
-
-## Reading outcomes
-
-- **TRADE:** The thesis survived the configured attack set. Practice-only; not a live trade instruction or profitability guarantee.
-- **REFUSE:** A pre-registered failure criterion was triggered.
-- **ABSTAIN:** A valid but previously unmodelled BREAK was found, or at least two valid attackers were inconclusive.
-- **BLOCKED:** Data Integrity Gate prevented normal analysis.
-- **INCOMPLETE:** The run could not complete validated evaluation/persistence. No verdict.
-
-## Operational rules
-
-- Do not manually edit historical criteria, findings, verdicts or certificate JSON.
-- Do not interpret unsupported attackers as NO_BREAK.
-- Do not bypass Data Gate or minimum-finding rules.
-- For corrections, preserve the original record and create a superseding record through the controlled correction path.
-- Monitor run and provider costs; stop before operator-defined ceilings.
-
-## Incident response
-
-If a key leaks, revoke/rotate it, inspect access logs, invalidate affected preview deployment, and record an incident. If certificate integrity fails, mark it not verified and preserve the original artifacts for investigation.
+## Financial boundary
+All MVP funding and reward demonstration is on testnet. No mainnet funds, trading or client custody are enabled. Do not transfer funds or deploy to mainnet without a separately signed-off authorization record.

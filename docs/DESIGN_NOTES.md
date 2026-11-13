@@ -1,25 +1,14 @@
-# Design Notes
+# Design Notes — Pending Reference Intake
 
-**Status:** Awaiting supplied UI reference images. No final design interpretation is recorded yet.
+No product UI reference image has been supplied in the current handoff. Do not fabricate observations. Phase 0 must collect at least one operator-owned or operator-authorized image and confirm its intended route/use.
 
-## Temporary Phase 1 design
+After the image arrives, record:
+- exact filename and repository path;
+- source and rights confirmation;
+- image dimensions and relevant responsive cues;
+- composition, hierarchy, layout density, spacing, typography, palette, components and interaction patterns;
+- product-specific adaptations and intentional deviations;
+- keyboard, semantic/accessibility adaptations;
+- routes/screens derived from each reference.
 
-Use a neutral, accessible analytical shell with a restrained type scale, clear navigation, consistent spacing tokens, and status labels that combine text with iconography. This is functional scaffolding, not the final brand system.
-
-## Reference-driven design log
-
-After intake and image inspection, record:
-
-| Reference asset path | Target routes | Extracted principles | Adaptations | Protected elements excluded |
-|---|---|---|---|---|
-| Pending | Pending | Pending | Pending | Pending |
-
-## Design constraints
-
-- Evidence and provenance must remain readable, not hidden in decorative cards.
-- Criteria visibility for the analyst must not leak into attacker request payloads.
-- `SIMULATED` versus live data must be obvious.
-- `TRADE` must say “practice-only”; `BLOCKED`/`INCOMPLETE` must never look like normal verdicts.
-- Distinguish `REFUSE` and `ABSTAIN` through text and icon as well as color.
-- Responsive layouts, keyboard access, focus visibility, reduced motion and contrast are requirements.
-- Do not copy third-party logos, proprietary assets, protected text, or distinctive trade dress.
+At the start of Phase 7, run `npx skills add benjitaylor/skills --skill stageshow`, inspect the installed instructions and record whether it was usable. Additional UI skills are optional and must be relevant/trustworthy. Implement the actual UI directly; no separate mockup or approval phase.

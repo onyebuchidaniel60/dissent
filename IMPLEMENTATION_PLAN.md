@@ -1,248 +1,184 @@
 # Dissent — Autonomous Implementation Plan
 
-**Status:** Pre-implementation plan  
-**Mandatory sequence:** intake → skeletal preview → core functionality → E2E verification → reference-led UI → frontend/docs completeness → demo → final regression/authorized release.
+**Version:** 1.0 | **Mode:** Continuous autonomous execution after one complete intake
 
-## Operating rule
+## Operating sequence (fixed)
 
-The agent executes all phases sequentially. Each phase ends with an internal engineering checkpoint, not an operator approval gate:
+`complete operator intake → early skeletal frontend deployment → backend/data/auth → core audit functionality → functional UI integration → end-to-end verification → reference-image-led final UI → frontend/docs completeness → demo video → final regression and authorized release`.
+
+Phases are internal checkpoints, not user approval gates. At each checkpoint: run tests, inspect the result, fix failures, commit, update `AI_HANDOFF.md` and `docs/BUILD_LOG.md`, then continue. Stop only for the explicit blockers in `AGENTS.md`.
+
+## Phase 0 — Consolidated operator intake and readiness
+
+**Objective:** Collect all genuinely required inputs before modifying the repository.
+
+Tasks:
+1. Read all handoff documents and inspect repository state without changing files.
+2. Complete `OPERATOR_INTAKE.md` in one consolidated round.
+3. Verify reference images exist and can be opened; if absent, ask for them now. An agent-generated reference image may be used only with explicit operator authorization.
+4. Verify repository write access, Git remote, branch policy and public/private status.
+5. Verify provider credentials, model IDs, current quotas, API rate limits and cost ceiling without printing secret values.
+6. Verify NEAR testnet account, deploy key, registry contract account, client signing approach, RPC access, and payout account IDs if testnet bounty transfer is included.
+7. Verify Railway access/credits or mark preview as blocked; verify Postgres and environment secret injection.
+8. Record permitted actions and prohibited actions, especially mainnet, live funds, production deployment, destructive operations and paid services.
+9. Confirm the three-family/two-vendor/open-weight TEE path can be exercised. Check actual per-response attestation verification, not only a successful API response.
+10. Resolve any missing critical item in one consolidated response. Use documented safe defaults for non-critical preferences.
+
+**Expected artifacts:** completed `OPERATOR_INTAKE.md`, verified `REFERENCE_ASSETS.md`, `model_assignments.json`, `adapter_capabilities.json`, intake section in `AI_HANDOFF.md`.
+
+**Acceptance:** no unresolved critical inputs; reference assets identified; testnet/preview authority explicit; budget ceiling recorded; provider model diversity and TEE path verified or a precise blocker recorded. No application code changes before this gate.
+
+## Phase 1 — Repository foundation and skeletal frontend deployment
+
+**Objective:** Establish a runnable repo and early navigable UI.
+
+Tasks:
+- Inspect Git status, existing code, lockfiles, env templates, tests, CI and deployment configuration; preserve useful work.
+- Establish pnpm workspace, TypeScript config, lint/format/test scripts and Dockerfiles.
+- Create Next.js app shell and all agreed routes with clearly labelled unfinished states.
+- Add responsive navigation and neutral temporary visual system; do not invent a supplied reference.
+- Create health endpoint and deployment-ready config.
+- Deploy protected preview with synthetic seed data and testnet-only integrations where available.
+- Record exact preview URL and deployed commit SHA.
+
+**Acceptance:** app boots; all routes navigate; responsive skeleton; no production secrets/data; preview URL is real and recorded (or exact deployment blocker is recorded and local work continues).
+
+## Phase 2 — Backend, data, identity and auth foundation
+
+**Objective:** Build durable data and access-control foundations.
+
+Tasks:
+- Add PostgreSQL schema and migrations for clients, users, API keys, audits, theses, conditions, commitments, attacker runs, findings, evidence, events, certificates, policies, reputation and bounty records.
+- Add Drizzle typed repositories and transaction helpers.
+- Add Better Auth operator sessions; provision first admin through safe one-time command.
+- Add scoped API-key auth for client agents; store hashes only.
+- Add client/workspace authorization checks and tests for IDOR.
+- Add Pino redacted logging, health/readiness endpoints and request IDs.
+- Add pg-boss worker process and queue bootstrap.
+
+**Acceptance:** migrations run on an empty DB; session and API key auth work; cross-client reads/writes are denied; worker starts and claims a test job; secrets do not appear in logs.
+
+## Phase 3 — Core domain, commitment and service adapters
+
+**Objective:** Implement deterministic audit intake and verifiable commitment before inference.
+
+Tasks:
+- Implement typed thesis/condition validation and normalization.
+- Implement RFC 8785 canonical serialization and SHA-256 hash fixtures.
+- Implement commitment transaction payload generation and receipt verification; implement fixed testnet fee quote, `fund_audit` receipt verification, and gate dispatch on both commitment and fee funding.
+- Implement NEAR registry contract and local sandbox tests; deploy testnet only under granted authority.
+- Implement source adapter interfaces and at least two working data routes for demo evidence.
+- Implement model-provider adapter interface and actual capability check for OpenAI, Anthropic and NEAR AI Cloud.
+- Implement NEAR AI deployment attestation and response signature verification.
+
+**Acceptance:** known canonical hash test vectors pass; no attacker job before confirmed commitment and fee funding; wrong signer/hash/contract/method/fee rejected; TEE unverified model request cannot count toward a `TRADE`-eligible audit; source adapters record raw payload hash and retrieval metadata.
+
+## Phase 4 — Attacker runtime and orchestration
+
+**Objective:** Run eight specialist attackers in isolated contexts with the frozen schema.
+
+Tasks:
+- Implement all eight immutable method configurations and prompt templates.
+- Implement the common schema, cross-field validation and server-owned provenance metadata.
+- Implement typed tools for source reads; no arbitrary HTTP/shell/SQL or wallet access.
+- Implement parallel queue fan-out, per-provider concurrency, timeouts and bounded retries.
+- Ensure each attacker sees thesis + committed visible conditions + own role instructions only.
+- Seal outputs until all eight runs close.
+- Record model family, vendor, version, TEE evidence, prompt/config hash, input snapshot and usage/cost.
+
+**Acceptance:** eight isolated runs produce schema-valid output for fixture and live sample; each assesses every condition once; each performs Section B; one run cannot read another run's artifacts; min model diversity enforced; partial/failure states remain explicit.
+
+## Phase 5 — Evidence/red-team/adjudication/certificate/bounty functionality
+
+**Objective:** Complete the full audit result before visual refinement.
+
+Tasks:
+- Implement Evidence Auditor with safe re-fetch and claim-to-evidence classifications.
+- Implement Sycophancy Auditor and Section B novelty review.
+- Implement snapshot-aware reproducibility checks and limitations.
+- Implement deterministic policy v1.0 exactly as in `docs/ADJUDICATION_SPEC.md`.
+- Implement condition coverage aggregation and divergence index.
+- Implement certificate canonicalization, hash and NEAR registration.
+- Implement reputation updates and idempotent bounty calculation.
+- Implement testnet escrow settlement only if contract tests, payout accounts, funding, and operator authority are available.
+
+**Acceptance:** policy test vectors pass; verified disqualifying finding leads to REFUSE; missing required coverage leads to ABSTAIN, not TRADE; unresolved critical disagreement leads to ABSTAIN; all decision inputs trace to records; certificate hash independently recomputes and matches NEAR; duplicate processing cannot pay/update reputation twice.
+
+## Phase 6 — Functional frontend integration and E2E gate
+
+**Objective:** Connect every critical UI route to real API/domain behavior.
+
+Tasks:
+- Build create-audit form for thesis and structured conditions.
+- Implement client wallet transaction signing/commit flow.
+- Implement audit timeline and run status.
+- Implement certificate, coverage matrix, findings and dissent display.
+- Implement public redacted verify page.
+- Implement operator provider health, audit search and bounded retry.
+- Add empty/loading/success/error/denied/not-found states.
+- Add Playwright tests for primary journey and failures.
+
+**Functionality gate:** unit + integration tests pass; critical E2E journey passes against deployed preview; no unresolved critical/high functional/security issues; preview commit and known limitations recorded. Final UI refinement cannot begin until this gate passes.
+
+## Phase 7 — Reference-image-led final UI implementation
+
+**Objective:** Implement the actual interface from supplied reference image(s).
+
+Tasks:
+1. Execute `npx skills add benjitaylor/skills --skill stageshow` from the project root.
+2. Inspect installed skill instructions; record install/inspection result. If installation fails, log exact failure and proceed with strong design-system, usability and accessibility practice.
+3. At discretion, discover additional reputable relevant UI skills; inspect and reject irrelevant/conflicting instructions.
+4. Inspect exact reference assets listed in `REFERENCE_ASSETS.md`.
+5. Extract composition, hierarchy, density, spacing, typography, color, component treatment, navigation and responsive behavior.
+6. Implement the actual routes/components directly. No mockup/prototype phase and no approval stop.
+7. Record interpretation and intentional deviations in `docs/DESIGN_NOTES.md`.
+
+**Acceptance:** UI reflects actual supplied references without copying protected branding/assets; primary journeys remain functional; responsive/accessibility/E2E checks remain green.
+
+## Phase 8 — Frontend and documentation completeness
+
+**Objective:** Finish the product rather than only its central screen.
+
+Tasks:
+- Complete responsive desktop/tablet/mobile states.
+- Finish nav/footer, real documentation/GitHub links, support/contact/legal destinations only where verified and approved.
+- Add metadata, title templates, favicon/app icon and share metadata.
+- Audit all buttons/links for real behavior; no `href="#"` or inert controls.
+- Complete accessibility review and keyboard operation.
+- Complete README and docs for setup, configuration, testing, deployment, troubleshooting, API, data, security and operator usage.
+
+**Acceptance:** route inventory complete; no dead links/controls; mobile/keyboard states verified; docs match actual behavior and configuration.
+
+## Phase 9 — Demo video, final regression and authorized release
+
+**Objective:** Produce the final <=180-second demo and deliver a verified release candidate.
+
+Tasks:
+- Use Playwright to record deterministic demo data in a clean browser profile.
+- Narrate commitment → eight attackers → divergence/invalid test/Section B → evidence verification → verdict/coverage/dissent → NEAR certificate → bounty record.
+- Check availability, free tier, credentials, terms and quotas for Google AI voice/TTS. Do not assume free unlimited use or spend without authority.
+- Use a genuinely free permitted fallback TTS if Google option unavailable; document substitution.
+- Synchronize narration with visible actions, add captions where feasible, redact secrets/private URLs/personal data.
+- Render and review full video; verify audio and video playback and duration <=180 seconds.
+- Run full unit/integration/E2E/security suite and contract tests; scan secrets/dependencies.
+- Deploy production only if explicit authority and all release gates are recorded. Otherwise deliver tested preview and exact release instructions.
+
+**Expected outputs:** `demo/dissent-demo.mp4`, narration script, production notes, public repo, public X demo post assets/links when operator authorizes posting.
+
+## Checkpoint template
 
 ```text
-IMPLEMENT → TEST → INSPECT → FIX → COMMIT
-          → UPDATE AI_HANDOFF.md + docs/BUILD_LOG.md
-          → CONTINUE AUTOMATICALLY
-```
-
-The only permitted stop conditions are genuine blockers defined in `AGENTS.md`. A failure in an optional integration must not prevent unaffected work from continuing.
-
-## Phase 0 — One consolidated Operator Intake / Readiness Check
-
-**Objective:** Verify the repository, inputs, reference images, access, costs, and authorization before modifying files.
-
-**Read first:** `PROJECT_SPEC.md`, `ARCHITECTURE.md`, `IMPLEMENTATION_PLAN.md`, `AGENTS.md`, `AI_HANDOFF.md`, `OPERATOR_INTAKE.md`, `REFERENCE_ASSETS.md`, `DEMO_VIDEO_PLAN.md`, plus repository instructions.
-
-**Inspect without modifying:**
-- Git status, branch, remotes, permissions, existing commits.
-- Repository structure, package manager, lockfile, Node version, source entrypoints.
-- Existing apps/components, tests, migrations, database schema, env examples.
-- CI, Vercel/Render/Supabase configuration and deployment history.
-- Existing environment variable names only; never print secret values.
-- Existing `AGENTS.md`, `README.md`, docs and handoff records.
-
-**Collect once:**
-1. Repository path/URL and permission to create branches/commits.
-2. Actual RYO organizer documentation, API base URL, API key, auth contract, request/response schemas, quotas, rate limits, sandbox status, and allowed use.
-3. OpenAI key, verified model ID, structured-output support, provider data-retention terms, and per-run/project cost ceilings.
-4. Supabase project/team access, Auth settings, DB roles and migration permissions.
-5. Vercel team/project, preview domain, environment management.
-6. Render team/service, preview environment, allowed spend and service limits.
-7. One or more actual UI reference images and asset ownership/source; or explicit authorization for agent-generated reference imagery.
-8. Demo audience, core story, pronunciation, narration style, redactions, and output directory.
-9. Exact production-release authority (default is preview only), data-handling constraints, prohibited actions, and cost ceiling.
-10. Public/private GitHub repository decision; public footer link requires explicit approval.
-
-**Output files:** `OPERATOR_INTAKE.md`, `REFERENCE_ASSETS.md`, initial `AI_HANDOFF.md`.
-
-**Acceptance:** All critical access, credentials, references and authority are verified or the blocked operation is deferred. Optional fields have safe documented defaults. No repeated questions for information already found.
-
-**Stop condition:** A missing required image before final UI work is caught here. It does not block Phase 1–7 if a temporary UI is allowed, but Phase 8 cannot be claimed complete without the reference or explicit image-generation authorization. Missing RYO/OpenAI credentials block live integration, not deterministic fixture development.
-
-## Phase 1 — Repository foundation + skeletal frontend + early preview
-
-**Objective:** Get a real, navigable product shell deployed quickly.
-
-**Tasks:**
-- Preserve compatible repository work.
-- Configure pnpm workspaces and strict TypeScript if absent.
-- Add Vite/React app shell and all planned routes.
-- Add primary navigation, page structure, footer placeholder, accessible temporary design tokens.
-- Show clearly labelled placeholders for unfinished product functions.
-- Add Fastify API liveness/readiness endpoint.
-- Configure Vercel preview and Render API preview with safe fixture-only settings.
-- Record exact preview URL, deployed commit SHA, and access restrictions.
-
-**Files:** root workspace manifests; `apps/web`; `apps/api`; CI config; `.env.example`; `AI_HANDOFF.md`; `docs/BUILD_LOG.md`.
-
-**Acceptance:** All routes load; shell is navigable on mobile/desktop; no inert navigation; no production credentials/data; exact URL and commit recorded. If deploy access is missing, record exact failure and continue local shell work.
-
-**Commit:** `feat: establish app shell and preview deployment`.
-
-## Phase 2 — Backend, database, auth foundation
-
-**Objective:** Establish secure identity, persistent data, and durable job processing.
-
-**Tasks:**
-- Implement Fastify server and API error contract.
-- Add Zod contracts shared from `packages/contracts`.
-- Create Drizzle schema and migrations for profiles, runs, jobs, snapshots, data-gate reports, thesis, criteria, commitments, executions, findings, certificates, audits, idempotency, verification.
-- Configure Supabase Auth and JWT verification.
-- Enforce ownership and RLS/least-privilege DB roles.
-- Implement durable `analysis_jobs` queue with `SKIP LOCKED`, leases, heartbeats, recovery.
-- Add Pino structured logging with redaction and request/run correlation.
-- Add health endpoints and database readiness.
-
-**Acceptance:** Migrations run cleanly; auth tests pass; user A cannot read user B's data; run+job creation is atomic/idempotent; worker lease expiry/reclaim tests pass; no secrets in logs.
-
-**Commit:** `feat: add database auth and durable job foundation`.
-
-## Phase 3 — Core deterministic domain logic and RYO adapter
-
-**Objective:** Build the evidence, criteria, validation, adjudication and certificate core independently from LLM behaviour.
-
-**Tasks:**
-- Verify actual RYO REST contract against organizer documentation.
-- Implement only allowlisted RYO client functions.
-- Validate provider schemas and preserve immutable snapshots.
-- Implement canonical JSON and hash helpers.
-- Implement Data Integrity Gate.
-- Implement six-domain attacker registry and actual evidence-activation rules.
-- Implement thesis/criteria schemas and criteria sealing.
-- Implement attacker finding schema and evidence pointer resolver.
-- Implement pure adjudicator and certificate generator/verifier.
-- Seed deterministic scenario fixtures.
-
-**Acceptance:** Ten required adjudication cases and all negative cases pass; no unsupported field assumptions; Data Gate BLOCK prevents normal verdict; criteria seal transaction commits before attackers; certificate replay is deterministic.
-
-**Commit:** `feat: implement evidence integrity and deterministic decision core`.
-
-## Phase 4 — Thesis Agent and specialist attackers
-
-**Objective:** Connect AI generation with bounded, testable contracts.
-
-**Tasks:**
-- Implement OpenAI Responses API adapter with configured `OPENAI_MODEL`.
-- Add thesis prompt/schema and output validation.
-- Implement attack payload projection that strips criteria/commit metadata/peer findings.
-- Implement three MVP attackers: Internal Logic, Asset & Contract Safety, Liquidity & Exit.
-- Enable Regime, Derivatives and Catalyst attackers only when their required evidence is mapped from actual RYO output schemas.
-- Store prompt/model version and usage per execution.
-- Enforce per-run budgets, maximum token counts, one repair retry.
-
-**Acceptance:** Each enabled attacker can produce BREAK/NO_BREAK/INCONCLUSIVE fixtures; evidence pointers resolve; invalid evidence cannot adjudicate; exact outbound payload test proves forbidden data is absent.
-
-**Commit:** `feat: add thesis and isolated specialist attackers`.
-
-## Phase 5 — Orchestration and API
-
-**Objective:** Connect the deterministic stages into recoverable run execution.
-
-**Tasks:**
-- Implement `/analyses` create/list/detail/cancel endpoints.
-- Implement token lookup, registry, history and certificate routes.
-- Implement worker stage transitions and durable job processing.
-- Add RYO fetch, Data Gate, thesis, criteria seal, attacker fan-out, finding validation, adjudication, certificate persistence.
-- Implement bounded retries, timeout handling, worker recovery, idempotency, SSE/polling.
-- Implement deterministic fixture demo route.
-
-**Acceptance:** Full fixture run succeeds; at least one REFUSE and ABSTAIN certificate; repeated request does not duplicate work; incomplete runs cannot show verdict; worker crash/restart recovers safely.
-
-**Commit:** `feat: orchestrate auditable analysis runs`.
-
-## Phase 6 — Functional frontend integration
-
-**Objective:** Connect all key routes to real backend behaviour using the temporary design system.
-
-**Tasks:**
-- Authentication states and protected routes.
-- Supported-token search and asset confirmation.
-- New analysis submit/idempotency.
-- Run progress and error recovery.
-- Thesis/evidence/criteria display.
-- Attacker status/findings and coverage.
-- Verdict/certificate display and verification.
-- History filtering/pagination.
-- Deterministic demo flow.
-
-**Acceptance:** Critical journey is usable end to end; all loading/empty/error/denied/incomplete states work; no inert controls; preview updated.
-
-**Commit:** `feat: connect analysis workflow to frontend`.
-
-## Phase 7 — End-to-end functionality gate
-
-**Objective:** Prove the product works before final visual refinement.
-
-**Tests:** All unit, integration, scenario, API authorization, idempotency, worker recovery, negative validation, core Playwright journeys, responsive smoke tests.
-
-**Acceptance:** All critical flows pass on preview; no unresolved critical/high security or functional issue; unsafe production actions disabled; deployed commit/test evidence recorded.
-
-**Failure loop:** Diagnose → fix → rerun. Do not ask for routine approval.
-
-**Commit:** `test: verify critical analysis journeys`.
-
-## Phase 8 — Reference-image-led final UI and UI skills
-
-**Objective:** Implement final UI directly from the supplied references, with no mockup/prototype stage.
-
-**Tasks:**
-- Execute `npx skills add benjitaylor/skills --skill stageshow`.
-- Inspect and apply relevant skill instructions.
-- Optionally evaluate additional reputable UI/UX skills.
-- Inspect exact reference images recorded in `REFERENCE_ASSETS.md`.
-- Extract layout, composition, typography, color, spacing, information density, interaction and responsive principles.
-- Implement the final interface directly in product routes.
-- Record intentional deviations in `docs/DESIGN_NOTES.md`.
-
-**Acceptance:** Final interface is based on actual supplied/generated-authorized references; app behaviour and accessibility gates still pass. No mockup review/approval stop.
-
-**Blocker:** If reference images remain absent and agent generation was not authorized, do not pretend the final UI has been completed. Record the exact missing input and continue unaffected work.
-
-**Commit:** `feat: implement reference-led product interface`.
-
-## Phase 9 — Frontend and documentation completeness
-
-**Tasks:**
-- Verify desktop/tablet/mobile layouts.
-- Verify semantic structure, labels, keyboard/focus, contrast, reduced motion.
-- Verify all loading/empty/success/error/denied/not-found/incomplete states.
-- Verify metadata, favicon/app icon, sharing metadata.
-- Verify footer navigation and real Documentation/GitHub links when approved.
-- Never expose private repo URL; omit GitHub link if not approved/public.
-- Complete README and docs.
-
-**Acceptance:** No `href="#"`, fake links, dead controls or unlabelled placeholders; all external links verified; docs match actual implementation.
-
-**Commit:** `docs: complete product and operator documentation`.
-
-## Phase 10 — Demo video
-
-**Objective:** Create a reviewed product video no longer than 180 seconds; target 90–150 seconds.
-
-**Tasks:** Use deterministic demo runs and a clean browser profile. Script the most compelling journeys: register criteria → independent attack → REFUSE; unanticipated BREAK → ABSTAIN; certificate verification. Capture with Playwright. Check current free Google AI voice/TTS availability, quota, terms, and credentials. Do not incur paid usage without exact authority. If unavailable, use a genuinely free licensed local TTS fallback (e.g. Piper or eSpeak NG after verifying voice license and distribution terms). Synchronize narration with visible steps; add captions where feasible; redact all private data/secrets/URLs; render and review audio/video; verify duration and playback.
-
-**Outputs:** `DEMO_VIDEO_PLAN.md`, script, production notes, final video in the operator-approved path.
-
-**Acceptance:** Duration <=180 seconds; narration describes only visible behaviour; no clipping/long gaps/rushed delivery; playback verified.
-
-**Commit:** `docs: add reviewed product demo` (large video may be stored outside Git in agreed output path).
-
-## Phase 11 — Final regression/security/authorized release
-
-**Tasks:** Full unit/integration/E2E/security regression, dependency and secret scan, migration review, backup/recovery plan, final preview smoke test. Deploy production only when exact authority was granted in Phase 0. Otherwise deliver verified staging with release instructions.
-
-**Acceptance:** No critical/high unresolved issue; test evidence and final commit/URL recorded; release scope matches intake authority.
-
-**Commit:** `chore: finalize verified release`.
-
-## Phase checkpoint record
-
-At each phase completion, update `AI_HANDOFF.md` and `docs/BUILD_LOG.md` with:
-
-```text
-Current phase:
-Completed:
-Tests and evidence:
+Phase:
+Commit:
 Preview URL:
-Deployed commit:
-Reference image status:
-UI skill status:
-Documentation status:
-Demo video status:
+Completed:
+Tests/evidence:
 Known issues:
-Authorization boundaries:
+Reference asset and stageshow status:
+Documentation status:
+Demo status:
+Production/mainnet authority:
+Budget consumed / ceiling:
 Next task:
 Blocked by:
 ```
-
-## Blocker protocol
-
-If an operation is blocked, record exact error/evidence, completed work, unaffected work completed, and the minimum operator action needed. Continue any phase tasks not dependent on the blocker. Never bypass permissions, access controls, budget ceilings, security, or production authorization.

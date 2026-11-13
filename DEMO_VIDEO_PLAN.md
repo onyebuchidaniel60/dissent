@@ -1,82 +1,48 @@
-# DEMO_VIDEO_PLAN.md — Dissent
+# Dissent — Product Demo Video Plan
 
-**Status:** Planned; video production occurs after MVP E2E functionality gate.  
-**Maximum duration:** 180 seconds.  
-**Target duration:** 120–150 seconds.
+**Length:** Target 90–150 seconds; hard limit 180 seconds.  
+**Capture:** Playwright browser automation using deterministic data.  
+**Voice:** Free Google AI voice/TTS if currently available within quota/terms; otherwise genuinely free permitted fallback. No spend without intake authorization.
 
-## 1. Demo story
+## Story beats and target timing
 
-Show the product's distinctive process, not a generic tour:
-
-1. A trading thesis is created from RYO market evidence.
-2. Failure criteria are committed before attacker execution.
-3. Isolated attackers challenge the thesis without seeing the criteria.
-4. One anticipated failure yields REFUSE.
-5. A different unanticipated BREAK yields ABSTAIN.
-6. The user opens the certificate and verifies the hashes/rule replay.
-
-Use deterministic sample fixtures for a repeatable recording. The UI must visibly label all sample values `SIMULATED`. If a live run is included, explicitly identify it as live and record real source timestamps; never mix simulated and live evidence without labels.
-
-## 2. Proposed 140-second sequence
-
-| Time | Screen/action | Narration purpose |
+| Time | Visual | Narration purpose |
 |---|---|---|
-| 0–10s | Landing / product headline | Explain the problem: a convincing thesis should be challenged, not trusted automatically |
-| 10–25s | New analysis/sample scenario and evidence snapshot | Establish that evidence is sourced and missing data stays missing |
-| 25–45s | Thesis and criteria commitment timeline | Show that criteria are sealed before attacks |
-| 45–70s | Attacker matrix with separate findings | Explain distinct surfaces and independent execution |
-| 70–90s | REFUSE sample | Show an anticipated registered failure |
-| 90–110s | ABSTAIN sample | Show an unanticipated failure that the original criteria did not predict |
-| 110–130s | Certificate verification | Show provenance, hashes and deterministic adjudication |
-| 130–140s | Final tagline / limitation | Reinforce no real trading and practice-only semantics |
+| 0–12s | Product/overview | State Dissent's purpose: adversarial audit before an agent acts |
+| 12–28s | Thesis + conditions form and hash | Show precommitment and explain the client cannot move goalposts |
+| 28–48s | Eight attacker run statuses | Show methods/model families and sibling isolation |
+| 48–68s | Divergent Section A + `INVALID_TEST` | Show a real disagreement and challenge to the client's test |
+| 68–88s | Section B finding + evidence re-fetch | Show a new risk and how the source is rechecked |
+| 88–112s | Coverage table + verdict + dissent | Show no-majority adjudication and preserved minority result |
+| 112–130s | NEAR certificate verify | Show on-chain hash and independent verification |
+| 130–145s | Bounty/reputation testnet record | Explain accepted findings and internal agent incentives |
 
-Trim to fit the final product while remaining <=180 seconds.
+The beat timing is flexible; keep total runtime <=180 seconds. Never show a live feature if the recording uses fixture data; display `DEMO FIXTURE` labels on screen and say the run is a fixture where applicable.
 
-## 3. Capture plan
+## Production steps
+1. Freeze deterministic demo audit ID and fixture dataset; reset test DB.
+2. Create a clean browser profile with no personal accounts/passwords.
+3. Use Playwright script to walk through exact routes and capture stable viewport, with animations reduced.
+4. Record narration script against actual UI states; do not narrate future/hidden outputs.
+5. Check Google AI TTS availability, free-tier limits, terms, credential and quota; no unlimited-free assumption.
+6. If unavailable, use an openly licensed/free permitted local TTS, document its license and substitution.
+7. Generate audio segments and align to screen actions; avoid dead air, overlaps, clipping and unnatural speed.
+8. Add burned-in captions where feasible; ensure contrast/readability.
+9. Redact private URLs, wallet account identifiers where not intended, API keys, emails and personal data.
+10. Render to `demo/dissent-demo.mp4`, save script to `demo/NARRATION.md` and production log to `demo/PRODUCTION_NOTES.md`.
+11. Play the entire rendered file; verify audio/video decode, sync, captions, no redactions missed, and `duration <= 180s`.
+12. Record file hash, duration, resolution, capture commit and review result in `AI_HANDOFF.md`.
 
-- Use Playwright against the deployed preview or a local production build.
-- Use a clean browser context with seeded deterministic demo fixtures.
-- Set viewport 1440x900 for primary recording; capture a short mobile frame only if it adds clear value.
-- Hide browser bookmarks, personal account details, private URLs, devtools, terminal secrets, and operator email.
-- Record real UI transitions; do not fake screens or animate actions that do not occur.
-- Use stable fixture IDs and reset the demo database between takes.
-- Capture cursor and scrolling at a deliberate pace.
+## Narration script draft
 
-## 4. Narration and TTS
+“Autonomous trading agents can make financial decisions faster than humans can supervise them. But an agent should not be the only judge of its own thesis. Dissent is an adversarial audit protocol for AI trading agents.
 
-Preferred: a genuinely free Google AI voice/TTS option, only after checking current availability, free-tier limits, terms, account eligibility, required credentials, and whether usage incurs charges. Do not assume a paid API key is free.
+A client submits a thesis and defines the conditions that would invalidate it. Dissent commits those conditions on NEAR before the analysis begins, so the goalposts cannot move afterward.
 
-If unavailable or not authorized, use a genuinely free local TTS option such as Piper or eSpeak NG after checking the selected voice/model license and distribution terms. Record the selected tool, version, voice, license, and any quality compromise.
+Eight specialist attackers independently challenge the thesis. They can see the committed conditions, but never each other's findings. Every attacker must assess the conditions and search for risks beyond them.
 
-Narration rules:
-- Script must correspond to visible events.
-- Use natural sentence lengths and measured delivery.
-- Avoid long silences, rushed sections, abrupt cuts, clipping or unexplained transitions.
-- Prefer captions/subtitles for important technical phrases.
-- Do not claim model certainty, profitability, or real execution.
+The Evidence Auditor re-fetches the underlying data. The Sycophancy Auditor checks whether the attackers genuinely challenged the thesis. The adjudicator does not count votes: it evaluates verified evidence, coverage and unresolved disagreement.
 
-## 5. Required files and output
+The result is TRADE, REFUSE or ABSTAIN. The certificate preserves the coverage table and minority findings, and its hash is anchored on NEAR. Dissent turns disagreement into an auditable safety mechanism for autonomous financial agents.”
 
-At the operator-approved location, save:
-
-- `dissent-demo.mp4` (or agreed container)
-- `narration-script.md`
-- `capture-notes.md`
-- `tts-provider-and-license.md`
-- `final-review-checklist.md`
-
-Do not commit a large video to a public repository unless explicitly authorized.
-
-## 6. Final review checklist
-
-- [ ] Duration <=180 seconds.
-- [ ] Complete video reviewed from start to finish.
-- [ ] Audio is present, intelligible, and synchronized.
-- [ ] Narration matches visible screen actions.
-- [ ] Captions are accurate where included.
-- [ ] No awkward dead air, clipping, rushed speech, or blank transitions.
-- [ ] No secrets, tokens, personal data, private repository URLs, or private dashboard URLs.
-- [ ] All simulated data is clearly labelled.
-- [ ] No real trade/financial execution is implied.
-- [ ] File opens and plays successfully.
-- [ ] Script and production notes saved beside the video.
+Use only the lines supported by the actual capture. If a beat is fixture-driven, explicitly call it a deterministic demo fixture rather than a live provider run.

@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0",
+  "audit_id": "00000000-0000-4000-8000-000000000001",
+  "run_id": "00000000-0000-4000-8000-000000000011",
+  "attacker": {
+    "attacker_id": "A01",
+    "attacker_name": "Liquidity / Execution",
+    "method": "LIQUIDITY_EXECUTION",
+    "provider": "fixture-provider",
+    "model_id": "fixture-model",
+    "model_version": "fixture-1",
+    "execution_environment": "fixture-runtime"
+  },
+  "input_commitment": {
+    "thesis_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "conditions_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "conditions_version": "1"
+  },
+  "evaluation": {
+    "started_at": "2026-11-13T08:00:00Z",
+    "completed_at": "2026-11-13T08:00:10Z",
+    "market_snapshot_at": "2026-11-13T08:00:00Z",
+    "status": "COMPLETED"
+  },
+  "section_a": {
+    "condition_assessments": [
+      {
+        "condition_id": "FC-001",
+        "condition_text": "Sample condition",
+        "assessment_status": "EVALUABLE",
+        "status": "HIT",
+        "observed_value": {
+          "value": 2.4,
+          "unit": "USD",
+          "observed_at": "2026-11-13T08:00:00Z"
+        },
+        "threshold": {
+          "operator": "<",
+          "value": 2.5,
+          "unit": "USD"
+        },
+        "rationale": "Fixture value is below fixture threshold.",
+        "evidence_refs": [
+          "EVID-001"
+        ],
+        "confidence": 0.95,
+        "invalid_test_analysis": null,
+        "limitations": []
+      }
+    ]
+  },
+  "section_b": {
+    "outside_findings": [],
+    "search_summary": {
+      "areas_examined": [
+        "Pool depth",
+        "Slippage"
+      ],
+      "data_sources_consulted": [
+        "Fixture adapter"
+      ],
+      "limitations": [
+        "Synthetic fixture only"
+      ],
+      "empty_findings_justification": "No additional supported finding in this fixture."
+    }
+  },
+  "attacker_summary": {
+    "overall_risk_level": "HIGH",
+    "overall_assessment": "Deterministic fixture response; not a live model result.",
+    "recommended_action": "REJECT"
+  }
+}

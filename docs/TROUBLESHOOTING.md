@@ -1,17 +1,16 @@
 # Troubleshooting
 
-| Symptom | Likely cause | Safe diagnostic | Action |
-|---|---|---|---|
-| API readiness fails | DB unavailable or migrations missing | Inspect health dependency code and Render logs | Restore DB/config; do not print connection URL |
-| Live RYO calls disabled | Missing docs/key/base URL/auth contract | Check configuration status only | Complete RYO section of operator intake |
-| RYO response rejected | Schema drift or wrong adapter contract | Compare raw sanitized response with official docs | Update schema/adapter after verification; do not loosen validation blindly |
-| Data Gate BLOCK | Required evidence missing/stale/identity mismatch | Inspect report reason codes | Use supported asset/fresh evidence; do not bypass gate |
-| Thesis validation fails | Model returned unsupported citation or malformed output | Inspect stored validation report/prompt version | One constrained repair; otherwise incomplete |
-| Attacker invalid | Wrong vocabulary/surface/evidence pointer | Inspect validation report | One repair; never convert invalid to NO_BREAK |
-| Run remains queued | Worker stopped or job lease issue | Inspect queue status and worker logs | Restart/recover worker; lease expiry handles stale claim |
-| Certificate verification fails | Payload/hash mismatch or unsupported schema | Compare canonicalized record and snapshot hashes | Mark not verified; preserve original; do not edit certificate |
-| Preview unavailable | Deploy permission/project/environment issue | Inspect deployment logs and access | Continue local work; report exact blocker |
-| UI final phase blocked | Reference image missing | Inspect `REFERENCE_ASSETS.md` | Obtain supplied image or explicit generation authorization |
-| Demo TTS unavailable | No free eligible Google option/credentials | Verify current terms/quota | Use documented free licensed local fallback |
+| Symptom | Likely cause | Safe response |
+|---|---|---|
+| Audit remains `AWAITING_COMMITMENT` | Client tx missing, wrong signer/hash, or not final | Inspect public receipt metadata; do not dispatch |
+| Audit remains `AWAITING_FUNDING` | Quote expired, amount mismatch, or tx not confirmed | Issue a new quote only under policy; never infer payment |
+| Attacker provider timeout | Vendor outage/rate limit | Bounded retry; record failure; never synthesize run |
+| TEE signature cannot verify | Missing/rotated attestation or gateway-only signature | Mark `TEE_UNVERIFIED`; cannot yield TRADE |
+| Evidence re-fetch differs | Source changed or snapshot mismatch | Align observation timestamps/block hash; classify honestly |
+| Empty Section B rejected | Inadequate coverage explanation | One bounded follow-up using same inputs; else ABSTAIN |
+| Queue job duplicated | Retry/idempotency issue | Inspect unique job keys and audit event log; never duplicate bounty |
+| Certificate hash mismatch | Canonicalization/version/serialization drift | Stop public verified claim; preserve both artifacts and diagnose |
+| Testnet RPC unavailable | Endpoint issue | Switch only to configured trusted RPC fallback; no mainnet fallback |
+| Preview deploy fails | Host/credential/project issue | Continue locally; record exact blocker and commit SHA |
 
-Never solve a failure by replacing missing evidence with placeholders that look real, weakening authorization, increasing cost without approval, or changing an expected verdict to make a test pass.
+Never fix an incident by mutating a committed audit, weakening a validation gate, logging secrets or retrying financial settlement without idempotency checks.

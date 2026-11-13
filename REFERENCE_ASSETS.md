@@ -1,32 +1,17 @@
-# REFERENCE_ASSETS.md
+# Dissent — Reference Assets Register
 
-**Status:** Awaiting operator-supplied UI reference image(s).  
-**Last checked:** 11 November 2026.
+**Status at handoff:** No UI reference image is attached. The only uploaded file is the workflow methodology document, not a UI reference asset.
 
-## Current asset inventory
+| Asset ID | Exact filename/path | Source/ownership | Intended use | Visual traits | Status |
+|---|---|---|---|---|---|
+| UI-REF-01 | To be supplied during `OPERATOR_INTAKE.md` | Operator-provided or explicitly authorized generated reference | Primary application dashboard / layout direction | Inspect after receipt; do not infer or fabricate | REQUIRED — missing |
+| UI-REF-02 | Optional additional file | Operator-provided | Audit detail/certificate detail direction | Inspect after receipt | Optional |
+| BRAND-01 | Logo/wordmark, if supplied | Operator-owned | Header/favicon/video | Do not invent ownership | Optional |
 
-| Exact filename/path | Type | Source/owner | Intended use | Status |
-|---|---|---|---|---|
-| None supplied | UI reference | N/A | Final product interface | MISSING — required during Phase 0 intake |
-| `PROPER_VIBE_CODING_WORKFLOW_AUTONOMOUS(2).md` | Workflow document | User-supplied | Implementation methodology only | Supplied; not a UI image/reference |
-
-Do not treat the workflow Markdown file as a visual design reference. Do not invent screenshots, filenames, or asset paths.
-
-## Intake requirements
-
-For every reference image, record:
-
-- Exact filename/path in the repository or supplied attachment.
-- Source and ownership/permission to use it as design inspiration.
-- Target screen/route and intended aspects to study.
-- Desktop/mobile dimensions and crops when supplied.
-- Composition, hierarchy, typography, color, spacing, density, navigation, component and interaction notes.
-- Any protected branding/assets/text that must not be copied.
-
-If no reference image is supplied, ask during the consolidated initial intake. The operator may explicitly authorize generation of a reference asset; absent that authorization, do not generate one. The skeleton and functional UI may use a documented neutral temporary system, but final reference-led UI completion remains blocked.
-
-## Required outputs after inspection
-
-- Update this file with exact asset paths and provenance.
-- Record extracted principles and route mapping in `docs/DESIGN_NOTES.md`.
-- Record any missing responsive references and the chosen accessible adaptation.
+## Rules
+- Record exact mounted/repository paths after intake; do not claim an asset exists until opened and inspected.
+- Confirm the operator has rights to use the reference image. Use it as directional input, not as permission to copy proprietary logos, text, assets or distinctive trade dress.
+- Extract composition, hierarchy, density, spacing, typography, color, component treatment, navigation, interaction patterns and responsive behavior.
+- Implement the real product UI directly from the references after the E2E functionality gate. No separate mockup/prototype or approval phase.
+- If no image is available, ask during Phase 0. Generate one only if operator explicitly authorizes this.
+- Record design interpretation and intentional deviations in `docs/DESIGN_NOTES.md`.

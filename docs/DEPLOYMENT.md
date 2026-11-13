@@ -1,27 +1,23 @@
-# Deployment
+# Deployment Guide
 
-## Target topology
+## Environments
 
-- Vercel: React/Vite frontend.
-- Render: Fastify API plus worker loop.
-- Supabase: PostgreSQL and Auth.
+1. Local: synthetic data, NEAR Sandbox/local contract tests, mocked provider clients by default.
+2. Preview/staging: protected URL, separate preview DB, testnet only, synthetic/approved demo data, no production secrets or live financial execution.
+3. Production: explicitly out of MVP. Requires separate operator authorization captured in intake, privacy/legal readiness, security pass, secrets and rollback plan.
 
-## Preview deployment
+## Default target
+Railway web + worker + PostgreSQL as the initial deployment target. Verify account access, plan, spend controls and deployment region during intake. If inaccessible, do not silently choose another paid provider. Continue local work and document the blocker; only change target with operator instruction.
 
-1. Use separate preview Supabase project or isolated schema/keys approved by operator.
-2. Use preview-only DB credentials, RYO sandbox credentials if available, and OpenAI budget-limited key.
-3. Keep fixture-only demo available even when live credentials are absent.
-4. Protect preview if it exposes user authentication or non-public analysis data.
-5. Record exact frontend/API URLs, deployed commit SHAs, environment, and test evidence in `AI_HANDOFF.md`.
-6. Update preview at verified checkpoints.
-
-## Production release
-
-Production is not authorized by default. Before release:
-- Obtain explicit release scope and approval recorded in `OPERATOR_INTAKE.md`.
-- Verify auth origins, CORS, RLS, secrets, rate limits and provider budgets.
-- Confirm DB backup and migration/rollback plan.
-- Run full test and security pass.
-- Deploy and smoke-test only the authorized services/domains.
-
-If production release is not authorized, deliver the verified preview and exact release instructions. Never infer authority from API keys or repository write access.
+## Release checklist
+- DB migrations and backup/restore plan verified.
+- Web and worker health endpoints pass.
+- Provider keys stored in secret manager.
+- Cost ceilings enforced.
+- Preview protected and deployed with safe data.
+- NEAR network explicitly equals `testnet`.
+- Contract account ID and code hash/commit recorded.
+- No mainnet signer or live trading adapter enabled.
+- Security test suite passes.
+- Rollback procedure tested/documented.
+- Operator has authorized exact release target and domain before production deployment.
