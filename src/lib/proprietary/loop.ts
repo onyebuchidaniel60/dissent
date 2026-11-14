@@ -1,10 +1,11 @@
 import "server-only";
 
-import { and, asc, desc, eq, inArray, like } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, like } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 
 import { getDb } from "@/db";
 import {
+  attackerRuns,
   auditEvents,
   audits,
   commitments,
@@ -138,7 +139,11 @@ async function commitAudit(audit: Audit, signer: NearSigner): Promise<TxReceipt>
     if (audit.status === "AWAITING_COMMITMENT") {
       await db
         .update(audits)
-        .set({ status: "COMMITTED", committedAt: existing.committedAt ?? new Date(), updatedAt: new Date() })
+        .set({
+          status: "COMMITTED",
+          committedAt: existing.committedAt ?? new Date(),
+          updatedAt: new Date(),
+        })
         .where(and(eq(audits.id, audit.id), eq(audits.status, "AWAITING_COMMITMENT")));
     }
     return {
@@ -405,7 +410,10 @@ async function ensureStorage(
   return result.transactionHash;
 }
 
-async function prepareExecution(audit: Audit, quote: ExecutionVenueQuoteResponse | null): Promise<void> {
+async function prepareExecution(
+  audit: Audit,
+  quote: ExecutionVenueQuoteResponse | null,
+): Promise<void> {
   if (executionVenue() !== "TIDEPOOL") {
     console.info(
       "[proprietary] execution_prep_skipped",
@@ -636,6 +644,29 @@ export async function runProprietaryLoop(
     const active = await findActiveProprietaryAudit(workspace.id);
     if (active) {
       if (active.status === "ATTACKING") {
+        // Do not enqueue a duplicate dispatch while an attacker call is still
+        // live. Duplicate dispatchers used to reset completed runs back to
+        // RUNNING and could stall a long audit indefinitely.
+        const [liveRun] = await db
+          .select({ id: attackerRuns.id })
+          .from(attackerRuns)
+          .where(
+            and(
+              eq(attackerRuns.auditId, active.id),
+              eq(attackerRuns.status, "RUNNING"),
+              gt(attackerRuns.startedAt, new Date(Date.now() - 10 * 60_000)),
+            ),
+          )
+          .limit(1);
+        if (liveRun) {
+          return {
+            status: "BUSY",
+            auditId: active.id,
+            publicAuditId: active.publicAuditId,
+            state: active.status,
+          };
+        }
+
         try {
           await enqueueAuditJob("audit.dispatch", active.id);
           console.info(
@@ -735,7 +766,7 @@ export async function runProprietaryLoop(
           asset_id:
             executionVenue() === "TIDEPOOL"
               ? "nep141:wnear.tidepool-sandbox.testnet"
-              : process.env.ONECLICK_ORIGIN_ASSET ?? "nep141:wrap.near",
+              : (process.env.ONECLICK_ORIGIN_ASSET ?? "nep141:wrap.near"),
           symbol: "wNEAR",
         },
         action: "SELL",
