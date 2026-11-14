@@ -13,9 +13,11 @@ const NEP413_SCHEMA = {
   },
 };
 
-export async function getSessionCookie(baseURL: string): Promise<string | null> {
-  const accountId = process.env.NEAR_DEPLOYER_ACCOUNT_ID;
-  const privateKey = process.env.NEAR_DEPLOYER_KEY;
+export async function getSessionCookieFor(
+  baseURL: string,
+  accountId: string | undefined,
+  privateKey: string | undefined,
+): Promise<string | null> {
   if (!accountId || !privateKey) return null;
 
   const nonceResponse = await fetch(`${baseURL}/api/v1/auth/nonce`, {
@@ -61,4 +63,12 @@ export async function getSessionCookie(baseURL: string): Promise<string | null> 
   const setCookie = verifyResponse.headers.get("set-cookie");
   if (!setCookie) return null;
   return setCookie.split(";")[0].split("=")[1] ?? null;
+}
+
+export async function getSessionCookie(baseURL: string): Promise<string | null> {
+  return getSessionCookieFor(
+    baseURL,
+    process.env.NEAR_DEPLOYER_ACCOUNT_ID,
+    process.env.NEAR_DEPLOYER_KEY,
+  );
 }

@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { getDb } from "@/db";
 import { auditEvents, audits, feePayments, feeQuotes } from "@/db/schema";
-import { authenticateApiKey, hasScope } from "@/lib/api-keys";
+import { resolveAuditPrincipal } from "@/lib/audit-principal";
 import { getOwnedAudit } from "@/lib/audit-service";
 import { apiError, apiSuccess, requestId, zodDetails } from "@/lib/http";
 import { verifyFundingTransaction } from "@/lib/near";
@@ -25,11 +25,17 @@ export async function POST(
   { params }: { params: Promise<{ auditId: string }> },
 ) {
   const id = requestId(request);
-  const principal = await authenticateApiKey(request);
-  if (!principal) return apiError("UNAUTHENTICATED", "A valid client API key is required.", 401, undefined, id);
-  if (!hasScope(principal, "audit:fund")) {
-    return apiError("FORBIDDEN", "This key does not have audit:fund.", 403, undefined, id);
+  const resolved = await resolveAuditPrincipal(request, "audit:fund");
+  if ("status" in resolved) {
+    return apiError(
+      resolved.status === 401 ? "UNAUTHENTICATED" : "FORBIDDEN",
+      resolved.message,
+      resolved.status,
+      undefined,
+      id,
+    );
   }
+  const { principal } = resolved;
 
   let body: unknown;
   try {

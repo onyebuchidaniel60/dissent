@@ -2,13 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExternalLink, FileSearch, GitCommitHorizontal, ShieldCheck, Users } from "lucide-react";
 
+import { ClientExecutionPanel } from "@/components/client-execution";
 import { StatusPill } from "@/components/status-pill";
 import { KpiCard, PageHeader, Panel } from "@/components/ui";
 import { getWalletSession } from "@/lib/auth";
 import { getAuditBundle } from "@/lib/audit-read";
 import { explorerTxUrl } from "@/lib/network";
 import { displayNarrative } from "@/lib/site";
-import { getWorkspaceForAccount } from "@/lib/workspace";
+import { ensureWorkspaceForAccount } from "@/lib/workspace";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export default async function AuditDetailPage({
   const session = await getWalletSession();
   if (!session) notFound();
 
-  const workspace = await getWorkspaceForAccount(session.accountId);
+  const workspace = await ensureWorkspaceForAccount(session.accountId);
   if (!workspace) notFound();
 
   const bundle = await getAuditBundle(
@@ -147,6 +148,18 @@ function LiveClientAudit({
         </div>
 
         <aside className="rail-stack">
+          {audit.verdict === "TRADE" && thesis ? (
+            <ClientExecutionPanel
+              auditId={audit.id}
+              publicAuditId={audit.public_audit_id}
+              thesis={{
+                action: thesis.action,
+                amount: thesis.position.amount,
+                unit: thesis.position.unit,
+              }}
+            />
+          ) : null}
+
           <Panel title="Certificate" subtitle="Only approved public fields are published.">
             {certificate ? (
               <div className="stack-md">

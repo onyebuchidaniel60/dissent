@@ -6,7 +6,7 @@ import { StatusPill } from "@/components/status-pill";
 import { getWalletSession } from "@/lib/auth";
 import { maskAccount } from "@/lib/env";
 import { listWorkspaceAudits } from "@/lib/audit-service";
-import { getWorkspaceForAccount } from "@/lib/workspace";
+import { ensureWorkspaceForAccount } from "@/lib/workspace";
 import { displayNarrative, displayVenue } from "@/lib/site";
 
 const STATUS_OPTIONS = [
@@ -30,7 +30,7 @@ export default async function AuditsPage({
   searchParams: Promise<{ status?: string; q?: string }>;
 }) {
   const session = await getWalletSession();
-  const workspace = session ? await getWorkspaceForAccount(session.accountId) : null;
+  const workspace = session ? await ensureWorkspaceForAccount(session.accountId) : null;
   const liveAudits = workspace ? await listWorkspaceAudits(workspace.workspaceId, 50) : [];
 
   const params = await searchParams;

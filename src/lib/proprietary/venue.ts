@@ -63,6 +63,7 @@ export type ExecutionVenueQuoteResponse = {
     amountOutUsd: string;
     minAmountOut: string;
     depositAddress: string;
+    depositMemo?: string;
     deadline: string;
     timeWhenInactive: string;
   };
@@ -108,11 +109,15 @@ export async function fetchExecutionVenueQuote(input?: {
   recipient?: string;
   refundTo?: string;
   deadlineMinutes?: number;
+  originAsset?: string;
+  destinationAsset?: string;
 }): Promise<ExecutionVenueQuoteResponse> {
   const amountYocto =
     input?.amountYocto ?? process.env.PROPRIETARY_THESIS_AMOUNT_YOCTO ?? "10000000000000000000000";
   const recipient = input?.recipient ?? RECIPIENT;
   const refundTo = input?.refundTo ?? REFUND_TO;
+  const originAsset = input?.originAsset ?? ORIGIN_ASSET;
+  const destinationAsset = input?.destinationAsset ?? DESTINATION_ASSET;
   if (!recipient || !refundTo) throw new Error("VENUE_ACCOUNT_NOT_CONFIGURED");
   const deadline = new Date(Date.now() + (input?.deadlineMinutes ?? 120) * 60_000).toISOString();
 
@@ -125,10 +130,10 @@ export async function fetchExecutionVenueQuote(input?: {
       dry: false,
       swapType: "EXACT_INPUT",
       slippageTolerance: 100,
-      originAsset: ORIGIN_ASSET,
+      originAsset,
       depositType: "ORIGIN_CHAIN",
       depositMode: "SIMPLE",
-      destinationAsset: DESTINATION_ASSET,
+      destinationAsset,
       amount: amountYocto,
       refundTo,
       refundType: "ORIGIN_CHAIN",

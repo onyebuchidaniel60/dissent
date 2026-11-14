@@ -11,6 +11,7 @@ export type ApiErrorCode =
   | "FUNDING_REQUIRED"
   | "RATE_LIMITED"
   | "PROVIDER_UNAVAILABLE"
+  | "UNSUPPORTED_EXECUTION"
   | "INTERNAL_ERROR";
 
 export function requestId(request?: Request): string {

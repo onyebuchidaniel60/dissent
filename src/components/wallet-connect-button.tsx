@@ -5,11 +5,9 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertTriangle, LogOut, WalletCards, X } from "lucide-react";
 
-import { DEFAULT_WALLET_NETWORK } from "@/lib/config";
 import type { WalletSelector } from "@near-wallet-selector/core";
-import type { WalletSelectorModal } from "@near-wallet-selector/modal-ui";
 
-const NEAR_WALLET_NETWORK = (process.env.NEXT_PUBLIC_NEAR_NETWORK ?? DEFAULT_WALLET_NETWORK) as "mainnet";
+import { getNearWalletSelector } from "@/lib/near-wallet";
 
 type Session = {
   accountId: string;
@@ -42,8 +40,7 @@ export function WalletConnectButton({
   label?: string;
 }) {
   const router = useRouter();
-  const selectorRef = useRef<WalletSelector | null>(null);
-  const modalRef = useRef<WalletSelectorModal | null>(null);
+  const listenersRef = useRef(false);
   const [session, setSession] = useState<Session | null>(null);
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
@@ -128,56 +125,43 @@ export function WalletConnectButton({
     [router],
   );
 
-  const ensureSelector = useCallback(async () => {
-    if (selectorRef.current) return selectorRef.current;
+  const attachListeners = useCallback(
+    (selector: WalletSelector) => {
+      if (listenersRef.current) return;
+      listenersRef.current = true;
 
-    const { setupWalletSelector } = await import("@near-wallet-selector/core");
-    const { setupModal } = await import("@near-wallet-selector/modal-ui");
-    const { setupMyNearWallet } = await import("@near-wallet-selector/my-near-wallet");
-    const { setupNightly } = await import("@near-wallet-selector/nightly");
+      selector.on("signedIn", (event) => {
+        const account = event.accounts[0];
+        if (account) void authenticate(selector, account.accountId);
+      });
 
-    const selector = await setupWalletSelector({
-      network: NEAR_WALLET_NETWORK,
-      modules: [setupMyNearWallet(), setupNightly()],
-    });
-
-    const modal = setupModal(selector, {
-      description: "Connect a NEAR wallet to sign the Dissent session challenge.",
-    });
-
-    selector.on("signedIn", (event) => {
-      const account = event.accounts[0];
-      if (account) void authenticate(selector, account.accountId);
-    });
-
-    selector.on("signedOut", () => {
-      setSession(null);
-      router.refresh();
-    });
-
-    selectorRef.current = selector;
-    modalRef.current = modal;
-    setReady(true);
-    return selector;
-  }, [authenticate, router]);
+      selector.on("signedOut", () => {
+        setSession(null);
+        router.refresh();
+      });
+    },
+    [authenticate, router],
+  );
 
   const handleOpen = useCallback(async () => {
     setError(null);
     setBusy(true);
     try {
-      const selector = await ensureSelector();
+      const { selector, modal } = await getNearWalletSelector();
+      attachListeners(selector);
+      setReady(true);
       const accounts = selector.store.getState().accounts;
       if (accounts.length > 0) {
         await authenticate(selector, accounts[0].accountId);
       } else {
-        modalRef.current?.show();
+        modal.show();
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not initialize the wallet selector.");
     } finally {
       setBusy(false);
     }
-  }, [authenticate, ensureSelector]);
+  }, [attachListeners, authenticate]);
 
   const handleLogout = useCallback(async () => {
     setBusy(true);

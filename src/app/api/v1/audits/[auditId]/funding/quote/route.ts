@@ -2,7 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 
 import { getDb } from "@/db";
 import { auditEvents, feeQuotes } from "@/db/schema";
-import { authenticateApiKey, hasScope } from "@/lib/api-keys";
+import { resolveAuditPrincipal } from "@/lib/audit-principal";
 import { getOwnedAudit } from "@/lib/audit-service";
 import { canonicalJson, sha256Hex } from "@/lib/canonical";
 import { apiError, apiSuccess, requestId } from "@/lib/http";
@@ -18,11 +18,17 @@ export async function POST(
   { params }: { params: Promise<{ auditId: string }> },
 ) {
   const id = requestId(request);
-  const principal = await authenticateApiKey(request);
-  if (!principal) return apiError("UNAUTHENTICATED", "A valid client API key is required.", 401, undefined, id);
-  if (!hasScope(principal, "audit:fund")) {
-    return apiError("FORBIDDEN", "This key does not have audit:fund.", 403, undefined, id);
+  const resolved = await resolveAuditPrincipal(request, "audit:fund");
+  if ("status" in resolved) {
+    return apiError(
+      resolved.status === 401 ? "UNAUTHENTICATED" : "FORBIDDEN",
+      resolved.message,
+      resolved.status,
+      undefined,
+      id,
+    );
   }
+  const { principal } = resolved;
 
   const { auditId } = await params;
   const audit = await getOwnedAudit(principal, auditId);

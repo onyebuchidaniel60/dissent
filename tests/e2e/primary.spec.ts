@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { Client } from "pg";
 
-import { getSessionCookie } from "./helpers";
+import { getSessionCookie, getSessionCookieFor } from "./helpers";
 
 const PUBLIC_ROUTES = [
   "/",
@@ -123,6 +124,110 @@ test("wallet session sees live audits and can create a session-authenticated dra
   }
 
   await context.close();
+});
+
+test("TRADE audit exposes client execution via the venue quote", async ({ browser, baseURL }) => {
+  const cookie = await getSessionCookieFor(
+    baseURL!,
+    process.env.DEMO_CLIENT_ACCOUNT_ID,
+    process.env.DEMO_CLIENT_KEY,
+  );
+  test.skip(!cookie, "DEMO_CLIENT_KEY is not available for the client execution E2E setup");
+
+  const context = await browser.newContext();
+  const host = new URL(baseURL!).hostname;
+  await context.addCookies([
+    {
+      name: "dissent_session",
+      value: cookie!,
+      domain: host,
+      path: "/",
+      httpOnly: true,
+      secure: baseURL!.startsWith("https"),
+      sameSite: "Lax",
+    },
+  ]);
+  const page = await context.newPage();
+  const tradeAuditId = "0bf3728d-e457-4b2f-8fad-b53be9565498";
+
+  await page.goto(`/app/audits/${tradeAuditId}`, { waitUntil: "domcontentloaded" });
+  await expect(page.getByTestId("execute-trade")).toBeVisible();
+  await expect(page.getByText(/Dissent audits the thesis/i).first()).toBeVisible();
+
+  let quoteResponse = await page.request.post(
+    `${baseURL}/api/v1/ui/audits/${tradeAuditId}/execution/quote`,
+    { headers: { cookie: `dissent_session=${cookie}` } },
+  );
+  for (let attempt = 1; attempt < 3 && quoteResponse.status() !== 200; attempt += 1) {
+    await page.waitForTimeout(2_000);
+    quoteResponse = await page.request.post(
+      `${baseURL}/api/v1/ui/audits/${tradeAuditId}/execution/quote`,
+      { headers: { cookie: `dissent_session=${cookie}` } },
+    );
+  }
+  expect(quoteResponse.status()).toBe(200);
+  const quote = await quoteResponse.json();
+  expect(quote.venue).toBe("TIDEPOOL");
+  expect(quote.pay.amount_yocto).toBe("10000000000000000000000");
+  expect(quote.quote.deposit_address).toMatch(/^[0-9a-f]{64}$/);
+
+  await context.close();
+});
+
+test("new audit form exposes wallet commit and fund steps", async ({ browser, baseURL }) => {
+  const cookie = await getSessionCookieFor(
+    baseURL!,
+    process.env.DEMO_CLIENT_ACCOUNT_ID,
+    process.env.DEMO_CLIENT_KEY,
+  );
+  test.skip(!cookie, "DEMO_CLIENT_KEY is not available for the client signing E2E setup");
+
+  const context = await browser.newContext();
+  const host = new URL(baseURL!).hostname;
+  await context.addCookies([
+    {
+      name: "dissent_session",
+      value: cookie!,
+      domain: host,
+      path: "/",
+      httpOnly: true,
+      secure: baseURL!.startsWith("https"),
+      sameSite: "Lax",
+    },
+  ]);
+  const page = await context.newPage();
+  let auditId: string | null = null;
+
+  try {
+    await page.goto("/app/audits/new", { waitUntil: "domcontentloaded" });
+    await page.getByLabel("Audit title").fill(`E2E client signing ${Date.now()}`);
+    const [prepareResponse] = await Promise.all([
+      page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/v1/ui/audits/prepare") &&
+          response.request().method() === "POST",
+      ),
+      page.getByRole("button", { name: /create draft in console/i }).click(),
+    ]);
+    expect(prepareResponse.status()).toBe(201);
+    const prepared = await prepareResponse.json();
+    auditId = prepared.audit_id as string;
+
+    await expect(page.getByTestId("sign-commitment")).toBeVisible();
+    await expect(page.getByText(/Sign fund_audit/i)).toBeVisible();
+    await expect(page.getByText(/Dissent audits the thesis/i).first()).toBeVisible();
+  } finally {
+    await context.close();
+    if (auditId && process.env.DATABASE_URL) {
+      const client = new Client({ connectionString: process.env.DATABASE_URL });
+      await client.connect();
+      await client.query(
+        "delete from audits where id=$1 and status='AWAITING_COMMITMENT' and not exists (select 1 from commitments where audit_id=audits.id)",
+        [auditId],
+      );
+      await client.end();
+    }
+  }
 });
 
 test("hero phone is visible at 1440x900 and hidden on mobile", async ({ page }) => {

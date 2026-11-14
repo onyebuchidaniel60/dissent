@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   CheckCircle2,
   CircleAlert,
+  ExternalLink,
   Hash,
   LockKeyhole,
   Plus,
@@ -13,6 +14,12 @@ import {
   Trash2,
   WalletCards,
 } from "lucide-react";
+
+import {
+  functionCallAction,
+  getConnectedWallet,
+  transactionHashFromOutcome,
+} from "@/lib/near-wallet";
 
 type ConditionDraft = {
   condition_id: string;
@@ -34,6 +41,7 @@ type Preview = {
 type CreatedDraft = {
   audit_id: string;
   public_audit_id: string;
+  client_account_id: string;
   status: string;
   thesis_hash: string;
   conditions_hash: string;
@@ -43,6 +51,15 @@ type CreatedDraft = {
     method: string;
     args: Record<string, string>;
   };
+};
+
+type FundingQuote = {
+  quote_id: string;
+  quote_hash: string;
+  amount_yocto: string;
+  expires_at: string;
+  network: string;
+  contract_id: string | null;
 };
 
 const DEFAULT_CONDITIONS: ConditionDraft[] = [
@@ -85,6 +102,14 @@ async function sha256Hex(value: string): Promise<string> {
     .join("");
 }
 
+function explorerTxUrl(txHash: string): string {
+  const base =
+    (process.env.NEXT_PUBLIC_NEAR_NETWORK ?? "testnet") === "mainnet"
+      ? "https://explorer.near.org"
+      : "https://explorer.testnet.near.org";
+  return `${base}/transactions/${txHash}`;
+}
+
 export function NewAuditForm() {
   const [title, setTitle] = useState("wNEAR / USDC execution thesis");
   const [asset, setAsset] = useState("nep141:wrap.near");
@@ -103,6 +128,12 @@ export function NewAuditForm() {
   const [created, setCreated] = useState<CreatedDraft | null>(null);
   const [creating, setCreating] = useState(false);
   const [status, setStatus] = useState<string>("");
+  const [fundingQuote, setFundingQuote] = useState<FundingQuote | null>(null);
+  const [commitmentTx, setCommitmentTx] = useState<string | null>(null);
+  const [fundingTx, setFundingTx] = useState<string | null>(null);
+  const [signingStage, setSigningStage] = useState<"commitment" | "funding" | null>(null);
+  const [queued, setQueued] = useState(false);
+  const [polledStatus, setPolledStatus] = useState<string>("");
 
   function updateCondition(index: number, patch: Partial<ConditionDraft>) {
     setConditions((current) =>
@@ -137,6 +168,29 @@ export function NewAuditForm() {
     setPreview(null);
     setStatus("");
   }
+
+  useEffect(() => {
+    if (!created || !queued) return;
+    let active = true;
+    const auditId = created.audit_id;
+
+    const poll = async () => {
+      try {
+        const response = await fetch(`/api/v1/audits/${auditId}`, { cache: "no-store" });
+        const data = await response.json();
+        if (active && response.ok) setPolledStatus(data.audit?.status ?? "UNKNOWN");
+      } catch {
+        // The next poll can recover; the audit remains server-owned.
+      }
+    };
+
+    void poll();
+    const timer = window.setInterval(poll, 5_000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [created, queued]);
 
   function validate(): Record<string, string> {
     const nextErrors: Record<string, string> = {};
@@ -271,11 +325,123 @@ export function NewAuditForm() {
         );
       }
       setCreated(data as CreatedDraft);
-      setStatus("Draft created through the session-authenticated console API.");
+      setStatus("Draft created. Sign the commitment transaction to continue.");
     } catch (cause) {
       setStatus(cause instanceof Error ? cause.message : "Could not create the draft.");
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function signCommitment() {
+    if (!created) return;
+    setSigningStage("commitment");
+    setStatus("");
+    try {
+      const { wallet, accountId } = await getConnectedWallet();
+      if (accountId !== created.client_account_id) {
+        throw new Error(
+          `Connect ${created.client_account_id} to sign this audit. The connected wallet is ${accountId}.`,
+        );
+      }
+      if (!created.commitment.contractId) {
+        throw new Error("The registry contract is not configured.");
+      }
+
+      const outcome = await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: created.commitment.contractId,
+        actions: [
+          functionCallAction({
+            methodName: created.commitment.method,
+            args: created.commitment.args,
+            gas: "100000000000000",
+            deposit: "0",
+          }),
+        ],
+      });
+      const hash = transactionHashFromOutcome(outcome);
+      if (!hash) throw new Error("The wallet did not return a transaction hash.");
+
+      const verified = await fetch(`/api/v1/audits/${created.audit_id}/commitment/verify`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ transaction_hash: hash }),
+      });
+      const verifiedBody = await verified.json();
+      if (!verified.ok) {
+        throw new Error(verifiedBody?.error?.message ?? "Commitment verification failed.");
+      }
+
+      setCommitmentTx(hash);
+      const quoteResponse = await fetch(`/api/v1/audits/${created.audit_id}/funding/quote`, {
+        method: "POST",
+      });
+      const quoteBody = await quoteResponse.json();
+      if (!quoteResponse.ok) {
+        throw new Error(quoteBody?.error?.message ?? "Could not issue the funding quote.");
+      }
+      setFundingQuote(quoteBody as FundingQuote);
+      setStatus("Commitment verified. Sign the funding transaction to queue the audit.");
+    } catch (cause) {
+      setStatus(cause instanceof Error ? cause.message : "Commitment signing failed.");
+    } finally {
+      setSigningStage(null);
+    }
+  }
+
+  async function signFunding() {
+    if (!created || !fundingQuote) return;
+    setSigningStage("funding");
+    setStatus("");
+    try {
+      const { wallet, accountId } = await getConnectedWallet();
+      if (accountId !== created.client_account_id) {
+        throw new Error(
+          `Connect ${created.client_account_id} to sign this audit. The connected wallet is ${accountId}.`,
+        );
+      }
+      if (!fundingQuote.contract_id) {
+        throw new Error("The registry contract is not configured.");
+      }
+
+      const outcome = await wallet.signAndSendTransaction({
+        signerId: accountId,
+        receiverId: fundingQuote.contract_id,
+        actions: [
+          functionCallAction({
+            methodName: "fund_audit",
+            args: {
+              audit_id: created.audit_id,
+              quote_id: fundingQuote.quote_id,
+              quote_hash: fundingQuote.quote_hash,
+            },
+            gas: "100000000000000",
+            deposit: fundingQuote.amount_yocto,
+          }),
+        ],
+      });
+      const hash = transactionHashFromOutcome(outcome);
+      if (!hash) throw new Error("The wallet did not return a transaction hash.");
+
+      const verified = await fetch(`/api/v1/audits/${created.audit_id}/funding/verify`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ transaction_hash: hash }),
+      });
+      const verifiedBody = await verified.json();
+      if (!verified.ok) {
+        throw new Error(verifiedBody?.error?.message ?? "Funding verification failed.");
+      }
+
+      setFundingTx(hash);
+      setQueued(true);
+      setPolledStatus("QUEUED");
+      setStatus("Audit Queued. The eight attackers will run after the funding state is committed.");
+    } catch (cause) {
+      setStatus(cause instanceof Error ? cause.message : "Funding signing failed.");
+    } finally {
+      setSigningStage(null);
     }
   }
 
@@ -295,6 +461,12 @@ export function NewAuditForm() {
     setErrors({});
     setPreview(null);
     setCreated(null);
+    setFundingQuote(null);
+    setCommitmentTx(null);
+    setFundingTx(null);
+    setSigningStage(null);
+    setQueued(false);
+    setPolledStatus("");
     setStatus("");
   }
 
@@ -730,13 +902,98 @@ export function NewAuditForm() {
                   <span className="hash-label mt-2">Conditions hash (server)</span>
                   <span className="hash-value">{created.conditions_hash}</span>
                 </div>
-                <div className="notice notice--info">
-                  <LockKeyhole size={15} aria-hidden="true" />
-                  <span>
-                    Next: sign <span className="mono">commit_audit</span> with the client wallet.
-                    The commitment must be final before funding or attacker dispatch.
-                  </span>
+                <div className="rounded-xl border border-line bg-white/[0.02] p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="mono text-[10px] text-primary">STEP 1 · COMMIT</span>
+                    <span className={commitmentTx ? "tag tag--ok" : "tag tag--muted"}>
+                      {commitmentTx ? "VERIFIED" : "REQUIRED"}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-[11px] leading-relaxed text-muted">
+                    Sign <span className="mono">commit_audit</span> with{" "}
+                    <span className="mono">{created.client_account_id}</span>. The thesis and
+                    conditions become immutable after this transaction is final.
+                  </p>
+                  {commitmentTx ? (
+                    <a
+                      href={explorerTxUrl(commitmentTx)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-3 inline-flex items-center gap-1 text-[11px] text-primary underline"
+                    >
+                      {commitmentTx.slice(0, 12)}…
+                      <ExternalLink size={11} aria-hidden="true" />
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      className="button button--primary button--small mt-3"
+                      onClick={signCommitment}
+                      disabled={signingStage !== null}
+                      data-testid="sign-commitment"
+                    >
+                      <WalletCards size={13} aria-hidden="true" />
+                      {signingStage === "commitment" ? "Waiting for wallet…" : "Sign commitment"}
+                    </button>
+                  )}
                 </div>
+
+                <div className="rounded-xl border border-line bg-white/[0.02] p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="mono text-[10px] text-primary">STEP 2 · FUND</span>
+                    <span className={fundingTx ? "tag tag--ok" : "tag tag--muted"}>
+                      {fundingTx ? "VERIFIED" : fundingQuote ? "QUOTE READY" : "LOCKED"}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-[11px] leading-relaxed text-muted">
+                    Sign <span className="mono">fund_audit</span> for the fixed testnet fee. Attackers
+                    start only after the registry verifies the exact quote and deposit.
+                  </p>
+                  {fundingTx ? (
+                    <a
+                      href={explorerTxUrl(fundingTx)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-3 inline-flex items-center gap-1 text-[11px] text-primary underline"
+                    >
+                      {fundingTx.slice(0, 12)}…
+                      <ExternalLink size={11} aria-hidden="true" />
+                    </a>
+                  ) : fundingQuote ? (
+                    <button
+                      type="button"
+                      className="button button--primary button--small mt-3"
+                      onClick={signFunding}
+                      disabled={signingStage !== null}
+                      data-testid="sign-funding"
+                    >
+                      <WalletCards size={13} aria-hidden="true" />
+                      {signingStage === "funding" ? "Waiting for wallet…" : "Sign & fund 0.1 NEAR"}
+                    </button>
+                  ) : (
+                    <p className="mt-3 text-[11px] text-muted-2">
+                      Sign the commitment first to receive the funding quote.
+                    </p>
+                  )}
+                </div>
+
+                {queued ? (
+                  <div className="notice notice--info" data-testid="audit-queued">
+                    <CheckCircle2 size={15} aria-hidden="true" />
+                    <span>
+                      Audit Queued. Polling status:{" "}
+                      <span className="mono">{polledStatus || "QUEUED"}</span>
+                    </span>
+                  </div>
+                ) : (
+                  <div className="notice notice--info">
+                    <LockKeyhole size={15} aria-hidden="true" />
+                    <span>
+                      The client wallet signs both transactions. The backend verifies the exact
+                      hashes, caller, quote and amount before dispatch.
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </section>
@@ -749,9 +1006,9 @@ export function NewAuditForm() {
               <h2 className="panel-title">Client signing</h2>
             </div>
             <p className="mt-3 text-[11px] leading-relaxed text-muted">
-              The deterministic E2E path uses an agent-supplied signed transaction from the
-              configured client account. Wallet-selector support is present for manual use; the
-              headless test does not automate a browser extension.
+              Dissent audits the thesis. You execute the trade with your own funds via 1Click.
+              Commitment and funding are signed by the connected wallet; Dissent never holds your
+              keys.
             </p>
             <Link href="/docs#wallet-auth" className="button button--ghost button--small mt-4">
               Read the auth design

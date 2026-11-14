@@ -3,7 +3,7 @@ import { prepareAudit } from "@/lib/audit-service";
 import { getWalletSession } from "@/lib/auth";
 import { apiError, apiSuccess, requestId, zodDetails } from "@/lib/http";
 import { rateLimit } from "@/lib/rate-limit";
-import { getWorkspaceForAccount } from "@/lib/workspace";
+import { ensureWorkspaceForAccount } from "@/lib/workspace";
 import { prepareAuditSchema } from "@/lib/validation/audit";
 
 export const dynamic = "force-dynamic";
@@ -26,10 +26,7 @@ export async function POST(request: Request) {
     return apiError("RATE_LIMITED", "Too many draft attempts. Try again shortly.", 429, undefined, id);
   }
 
-  const workspace = await getWorkspaceForAccount(session.accountId);
-  if (!workspace) {
-    return apiError("FORBIDDEN", "This wallet is not a member of an active workspace.", 403, undefined, id);
-  }
+  const workspace = await ensureWorkspaceForAccount(session.accountId);
 
   const idempotencyKey = request.headers.get("idempotency-key")?.trim() ?? "";
   if (!/^[\x20-\x7E]{16,128}$/.test(idempotencyKey)) {
@@ -61,6 +58,7 @@ export async function POST(request: Request) {
       {
         audit_id: prepared.audit.id,
         public_audit_id: prepared.audit.publicAuditId,
+        client_account_id: prepared.audit.clientAccountId,
         status: prepared.status,
         thesis_hash: prepared.thesisHash,
         conditions_hash: prepared.conditionsHash,

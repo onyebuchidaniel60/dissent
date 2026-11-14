@@ -24,7 +24,7 @@ import { ATTACKER_PROFILES } from "@/lib/attackers/profiles";
 import { MODEL_ASSIGNMENTS, PROVIDER_CONFIG } from "@/lib/model-assignments";
 import { NEAR_NETWORK_LABEL, registryAccountId } from "@/lib/network";
 import { displayNarrative, displayVenue } from "@/lib/site";
-import { getWorkspaceForAccount } from "@/lib/workspace";
+import { ensureWorkspaceForAccount } from "@/lib/workspace";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +37,7 @@ const ROSTER = MODEL_ASSIGNMENTS.attackers.map((attacker) => ({
 export default async function AppOverviewPage() {
   const database = await checkDatabase();
   const session = await getWalletSession();
-  const workspace = session ? await getWorkspaceForAccount(session.accountId) : null;
+  const workspace = session ? await ensureWorkspaceForAccount(session.accountId) : null;
   const audits = workspace ? await listWorkspaceAudits(workspace.workspaceId, 6) : [];
 
   const attacking = audits.filter((audit) => audit.status === "ATTACKING").length;

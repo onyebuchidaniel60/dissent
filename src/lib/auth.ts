@@ -11,6 +11,7 @@ import { authNonces, walletSessions } from "@/db/schema";
 import { PREVIEW_AUTH_RECIPIENT } from "@/lib/config";
 import { getAdminAllowlist, getAppBaseUrl } from "@/lib/env";
 import { NEAR_NETWORK, NEAR_RPC_URL } from "@/lib/network";
+import { ensureWorkspaceForAccount } from "@/lib/workspace";
 
 export const SESSION_COOKIE = "dissent_session";
 export const SESSION_TTL_SECONDS = 8 * 60 * 60;
@@ -334,6 +335,17 @@ export async function verifyWalletSignature(input: {
   if (claimed.length !== 1) throw new Error("NONCE_EXPIRED_OR_USED");
 
   const session = await createWalletSession(input.accountId, nonceHash);
+  try {
+    await ensureWorkspaceForAccount(input.accountId);
+  } catch (error) {
+    console.error(
+      "[auth/workspace] provision_failed",
+      JSON.stringify({
+        accountId: input.accountId,
+        error: error instanceof Error ? error.message : String(error),
+      }),
+    );
+  }
   return {
     ...session,
     isAdmin: getAdminAllowlist().includes(input.accountId),

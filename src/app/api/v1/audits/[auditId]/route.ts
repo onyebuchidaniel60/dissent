@@ -1,4 +1,4 @@
-import { authenticateApiKey, hasScope } from "@/lib/api-keys";
+import { resolveAuditPrincipal } from "@/lib/audit-principal";
 import { getOwnedAudit } from "@/lib/audit-service";
 import { apiError, apiSuccess, requestId } from "@/lib/http";
 
@@ -10,13 +10,17 @@ export async function GET(
   { params }: { params: Promise<{ auditId: string }> },
 ) {
   const id = requestId(request);
-  const principal = await authenticateApiKey(request);
-  if (!principal) {
-    return apiError("UNAUTHENTICATED", "A valid client API key is required.", 401, undefined, id);
+  const resolved = await resolveAuditPrincipal(request, "audit:read:own");
+  if ("status" in resolved) {
+    return apiError(
+      resolved.status === 401 ? "UNAUTHENTICATED" : "FORBIDDEN",
+      resolved.message,
+      resolved.status,
+      undefined,
+      id,
+    );
   }
-  if (!hasScope(principal, "audit:read:own")) {
-    return apiError("FORBIDDEN", "This key does not have audit:read:own.", 403, undefined, id);
-  }
+  const { principal } = resolved;
 
   const { auditId } = await params;
   const audit = await getOwnedAudit(principal, auditId);
