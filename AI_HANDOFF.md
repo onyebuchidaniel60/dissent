@@ -4,7 +4,7 @@
 **Current phase:** Phase 12 — layout fix and production sweep. The hero phone is visible at 1440×900, the display breakpoint is 1099px, code defaults are mainnet/1Click/execution-disabled, and the customer-facing UI is network-neutral. Demo video generation is deferred. `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false`; the preview is an explicit testnet staging deployment, and no mainnet contract or real-fund transaction is claimed or authorized.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
-**Deployed app commit:** `6121e36` (`fix: expose hero phone on desktop and complete production sweep`).
+**Deployed app commit:** `aaa5bb1` (`fix: scrub residual network labels and verify signed wallet login`).
 **Production/mainnet authority:** **not granted**. No mainnet transaction, production release or external posting is authorized.
 
 ## Live testnet artifacts
@@ -29,9 +29,9 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 - **Hero phone bug:** the phone was hidden by the 1340px breakpoint on narrower/zoomed desktop viewports and had no explicit minimum dimensions. The hero grid is now explicit (`minmax(0, 1fr) 300px`), the phone has `min-width: 280px` / `min-height: 566px`, and the hide breakpoint is **1099px**. The right column can no longer collapse. Playwright asserts the phone is visible at 1440×900 (width > 240, x > 800), captures `test-results/hero-1440.png`, and asserts it is hidden at 390×844.
 - **Production defaults:** `.env.example` and `src/lib/config.ts` default to `NEAR_NETWORK=mainnet`, `EXECUTION_VENUE=ONECLICK`, `EXECUTION_ENABLED=false` and `PROPRIETARY_LOOP_ENABLED=false`. `network.ts` consumes those defaults. 1Click remains the primary adapter at `https://1click.chaindefuser.com`.
 - **Frontend sweep:** no `testnet`, `demo-client` or `fixture` strings remain in `src/app` or `src/components`; the operator account display and wallet network defaults were made network-neutral. The UI is 100% network-neutral.
-- **Tests:** Vitest 13/13; local Playwright 4/4 at 390×844/1440×900, including the new hero-phone visibility test. Preview `6121e36` is live; preview Playwright 4/4 passes; the 1440×900 screenshot shows the phone visible, and the 390×844 assertion confirms it is hidden.
-- **TEE banner removal:** `TeeWaiverNotice` deleted; every TEE/attestation/confidential tag, panel, footer line, status entry and public API field removed from `src/app`/`src/components`. Rendered-text scan of `/`, `/docs`, `/app`, `/app/attackers`, `/app/audits`, `/app/reputation`, `/app/settings/api-keys`, `/operator`, `/operator/providers`, `/operator/proprietary` and the verifier is clean for TEE/attestation/confidential and for testnet/demo-client/fixture. The workspace account tag is masked.
-- **Wallet auth fix:** `AUTH_RECIPIENT` now defaults to `APP_BASE_URL` and the preview uses `https://dissent-web.onrender.com`. The frontend normalizes the public-key prefix and signature encoding; the backend decodes base64/base64url/array/hex signatures, strips an `ed25519:` prefix, normalizes the public key and verifies against the stored recipient/callback. Local API test with an unprefixed public key and prefixed base64 signature returned 200 and a valid admin session; the same request is used on the preview after deploy.
+- **Tests:** Vitest 13/13; local Playwright 4/4 at 390×844/1440×900, including the new hero-phone visibility test. Preview `aaa5bb1` is live; preview Playwright 4/4 passes; the 1440×900 screenshot shows the phone visible, and the 390×844 assertion confirms it is hidden.
+- **TEE banner removal:** `TeeWaiverNotice` deleted; every TEE/attestation/confidential tag, panel, footer line, status entry and public API field removed from `src/app`/`src/components`. Rendered-text scan of `/`, `/docs`, `/app`, `/app/attackers`, `/app/audits`, `/app/reputation`, `/app/settings/api-keys`, `/operator`, `/operator/providers`, `/operator/proprietary` and the verifier is clean for TEE/attestation/confidential and for testnet/demo-client/fixture. The workspace account tag is masked. The same scan is clean on the deployed preview at `aaa5bb1`.
+- **Wallet auth fix:** `AUTH_RECIPIENT` now defaults to `APP_BASE_URL` and the preview uses `https://dissent-web.onrender.com`. The frontend normalizes the public-key prefix and signature encoding; the backend decodes base64/base64url/array/hex signatures, strips an `ed25519:` prefix, normalizes the public key and verifies against the stored recipient/callback. Local API test with an unprefixed public key and prefixed base64 signature returned 200 and a valid admin session; the same request on the preview also returned 200 with an admin session.
 - **Demo:** deferred by operator instruction; no video or README finalisation was generated in this phase.
 
 ### Phase 11 UI correction (operator feedback)
@@ -159,10 +159,10 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 | Live vault execution | `spend_ft_as` PASS; tx `DxvoRKhCnyYyKrmAopnVYPKZJB7g8ev5Er1wtW5JbSp`; `execution_readiness=EXECUTED` |
 | Tidepool settlement | `SUCCESS`; `0.035245 USDC` out; 3 swap txs recorded |
 | Local Playwright | 3/3 PASS at 390×844 and 1440×900, including the execution receipt |
-| Preview deploy | `6121e36` live; `/healthz`, `/readyz`, both verifier pages 200 |
-| Preview Playwright | 4/4 PASS at 390×844 and 1440×900 on `6121e36`, including the phone visibility test |
-| TEE UI scan | Clean: no TEE/attestation/confidential text on 11 rendered routes |
-| Wallet login | Local signed NEP-413 request returned 200 with a valid admin session |
+| Preview deploy | `aaa5bb1` live; `/healthz`, `/readyz`, both verifier pages 200 |
+| Preview Playwright | 4/4 PASS at 390×844 and 1440×900 on `aaa5bb1`, including the phone visibility test |
+| TEE/network UI scan | Clean: no TEE/attestation/confidential or testnet/demo-client/fixture text on 11 rendered routes locally and on the preview |
+| Wallet login | Local and preview signed NEP-413 requests returned 200 with a valid admin session |
 | Public verifier | `VERIFIED`; `execution_readiness=EXECUTED`; vault tx and venue swap hashes returned |
 | `/readyz` config check | PASS in staging (`network=testnet`, `venue=TIDEPOOL`); fail-closed in production if registry/vault/quote accounts are missing |
 | Typography | Orbitron display face; hero 2.8–7.3rem, section 1.6–2.8rem, page 1.8–3.1rem; animated hero phone; no overflow at 390×844/1440×900/1920×1080 |
@@ -212,7 +212,7 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 - Music: Kevin MacLeod — “Floating Cities”, CC BY 4.0, attributed in README and production notes.
 - Captions: burned in, max two lines; sampled review at 5s/30s/55s/75s.
 - E2E: 3 Playwright tests pass against both local and deployed preview.
-- Preview deploy: `6121e36` live at `https://dissent-web.onrender.com`; health/readiness and the four E2E checks pass.
+- Preview deploy: `aaa5bb1` live at `https://dissent-web.onrender.com`; health/readiness and the four E2E checks pass.
 
 ## Next task
 
