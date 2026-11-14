@@ -127,7 +127,7 @@ export default function ReputationPage() {
           <Panel title="Empty until finalization" subtitle="Honest state, not a synthetic score.">
             <p className="text-[12px] leading-relaxed text-muted">
               No audit has been finalized in this workspace, so the ledger is empty. The service
-              never writes a reputation event from an unfinished run or a fixture.
+              never writes a reputation event from an unfinished or synthetic record.
             </p>
           </Panel>
         </div>

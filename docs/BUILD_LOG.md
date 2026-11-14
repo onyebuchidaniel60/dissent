@@ -198,12 +198,20 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Public verifier for the proprietary certificate: `https://dissent-web.onrender.com/verify/0bf3728d-e457-4b2f-8fad-b53be9565498` returns `VERIFIED` with `execution_readiness=EXECUTED` and the Tidepool swap hashes.
 - Demo intentionally not regenerated; operator approval is the next gate.
 
+## Phase 12 — layout fix and production sweep
+
+- Fixed the hero phone visibility: explicit `minmax(0, 1fr) 300px` grid, `min-width: 280px` / `min-height: 566px` on `.hero-phone`, and the hide breakpoint lowered from 1340px to 1099px. Added `data-testid="hero-phone"` and a Playwright assertion/screenshot at 1440×900.
+- Confirmed `.env.example` and `src/lib/config.ts` default to `mainnet`, `ONECLICK`, `EXECUTION_ENABLED=false`, `PROPRIETARY_LOOP_ENABLED=false`; `network.ts` consumes the config defaults.
+- Swept `src/app` and `src/components`: no `testnet`, `demo-client` or `fixture` strings remain. The operator account display and wallet-network default are network-neutral.
+- Tests: Vitest 13/13; Playwright 4/4 at 390×844/1440×900, including the new phone visibility test. Preview deploy and preview Playwright recorded after the commit.
+- Demo video generation deferred by operator instruction.
+
 ## Phase 11 UI correction — operator feedback
 
 - Reverted the display face from Russo One to **Orbitron** (the Phase 10 font).
 - Increased the hero clamp ~18% to `clamp(2.8rem, 7.3vw, 7.3rem)`; mobile stayed within the existing safe clamp.
 - Increased the global gutter to `clamp(24px, 4.8vw, 88px)` so content has 24px mobile / 65–88px desktop breathing room.
-- Added the decorative hero phone animation: tap ripple + `Submitted`, sequential A01–A08 dots, final `TRADE · Certificate anchored` badge. CSS keyframes, 9s loop, reduced-motion fallback, hidden at ≤1340px.
+- Added the decorative hero phone animation: tap ripple + `Submitted`, sequential A01–A08 dots, final `TRADE · Certificate anchored` badge. CSS keyframes, 9s loop, reduced-motion fallback, hidden at ≤1099px.
 - Visual checks: 1440×900, 1920×1080 and 390×844; no horizontal overflow. Vitest 13/13; Playwright 3/3 at 390×844/1440×900 locally. Preview deployed at `a8b24c3`; preview Playwright 3/3; phone `block` at 1440 and `none` at 390.
 
 ## Phase 11 — mainnet readiness and production polish

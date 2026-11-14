@@ -103,3 +103,19 @@ test("wallet session sees live audits and can create a session-authenticated dra
 
   await context.close();
 });
+
+test("hero phone is visible at 1440x900 and hidden on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/", { waitUntil: "networkidle" });
+  const phone = page.getByTestId("hero-phone");
+  await expect(phone).toBeVisible();
+  const box = await phone.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.width).toBeGreaterThan(240);
+  expect(box!.x).toBeGreaterThan(800);
+  await page.screenshot({ path: "test-results/hero-1440.png", fullPage: false });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expect(phone).toBeHidden();
+});

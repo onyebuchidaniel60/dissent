@@ -401,6 +401,8 @@ textarea {
   position: relative;
   z-index: 1;
   width: 280px;
+  min-width: 280px;
+  min-height: 566px;
   justify-self: end;
   align-self: center;
 }
@@ -900,7 +902,7 @@ textarea {
   }
 }
 
-@media (max-width: 1340px) {
+@media (max-width: 1099px) {
   .hero-grid {
     grid-template-columns: 1fr;
   }
@@ -1191,12 +1193,6 @@ textarea {
   border-color: rgba(251, 113, 133, 0.24);
   background: var(--danger-bg);
   color: var(--danger);
-}
-
-.tag--fixture {
-  border-color: rgba(147, 197, 253, 0.22);
-  background: var(--info-bg);
-  color: var(--info);
 }
 
 .tag--muted {

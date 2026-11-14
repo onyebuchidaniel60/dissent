@@ -12,7 +12,8 @@ export const dynamic = "force-dynamic";
 
 function displayAccount(accountId: string | null): string {
   if (!accountId) return "not configured";
-  return accountId.replace(/\.testnet$/i, "");
+  const parts = accountId.split(".");
+  return parts.length > 2 ? `${parts[0]}.${parts[1]}` : parts[0];
 }
 
 export default async function ProprietaryPage() {

@@ -1,7 +1,7 @@
 # AI_HANDOFF.md — Dissent
 
 **Last updated:** 2026-11-14
-**Current phase:** Phase 11 — mainnet readiness, production UI cleanup and typography; operator UI correction applied (Orbitron restored, wider gutters, animated hero phone). Code defaults to mainnet and the primary execution adapter is 1Click. `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false`. The preview is an explicit testnet staging deployment with testnet records hidden behind a network-neutral UI; no mainnet contract or real-fund transaction is claimed or authorized.
+**Current phase:** Phase 12 — layout fix and production sweep. The hero phone is visible at 1440×900, the display breakpoint is 1099px, code defaults are mainnet/1Click/execution-disabled, and the customer-facing UI is network-neutral. Demo video generation is deferred. `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false`; the preview is an explicit testnet staging deployment, and no mainnet contract or real-fund transaction is claimed or authorized.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
 **Deployed app commit:** `a8b24c3` (`fix: restore Orbitron typography and add animated hero phone`).
@@ -24,12 +24,20 @@
 
 An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-depth evidence was unavailable and a preimage-hash bug produced a false contradiction. The bug is fixed in `src/lib/evidence/service.ts`; the earlier anchored certificate is retained unchanged as an immutable test artifact.
 
+## Phase 12 — layout fix and production sweep
+
+- **Hero phone bug:** the phone was hidden by the 1340px breakpoint on narrower/zoomed desktop viewports and had no explicit minimum dimensions. The hero grid is now explicit (`minmax(0, 1fr) 300px`), the phone has `min-width: 280px` / `min-height: 566px`, and the hide breakpoint is **1099px**. The right column can no longer collapse. Playwright asserts the phone is visible at 1440×900 (width > 240, x > 800), captures `test-results/hero-1440.png`, and asserts it is hidden at 390×844.
+- **Production defaults:** `.env.example` and `src/lib/config.ts` default to `NEAR_NETWORK=mainnet`, `EXECUTION_VENUE=ONECLICK`, `EXECUTION_ENABLED=false` and `PROPRIETARY_LOOP_ENABLED=false`. `network.ts` consumes those defaults. 1Click remains the primary adapter at `https://1click.chaindefuser.com`.
+- **Frontend sweep:** no `testnet`, `demo-client` or `fixture` strings remain in `src/app` or `src/components`; the operator account display and wallet network defaults were made network-neutral. The UI is 100% network-neutral.
+- **Tests:** Vitest 13/13; local Playwright 4/4 at 390×844/1440×900, including the new hero-phone visibility test. Preview deploy and preview Playwright are recorded after the commit.
+- **Demo:** deferred by operator instruction; no video or README finalisation was generated in this phase.
+
 ### Phase 11 UI correction (operator feedback)
 
 - Restored **Orbitron** as the display face; Russo One removed. The previous Phase 10 typography is back.
 - Hero heading increased ~18%: `clamp(2.8rem, 7.3vw, 7.3rem)`; mobile retains the existing safe clamp and the phone is hidden.
 - Global gutter increased to `clamp(24px, 4.8vw, 88px)` — at least 24px mobile and 65–88px on desktop, rather than content touching the viewport edge.
-- Added a pure-CSS/SVG-free hero phone mockup with a dark bezel, tap ripple, sequential A01–A08 lighting, and a final `TRADE · Certificate anchored` badge. It loops every 9s, is decorative (`aria-hidden`, no interactive controls), supports `prefers-reduced-motion`, and is hidden at widths ≤1340px so mobile stacks the hero copy without the phone.
+- Added a pure-CSS/SVG-free hero phone mockup with a dark bezel, tap ripple, sequential A01–A08 lighting, and a final `TRADE · Certificate anchored` badge. It loops every 9s, is decorative (`aria-hidden`, no interactive controls), supports `prefers-reduced-motion`, and is hidden at widths ≤1099px so mobile stacks the hero copy without the phone.
 - Verified visually at 1440×900, 1920×1080 and 390×844; no horizontal overflow. Vitest 13/13 and Playwright 3/3 at 390×844/1440×900 pass locally. Preview `a8b24c3` is live; preview Playwright 3/3 passes; the hero phone is `block` at 1440 and `none` at 390.
 
 ## Phase 11 — mainnet readiness and production polish

@@ -310,7 +310,7 @@ export function NewAuditForm() {
                 conditions, never the client workspace.
               </p>
             </div>
-            <span className="tag tag--fixture">Draft only</span>
+            <span className="tag tag--muted">Draft only</span>
           </div>
           <div className="panel-body stack-md">
             <div className="field">

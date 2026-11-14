@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * Results are part of the audit record. Keep this route as a stable redirect
- * for old links instead of maintaining a second, fixture-only surface.
+ * for old links instead of maintaining a duplicate result surface.
  */
 export default async function AuditResultsRedirect({
   params,

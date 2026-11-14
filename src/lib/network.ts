@@ -7,10 +7,18 @@
  * payout accounts must be supplied by the operator.
  */
 
+import {
+  DEFAULT_EXECUTION_VENUE,
+  DEFAULT_NEAR_NETWORK,
+  ONECLICK_BASE_URL as DEFAULT_ONECLICK_BASE_URL,
+  ONECLICK_DESTINATION_ASSET as DEFAULT_ONECLICK_DESTINATION_ASSET,
+  ONECLICK_ORIGIN_ASSET as DEFAULT_ONECLICK_ORIGIN_ASSET,
+} from "@/lib/config";
+
 export type NearNetwork = "mainnet" | "testnet";
 
 function parseNetwork(value: string | undefined): NearNetwork {
-  return value?.trim().toLowerCase() === "testnet" ? "testnet" : "mainnet";
+  return value?.trim().toLowerCase() === "testnet" ? "testnet" : DEFAULT_NEAR_NETWORK;
 }
 
 export const NEAR_NETWORK: NearNetwork = parseNetwork(process.env.NEAR_NETWORK);
@@ -48,19 +56,21 @@ export function explorerTxUrl(txHash: string): string {
 }
 
 export function executionVenue(): "ONECLICK" | "TIDEPOOL" {
-  return process.env.EXECUTION_VENUE?.trim().toUpperCase() === "TIDEPOOL" ? "TIDEPOOL" : "ONECLICK";
+  return process.env.EXECUTION_VENUE?.trim().toUpperCase() === "TIDEPOOL"
+    ? "TIDEPOOL"
+    : DEFAULT_EXECUTION_VENUE;
 }
 
 export const ONECLICK_BASE_URL =
-  process.env.ONECLICK_BASE_URL ?? "https://1click.chaindefuser.com";
+  process.env.ONECLICK_BASE_URL ?? DEFAULT_ONECLICK_BASE_URL;
 
 /** Mainnet wNEAR is the origin asset; the cap unit is 1:1 with NEAR. */
-export const ONECLICK_ORIGIN_ASSET = process.env.ONECLICK_ORIGIN_ASSET ?? "nep141:wrap.near";
+export const ONECLICK_ORIGIN_ASSET =
+  process.env.ONECLICK_ORIGIN_ASSET ?? DEFAULT_ONECLICK_ORIGIN_ASSET;
 
 /**
  * 1Click's mainnet USDC is the bridged NEP-141 contract, not `usdc.near`.
  * Source: GET https://1click.chaindefuser.com/v0/tokens.
  */
 export const ONECLICK_DESTINATION_ASSET =
-  process.env.ONECLICK_DESTINATION_ASSET ??
-  "nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1";
+  process.env.ONECLICK_DESTINATION_ASSET ?? DEFAULT_ONECLICK_DESTINATION_ASSET;

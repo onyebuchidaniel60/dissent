@@ -4,10 +4,12 @@ import { Buffer } from "buffer";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertTriangle, LogOut, WalletCards, X } from "lucide-react";
+
+import { DEFAULT_WALLET_NETWORK } from "@/lib/config";
 import type { WalletSelector } from "@near-wallet-selector/core";
 import type { WalletSelectorModal } from "@near-wallet-selector/modal-ui";
 
-const NEAR_WALLET_NETWORK = process.env.NEXT_PUBLIC_NEAR_NETWORK === "testnet" ? "testnet" : "mainnet";
+const NEAR_WALLET_NETWORK = (process.env.NEXT_PUBLIC_NEAR_NETWORK ?? DEFAULT_WALLET_NETWORK) as "mainnet";
 
 type Session = {
   accountId: string;

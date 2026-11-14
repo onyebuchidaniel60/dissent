@@ -9,7 +9,7 @@ const ATTACKERS = ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08"];
  */
 export function HeroPhone() {
   return (
-    <div className="hero-phone" aria-hidden="true">
+    <div className="hero-phone" aria-hidden="true" data-testid="hero-phone">
       <div className="hero-phone-glow" />
       <div className="hero-phone-device">
         <div className="hero-phone-notch" />

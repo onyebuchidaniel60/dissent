@@ -104,6 +104,7 @@ describe("execution adapter", () => {
     const previousVenue = process.env.EXECUTION_VENUE;
     delete process.env.EXECUTION_VENUE;
     const parsed = executionConfigFromEnv();
+    expect(parsed.enabled).toBe(false);
     expect(parsed.venue).toBe("ONECLICK");
     expect(parsed.ftTokenId).toBe("wrap.near");
     if (previousVenue !== undefined) process.env.EXECUTION_VENUE = previousVenue;
