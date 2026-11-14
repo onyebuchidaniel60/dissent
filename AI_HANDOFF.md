@@ -4,7 +4,7 @@
 **Current phase:** Phase 11 — mainnet readiness, production UI cleanup and typography. Code defaults to mainnet and the primary execution adapter is 1Click. `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false`. The preview is an explicit testnet staging deployment with testnet records hidden behind a network-neutral UI; no mainnet contract or real-fund transaction is claimed or authorized.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
-**Deployed app commit:** `46bf788` (`feat: execute proprietary TRADE through NEP-141 Tidepool vault`).
+**Deployed app commit:** `e400b47` (`feat: mainnet readiness, production UI and Russo One typography`).
 **Production/mainnet authority:** **not granted**. No mainnet transaction, production release or external posting is authorized.
 
 ## Live testnet artifacts
@@ -141,8 +141,8 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 | Live vault execution | `spend_ft_as` PASS; tx `DxvoRKhCnyYyKrmAopnVYPKZJB7g8ev5Er1wtW5JbSp`; `execution_readiness=EXECUTED` |
 | Tidepool settlement | `SUCCESS`; `0.035245 USDC` out; 3 swap txs recorded |
 | Local Playwright | 3/3 PASS at 390×844 and 1440×900, including the execution receipt |
-| Preview deploy | `46bf788` live; `/healthz`, `/readyz`, both verifier pages 200 |
-| Preview Playwright | 3/3 PASS at 390×844 and 1440×900 after the Phase 11 deploy |
+| Preview deploy | `e400b47` live; `/healthz`, `/readyz`, both verifier pages 200 |
+| Preview Playwright | 3/3 PASS at 390×844 and 1440×900 on `e400b47` |
 | Public verifier | `VERIFIED`; `execution_readiness=EXECUTED`; vault tx and venue swap hashes returned |
 | `/readyz` config check | PASS in staging (`network=testnet`, `venue=TIDEPOOL`); fail-closed in production if registry/vault/quote accounts are missing |
 | Typography | Russo One display face; hero 2.4–6.2rem, section 1.6–2.8rem, page 1.8–3.1rem; no overflow at 390×844/1440×900 |
@@ -192,14 +192,13 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 - Music: Kevin MacLeod — “Floating Cities”, CC BY 4.0, attributed in README and production notes.
 - Captions: burned in, max two lines; sampled review at 5s/30s/55s/75s.
 - E2E: 3 Playwright tests pass against both local and deployed preview.
-- Preview deploy: `245bf9a` live at `https://dissent-web.onrender.com`; health/readiness and the three E2E checks pass.
+- Preview deploy: `e400b47` live at `https://dissent-web.onrender.com`; health/readiness and the three E2E checks pass.
 
 ## Next task
 
-**Phase 10 unblock:** authorize a token-aware vault upgrade that can register storage and perform `ft_transfer` of wNEAR to a Tidepool per-quote deposit address (or approve a native-NEAR venue). Then set `PROPRIETARY_LOOP_ENABLED=true` and `EXECUTION_ENABLED=true` for the preview/demo, approve the quote deposit address and certificate on the vault, run one proprietary thesis, and verify `execution_readiness=EXECUTED` with a tx hash. Do not regenerate the demo until the operator reviews the flow.
+**Phase 12 — production deployment (blocked on operator authorization).** No mainnet contract deployment or real-fund execution is authorized. Required before enabling anything: operator-owned mainnet registry/vault/payout accounts, a multisig/timelock vault owner, a fresh mainnet database, a mainnet 1Click recipient/refund account, independent review of the registry fee/bounty path and the 1Click integration, and an explicit production authorization record.
 
-1. Wire wallet `signAndSendTransaction` for `commit_audit` after the draft is created.
-2. Wire quote issuance and wallet `fund_audit`, then verify receipts and show live progress.
-3. Add UI tests for the wallet transaction path (wallet-extension mocking or the agent-supplied signed-tx path).
-4. Deploy the final commit and re-run the Playwright suite on the preview.
-5. If the operator supplies an ElevenLabs free-tier-compatible voice ID or upgrades the plan, regenerate `demo/dissent-demo.mp4` with the requested voice.
+1. Wire wallet `signAndSendTransaction` for `commit_audit` and `fund_audit` in the console; the current API/CLI path is verified.
+2. Run a read-only mainnet smoke check against 1Click `/v0/tokens` and a dry wNEAR/USDC quote (already performed; repeat in CI with a monitored endpoint).
+3. After authorization, deploy a fresh `#[init]` vault and registry to mainnet, keep `EXECUTION_ENABLED=false`, and validate readiness, caps, allowlists and certificate verification before enabling a capped execution.
+4. Regenerate `demo/dissent-demo.mp4` only after operator approval and a decision on the ElevenLabs voice; the current demo uses the documented Piper/LJSpeech fallback.
