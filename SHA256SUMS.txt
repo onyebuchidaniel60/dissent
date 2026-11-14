@@ -110,8 +110,9 @@ a03e1e5788ebab36d7a935119a8053703b9f66e9d824dbe027970b278a54c21c  ./src/app/app/
 98ec1ae859094138c9007eb9ad9403223bd2c18815205c8f7a07723c19f5d0eb  ./src/app/app/page.tsx
 5c56e470e420d45cb6ed559af1f644d334960e6568384d1ef515021608722ece  ./src/app/app/reputation/page.tsx
 87ae4908cc5a6225deab63a0936915ed0e49307595e6d31d668944c44f9ce839  ./src/app/app/settings/api-keys/page.tsx
+d9436ed144f796111b8be0702b210cdcdc9ac48a7e4d0649fe59e6de2f10192c  ./src/app/docs/layout.tsx
 01b9f538c634f117a7253ab5f00cb2d161a012042ae8c6c54af7ede675de9280  ./src/app/docs/page.tsx
-78ec12da8051ac3efb531a5dff5472caf227e3f03b4262c7a2207376b0e7b24f  ./src/app/globals.css
+ab291911391ddf922553b6144cae73716bdaadf69e362bac6c3a2691a5916164  ./src/app/globals.css
 3658e0f611cc4113a57595b1642cd74f100fe480fabbb065606dcf965434a13f  ./src/app/healthz/route.ts
 5305eccb54c296c72252f7129b3ec5702ffeaef9c3434df6091414223b2596b4  ./src/app/icon.svg
 85ab79c3fcbea64ed9ae0e6c0269f66ba84e0c78a8070e5a0661b6cfd6be8cf8  ./src/app/layout.tsx
@@ -168,7 +169,7 @@ a1e5cf0a5362efdbb77634fce6922521b5c0f2a7ab991ff2e1d2ccf4e5a66533  ./src/lib/site
 1a4144be1b5813d3800de36c72c2aa1576f20431f6274cd06adc3d5aaf3d7bca  ./src/lib/validation/audit.ts
 c33a5271ab5fbb87fd651e02eb549bf42ea33f6ebc61f82ba25b0f1dbef80ab7  ./src/lib/workspace.ts
 3452cd8a48607fdeec1a7adbc5812c1cacb803ecfc4e21916f8e8ac37e7f659e  ./tests/e2e/helpers.ts
-ee7b47d45c1c2a45bbddd79e322102e737dc15b79db8364ba0e13f4987ec3b83  ./tests/e2e/primary.spec.ts
+a307ebc6a69ccd442da9cc78712005e298c7c7b5516778435bc8f1d849de46dd  ./tests/e2e/primary.spec.ts
 e8b9931c92c1c77f8c6450d3301906a98708a3ac8f729a6f043c5b9d2ddb64d0  ./tests/fixtures/attacker-output-valid-example.json
 43f726cfd5da893522f80cd1dec05b08d7cb895d95b8fbdcddcd50ab5b5e4c2b  ./tests/unit/model-diversity.test.ts
 32f0a59b5e4ca1d51ffe5346573b4808e14d261d1c4e49382f8edd139f7bb6b2  ./tsconfig.json

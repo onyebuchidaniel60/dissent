@@ -34,6 +34,27 @@ test("public routes render without horizontal page overflow", async ({ page }) =
   }
 });
 
+test("app and docs content uses the global horizontal gutter at 1440x900", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const routes = [
+    { route: "/app/reputation", screenshot: "test-results/gutter-reputation-1440.png" },
+    { route: "/app/audits", screenshot: "test-results/gutter-audits-1440.png" },
+    { route: "/docs", screenshot: "test-results/gutter-docs-1440.png" },
+  ];
+
+  for (const { route, screenshot } of routes) {
+    const response = await page.goto(route, { waitUntil: "domcontentloaded" });
+    expect(response?.status(), route).toBe(200);
+    const header = page.locator(".page-header").first();
+    await expect(header, route).toBeVisible();
+    const box = await header.boundingBox();
+    expect(box, route).not.toBeNull();
+    expect(box!.x, `${route} left gutter`).toBeGreaterThanOrEqual(24);
+    expect(1440 - (box!.x + box!.width), `${route} right gutter`).toBeGreaterThanOrEqual(24);
+    await page.screenshot({ path: screenshot, fullPage: false });
+  }
+});
+
 test("unauthenticated operator route is gated", async ({ page }) => {
   const response = await page.goto("/operator", { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
