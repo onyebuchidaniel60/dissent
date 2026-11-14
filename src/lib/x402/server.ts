@@ -127,6 +127,7 @@ async function shimState(): Promise<ShimState> {
         process.env.X402_RELAYER_ACCOUNT_ID?.trim() || requiredEnv("NEAR_DEPLOYER_ACCOUNT_ID");
       const relayerKey = process.env.X402_RELAYER_KEY?.trim() || requiredEnv("NEAR_DEPLOYER_KEY");
       const rpcUrl =
+        process.env.X402_RPC_URL?.trim() ||
         process.env.NEAR_RPC_URL?.trim() ||
         (network === "near:mainnet"
           ? "https://rpc.mainnet.fastnear.com"

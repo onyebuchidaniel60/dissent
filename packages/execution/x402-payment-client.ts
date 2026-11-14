@@ -95,7 +95,10 @@ export function x402SignerFromEnv(network: X402Network = x402NetworkFromEnv()): 
   return createLocalNearSigner({
     accountId,
     secretKey: secretKey as `ed25519:${string}`,
-    rpcUrls: { [network]: process.env.NEAR_RPC_URL?.trim() || defaultRpc(network) },
+    rpcUrls: {
+      [network]:
+        process.env.X402_RPC_URL?.trim() || process.env.NEAR_RPC_URL?.trim() || defaultRpc(network),
+    },
   });
 }
 
