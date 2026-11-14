@@ -11,7 +11,6 @@ import {
   Users,
 } from "lucide-react";
 
-import { TeeWaiverNotice } from "@/components/tee-waiver-notice";
 import { KpiCard, PageHeader, Panel } from "@/components/ui";
 import { StatusPill } from "@/components/status-pill";
 import { getAdminRecentAudits } from "@/lib/audit-read";
@@ -239,7 +238,6 @@ export default async function OperatorPage() {
             </ul>
           </Panel>
 
-          <TeeWaiverNotice compact />
         </aside>
       </div>
     </>

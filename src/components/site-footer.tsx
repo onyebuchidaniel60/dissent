@@ -33,7 +33,7 @@ export function SiteFooter() {
 
         <div className="footer-bottom">
           <span>Production build</span>
-          <span>{SITE.network} · TEE attestation unavailable</span>
+          <span>{SITE.network}</span>
           <span>© 2026 Dissent</span>
         </div>
       </div>

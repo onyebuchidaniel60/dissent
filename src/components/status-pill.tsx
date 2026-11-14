@@ -5,7 +5,6 @@ import {
   Clock3,
   FileWarning,
   LoaderCircle,
-  ShieldOff,
   XCircle,
   type LucideIcon,
 } from "lucide-react";
@@ -27,7 +26,6 @@ const STATUS_MAP: Record<string, { tone: StatusTone; icon: LucideIcon; label: st
   REFUSE: { tone: "danger", icon: XCircle, label: "REFUSE" },
   ABSTAIN: { tone: "warn", icon: AlertTriangle, label: "ABSTAIN" },
   FAILED: { tone: "danger", icon: XCircle, label: "Failed" },
-  TEE_UNVERIFIED: { tone: "danger", icon: ShieldOff, label: "TEE unverified" },
   VERIFIED: { tone: "ok", icon: CheckCircle2, label: "Verified" },
   PARTIALLY_VERIFIED: { tone: "warn", icon: AlertTriangle, label: "Partially verified" },
   UNVERIFIABLE: { tone: "neutral", icon: FileWarning, label: "Unverifiable" },
@@ -44,7 +42,6 @@ const STATUS_MAP: Record<string, { tone: StatusTone; icon: LucideIcon; label: st
     icon: FileWarning,
     label: "Source-limited replay",
   },
-  WAIVED_BUDGET_CONSTRAINT: { tone: "warn", icon: ShieldOff, label: "Waived — budget" },
 };
 
 export function StatusPill({ status, label }: { status: string; label?: string }) {

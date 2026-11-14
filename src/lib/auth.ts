@@ -30,7 +30,38 @@ export function isValidAccountId(accountId: string): boolean {
 }
 
 export function authRecipient(): string {
-  return process.env.AUTH_RECIPIENT?.trim() || process.env.NEAR_DEPLOYER_ACCOUNT_ID?.trim() || "dissent";
+  return process.env.AUTH_RECIPIENT?.trim() || getAppBaseUrl();
+}
+
+function normalizePublicKey(publicKey: string): string {
+  const trimmed = publicKey.trim();
+  return /^(ed25519|secp256k1|ml-dsa-65):/i.test(trimmed) ? trimmed : `ed25519:${trimmed}`;
+}
+
+/**
+ * Wallets return the NEP-413 signature as a base64 string. Some injected
+ * wallets return base64url, a JSON byte array, or an already-prefixed value.
+ * Normalize all of those to the raw bytes expected by near-api-js.
+ */
+function decodeNep413Signature(signature: string): Uint8Array {
+  const trimmed = signature.trim().replace(/^ed25519:/i, "");
+  if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+    try {
+      const bytes = JSON.parse(trimmed) as unknown;
+      if (Array.isArray(bytes) && bytes.every((byte) => Number.isInteger(byte) && byte >= 0 && byte <= 255)) {
+        return new Uint8Array(bytes);
+      }
+    } catch {
+      // Fall through to the base64 decoder.
+    }
+  }
+  if (/^[0-9a-f]{128}$/i.test(trimmed)) {
+    return new Uint8Array(Buffer.from(trimmed, "hex"));
+  }
+  const normalized = trimmed.replace(/-/g, "+").replace(/_/g, "/");
+  const bytes = Buffer.from(normalized, "base64");
+  if (bytes.length !== 64) throw new Error("INVALID_SIGNATURE_ENCODING");
+  return new Uint8Array(bytes);
 }
 
 export function buildAuthMessage(accountId: string, nonce: string): string {
@@ -110,26 +141,40 @@ export async function verifyWalletSignature(input: {
   if (!challenge) throw new Error("NONCE_EXPIRED_OR_USED");
 
   const nonceBytes = Buffer.from(input.nonce, "base64");
-  const signatureBytes = Buffer.from(input.signature, "base64");
+  const publicKey = normalizePublicKey(input.publicKey);
+  const signature = decodeNep413Signature(input.signature);
   const provider = new JsonRpcProvider({
     url: process.env.NEAR_RPC_URL ?? "https://rpc.mainnet.near.org",
   });
 
   try {
+    const accessKey = await provider.viewAccessKey({
+      accountId: input.accountId,
+      publicKey,
+    });
+    if (accessKey.permission !== "FullAccess") {
+      throw new Error("FULL_ACCESS_KEY_REQUIRED");
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message === "FULL_ACCESS_KEY_REQUIRED") throw error;
+    throw new Error("ACCESS_KEY_NOT_FOUND");
+  }
+
+  try {
     await verifyMessage({
       signerAccountId: input.accountId,
-      signerPublicKey: input.publicKey,
+      signerPublicKey: publicKey,
       payload: {
         message: challenge.message,
         recipient: challenge.recipient,
         nonce: nonceBytes,
         callbackUrl: challenge.callbackUrl ?? undefined,
       },
-      signature: new Uint8Array(signatureBytes),
+      signature,
       provider,
     });
   } catch {
-    throw new Error("INVALID_SIGNATURE_OR_ACCESS_KEY");
+    throw new Error("SIGNATURE_MISMATCH");
   }
 
   const claimed = await db

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-import { TeeWaiverNotice } from "@/components/tee-waiver-notice";
 import { PageHeader } from "@/components/ui";
 import { NewAuditForm } from "./audit-form";
 
@@ -27,9 +26,6 @@ export default function NewAuditPage() {
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="tag tag--ok">Session-scoped draft</span>
         <span className="tag tag--muted">Local validation</span>
-      </div>
-      <div className="mb-4">
-        <TeeWaiverNotice compact />
       </div>
       <NewAuditForm />
     </>

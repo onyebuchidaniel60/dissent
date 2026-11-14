@@ -10,11 +10,9 @@ import {
   LockKeyhole,
   Scale,
   ShieldCheck,
-  ShieldOff,
   Users,
 } from "lucide-react";
 
-import { TeeWaiverNotice } from "@/components/tee-waiver-notice";
 import { HeroPhone } from "@/components/hero-phone";
 import { SectionHeading } from "@/components/ui";
 import { ATTACKER_PROFILES } from "@/lib/attackers/profiles";
@@ -115,7 +113,6 @@ export default function HomePage() {
                 <span>
                   <strong>1</strong> deterministic verdict
                 </span>
-                <span className="text-primary-bright">TEE unavailable</span>
               </div>
             </div>
             <HeroPhone />
@@ -217,10 +214,6 @@ export default function HomePage() {
                   <span>Policy</span>
                   <strong>v1.0</strong>
                 </div>
-                <div className="rail-row">
-                  <span>TEE</span>
-                  <strong className="text-warn">waived</strong>
-                </div>
 
                 <div className="mt-5 border-t border-line pt-4">
                   <p className="small-caps text-muted-2">Verdict</p>
@@ -299,9 +292,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="mt-6">
-            <TeeWaiverNotice />
-          </div>
         </div>
       </section>
 
@@ -463,11 +453,6 @@ export default function HomePage() {
                   Read the docs
                 </Link>
               </div>
-            </div>
-            <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-line pt-5 text-[11px] text-muted-2">
-              <ShieldOff size={14} className="text-warn" aria-hidden="true" />
-              TEE attestation is waived under the no-new-spend constraint. No confidential-inference
-              claim is made.
             </div>
           </div>
         </div>

@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, LockKeyhole, Network, ShieldOff, Users } from "lucide-react";
+import { ArrowRight, CheckCircle2, LockKeyhole, Network, Users } from "lucide-react";
 
-import { TeeWaiverNotice } from "@/components/tee-waiver-notice";
 import { KpiCard, PageHeader, Panel } from "@/components/ui";
 import { MODEL_ASSIGNMENTS } from "@/lib/model-assignments";
 
@@ -47,7 +46,6 @@ export default function AttackersPage() {
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="tag tag--ok">Diversity gate enforced</span>
-        <span className="tag tag--warn">TEE unavailable</span>
       </div>
 
       <div className="stat-grid">
@@ -76,8 +74,6 @@ export default function AttackersPage() {
           icon={<CheckCircle2 size={14} aria-hidden="true" />}
         />
       </div>
-
-      <TeeWaiverNotice />
 
       <div className="mt-4">
         <Panel
@@ -184,16 +180,6 @@ export default function AttackersPage() {
             </div>
           </Panel>
 
-          <Panel title="Attestation boundary" subtitle="Recorded, not implied.">
-            <div className="flex items-start gap-3">
-              <ShieldOff size={18} className="mt-0.5 shrink-0 text-warn" aria-hidden="true" />
-              <p className="text-[12px] leading-relaxed text-muted">
-                The frozen TEE gate is formally waived under the zero-new-spend constraint. The
-                model-family and vendor gates remain enforced. The UI does not display a TEE badge
-                for any attacker, and the certificate must record the waiver.
-              </p>
-            </div>
-          </Panel>
         </div>
       </div>
     </>

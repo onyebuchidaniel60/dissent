@@ -16,6 +16,18 @@ type Session = {
   isAdmin: boolean;
 };
 
+function normalizePublicKey(publicKey: string): string {
+  const trimmed = publicKey.trim();
+  return /^(ed25519|secp256k1|ml-dsa-65):/i.test(trimmed) ? trimmed : `ed25519:${trimmed}`;
+}
+
+function normalizeSignature(signature: unknown): string {
+  if (typeof signature === "string") return signature.trim();
+  if (signature instanceof Uint8Array) return Buffer.from(signature).toString("base64");
+  if (Array.isArray(signature)) return Buffer.from(signature).toString("base64");
+  return String(signature ?? "").trim();
+}
+
 function shortAccount(accountId: string) {
   const local = accountId.split(".")[0] || accountId;
   if (local.length <= 16) return local;
@@ -81,14 +93,21 @@ export function WalletConnectButton({
         });
 
         if (!signed) throw new Error("This wallet does not support message signing.");
+        if (signed.accountId !== accountId) {
+          throw new Error("The wallet account changed during sign-in. Reconnect and try again.");
+        }
+
+        const publicKey = normalizePublicKey(signed.publicKey);
+        const signature = normalizeSignature(signed.signature);
+        if (!signature) throw new Error("The wallet returned an empty signature.");
 
         const verifyResponse = await fetch("/api/v1/auth/verify", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             accountId: signed.accountId,
-            publicKey: signed.publicKey,
-            signature: signed.signature,
+            publicKey,
+            signature,
             nonce: challenge.nonce,
           }),
         });

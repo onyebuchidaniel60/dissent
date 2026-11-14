@@ -2,16 +2,13 @@ import Link from "next/link";
 import {
   ArrowLeft,
   CheckCircle2,
-  Gauge,
   KeyRound,
   Network,
-  ShieldOff,
   Wallet,
 } from "lucide-react";
 
-import { TeeWaiverNotice } from "@/components/tee-waiver-notice";
 import { PageHeader, Panel } from "@/components/ui";
-import { MODEL_ASSIGNMENTS, MODEL_POLICY, PROVIDER_CONFIG, TEE_POLICY } from "@/lib/model-assignments";
+import { MODEL_ASSIGNMENTS, MODEL_POLICY, PROVIDER_CONFIG } from "@/lib/model-assignments";
 
 export default function OperatorProvidersPage() {
   return (
@@ -20,7 +17,7 @@ export default function OperatorProvidersPage() {
         eyebrow="Providers"
         title="Diversity is"
         accent="a hard gate."
-        description="One OpenAI-compatible adapter serves both inference vendors. The TEE sub-clause is waived; the model-family, vendor and open-weight gates are not."
+        description="One OpenAI-compatible adapter serves both inference vendors. The model-family, vendor and open-weight gates are enforced."
         actions={
           <Link href="/operator" className="button button--ghost">
             <ArrowLeft size={14} aria-hidden="true" />
@@ -31,11 +28,8 @@ export default function OperatorProvidersPage() {
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="tag tag--ok">server-side keys</span>
-        <span className="tag tag--warn">TEE unavailable</span>
         <span className="tag tag--muted">diversity gate enforced</span>
       </div>
-
-      <TeeWaiverNotice />
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         {Object.entries(PROVIDER_CONFIG).map(([name, provider]) => (
@@ -146,10 +140,6 @@ export default function OperatorProvidersPage() {
                 <CheckCircle2 aria-hidden="true" />
                 At least 1 open-weight attacker
               </li>
-              <li className="gate" data-pass="false">
-                <ShieldOff aria-hidden="true" />
-                TEE attestation — waived by budget
-              </li>
             </ul>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <div className="rounded-xl border border-line bg-white/[0.02] p-3">
@@ -184,17 +174,6 @@ export default function OperatorProvidersPage() {
               <span className="tag tag--muted">max {MODEL_POLICY.max_parallel_attackers} parallel</span>
               <span className="tag tag--muted">max {MODEL_POLICY.max_concurrent_audits} audit</span>
               <span className="tag tag--ok">$0 new spend</span>
-            </div>
-          </Panel>
-
-          <Panel title="TEE waiver record" subtitle="Disclosed, not hidden.">
-            <div className="flex items-start gap-3">
-              <Gauge size={16} className="mt-0.5 shrink-0 text-warn" aria-hidden="true" />
-              <p className="text-[11px] leading-relaxed text-muted">
-                Status <span className="mono text-warn">{TEE_POLICY.status}</span>. No TEE badge is
-                rendered for any attacker, and the certificate records the waiver. This is a
-                documented budget-constraint deviation from the frozen TEE sub-clause.
-              </p>
             </div>
           </Panel>
 

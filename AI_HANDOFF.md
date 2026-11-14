@@ -30,6 +30,8 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 - **Production defaults:** `.env.example` and `src/lib/config.ts` default to `NEAR_NETWORK=mainnet`, `EXECUTION_VENUE=ONECLICK`, `EXECUTION_ENABLED=false` and `PROPRIETARY_LOOP_ENABLED=false`. `network.ts` consumes those defaults. 1Click remains the primary adapter at `https://1click.chaindefuser.com`.
 - **Frontend sweep:** no `testnet`, `demo-client` or `fixture` strings remain in `src/app` or `src/components`; the operator account display and wallet network defaults were made network-neutral. The UI is 100% network-neutral.
 - **Tests:** Vitest 13/13; local Playwright 4/4 at 390×844/1440×900, including the new hero-phone visibility test. Preview `6121e36` is live; preview Playwright 4/4 passes; the 1440×900 screenshot shows the phone visible, and the 390×844 assertion confirms it is hidden.
+- **TEE banner removal:** `TeeWaiverNotice` deleted; every TEE/attestation/confidential tag, panel, footer line, status entry and public API field removed from `src/app`/`src/components`. Rendered-text scan of `/`, `/docs`, `/app`, `/app/attackers`, `/app/audits`, `/app/reputation`, `/app/settings/api-keys`, `/operator`, `/operator/providers`, `/operator/proprietary` and the verifier is clean.
+- **Wallet auth fix:** `AUTH_RECIPIENT` now defaults to `APP_BASE_URL` and the preview uses `https://dissent-web.onrender.com`. The frontend normalizes the public-key prefix and signature encoding; the backend decodes base64/base64url/array/hex signatures, strips an `ed25519:` prefix, normalizes the public key and verifies against the stored recipient/callback. Local API test with an unprefixed public key and prefixed base64 signature returned 200 and a valid admin session.
 - **Demo:** deferred by operator instruction; no video or README finalisation was generated in this phase.
 
 ### Phase 11 UI correction (operator feedback)
@@ -159,6 +161,8 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 | Local Playwright | 3/3 PASS at 390×844 and 1440×900, including the execution receipt |
 | Preview deploy | `6121e36` live; `/healthz`, `/readyz`, both verifier pages 200 |
 | Preview Playwright | 4/4 PASS at 390×844 and 1440×900 on `6121e36`, including the phone visibility test |
+| TEE UI scan | Clean: no TEE/attestation/confidential text on 11 rendered routes |
+| Wallet login | Local signed NEP-413 request returned 200 with a valid admin session |
 | Public verifier | `VERIFIED`; `execution_readiness=EXECUTED`; vault tx and venue swap hashes returned |
 | `/readyz` config check | PASS in staging (`network=testnet`, `venue=TIDEPOOL`); fail-closed in production if registry/vault/quote accounts are missing |
 | Typography | Orbitron display face; hero 2.8–7.3rem, section 1.6–2.8rem, page 1.8–3.1rem; animated hero phone; no overflow at 390×844/1440×900/1920×1080 |

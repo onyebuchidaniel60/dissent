@@ -267,7 +267,6 @@ export default async function VerifyPage({
               <div className="mt-4 flex flex-wrap gap-2">
                 <span className="tag tag--ok">hash recomputed</span>
                 <span className="tag tag--muted">no private fields</span>
-                <span className="tag tag--warn">TEE unavailable</span>
               </div>
             </Panel>
           </div>

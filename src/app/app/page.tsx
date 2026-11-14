@@ -15,14 +15,13 @@ import {
   WalletCards,
 } from "lucide-react";
 
-import { TeeWaiverNotice } from "@/components/tee-waiver-notice";
 import { KpiCard, Panel, PageHeader } from "@/components/ui";
 import { StatusPill } from "@/components/status-pill";
 import { getWalletSession } from "@/lib/auth";
 import { listWorkspaceAudits } from "@/lib/audit-service";
 import { checkDatabase } from "@/lib/db";
 import { ATTACKER_PROFILES } from "@/lib/attackers/profiles";
-import { MODEL_ASSIGNMENTS, PROVIDER_CONFIG, TEE_POLICY } from "@/lib/model-assignments";
+import { MODEL_ASSIGNMENTS, PROVIDER_CONFIG } from "@/lib/model-assignments";
 import { NEAR_NETWORK_LABEL, registryAccountId } from "@/lib/network";
 import { displayVenue } from "@/lib/site";
 import { getWorkspaceForAccount } from "@/lib/workspace";
@@ -208,9 +207,6 @@ export default async function AppOverviewPage() {
                 </article>
               ))}
             </div>
-            <div className="mt-4">
-              <TeeWaiverNotice compact />
-            </div>
           </Panel>
         </div>
 
@@ -249,13 +245,6 @@ export default async function AppOverviewPage() {
               <strong className={registryAccountId() ? "text-ok" : "text-warn"}>
                 {registryAccountId() ? "configured" : "not configured"}
               </strong>
-            </div>
-            <div className="rail-row">
-              <span className="flex items-center gap-2">
-                <ShieldCheck size={13} aria-hidden="true" />
-                TEE attestation
-              </span>
-              <strong className="text-warn">{TEE_POLICY.status === "WAIVED_BUDGET_CONSTRAINT" ? "Unavailable" : TEE_POLICY.status}</strong>
             </div>
             <div className="mt-4 border-t border-line pt-4">
               <p className="small-caps text-muted-2">Configured providers</p>

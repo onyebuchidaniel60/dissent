@@ -7,7 +7,6 @@ import {
   ExternalLink,
   Fingerprint,
   LockKeyhole,
-  ShieldOff,
 } from "lucide-react";
 
 import { PageHeader, Panel } from "@/components/ui";
@@ -65,7 +64,6 @@ export default function DocsPage() {
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="tag tag--ok">Policy v1.0</span>
         <span className="tag tag--muted">RFC 8785</span>
-        <span className="tag tag--warn">TEE unavailable</span>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start">
@@ -284,9 +282,8 @@ curl -i http://localhost:3000/readyz`}</code>
                 wallet signing inside an attacker run.
               </p>
               <p>
-                The TEE sub-clause is currently unavailable. No confidential-inference claim is made,
-                and no TEE badge is displayed. The model-family, vendor and open-weight gates remain
-                enforced. See <DocLink href={`${REPO_DOCS}/docs/SECURITY_SPEC.md`}>docs/SECURITY_SPEC.md</DocLink>.
+                The model-family, vendor and open-weight gates remain enforced. See{" "}
+                <DocLink href={`${REPO_DOCS}/docs/SECURITY_SPEC.md`}>docs/SECURITY_SPEC.md</DocLink>.
               </p>
             </div>
           </Panel>
@@ -372,10 +369,6 @@ Readiness: /readyz`}</code>
               <li className="gate" data-pass="false">
                 <CircleAlert aria-hidden="true" />
                 Mainnet contract deployment requires operator accounts and explicit release authority.
-              </li>
-              <li className="gate" data-pass="false">
-                <ShieldOff aria-hidden="true" />
-                TEE attestation is currently unavailable.
               </li>
             </ul>
             <p className="mt-4 text-[10px] leading-relaxed text-muted-2">

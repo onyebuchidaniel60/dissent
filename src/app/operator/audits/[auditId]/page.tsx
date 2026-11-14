@@ -78,7 +78,6 @@ function LiveAuditInspection({
             <div className="mt-4 flex flex-wrap gap-2 border-t border-line pt-3">
               <span className="tag tag--muted">{completed} / 8 completed</span>
               <span className="tag tag--muted">${(totalCost / 1_000_000).toFixed(4)} inference</span>
-              <span className="tag tag--warn">TEE unavailable</span>
             </div>
           </Panel>
 

@@ -12,7 +12,7 @@ All secrets are server-only. The authoritative template is [`.env.example`](../.
 | `PG_BOSS_SCHEMA` | Optional | Server config | Queue schema override (default `pgboss`) |
 | `DISABLE_IN_PROCESS_QUEUE` | Optional | Server config | Set `true` only for isolated tests |
 | `AUTH_SECRET` | Yes | Server secret | Session/nonce signing |
-| `AUTH_RECIPIENT` | Optional | Server config | NEP-413 session recipient; defaults to the deployer account |
+| `AUTH_RECIPIENT` | Optional | Server config | NEP-413 recipient; must exactly match `APP_BASE_URL` (URL form) |
 | `ADMIN_WALLET_ADDRESSES` | Yes | Server config | Comma-separated operator allowlist |
 | `NEAR_NETWORK` | Yes | Server config | `mainnet` (default) or explicit `testnet` for staging |
 | `NEXT_PUBLIC_NEAR_NETWORK` | Yes | Public config | Must match `NEAR_NETWORK` for the wallet selector |

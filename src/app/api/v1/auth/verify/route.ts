@@ -54,7 +54,16 @@ export async function POST(request: Request) {
     if (code === "NONCE_EXPIRED_OR_USED") {
       return apiError("UNAUTHENTICATED", "The sign-in challenge expired or was already used.", 401, undefined, id);
     }
-    if (code === "INVALID_SIGNATURE_OR_ACCESS_KEY") {
+    if (code === "INVALID_SIGNATURE_ENCODING") {
+      return apiError("UNAUTHENTICATED", "The wallet signature could not be decoded.", 401, undefined, id);
+    }
+    if (code === "ACCESS_KEY_NOT_FOUND") {
+      return apiError("UNAUTHENTICATED", "The wallet public key is not an access key on this account.", 401, undefined, id);
+    }
+    if (code === "FULL_ACCESS_KEY_REQUIRED") {
+      return apiError("UNAUTHENTICATED", "Connect with an account key that has FullAccess permission.", 401, undefined, id);
+    }
+    if (code === "SIGNATURE_MISMATCH") {
       return apiError("UNAUTHENTICATED", "The wallet signature could not be verified.", 401, undefined, id);
     }
     return apiError("UNAUTHENTICATED", "Wallet verification failed.", 401, undefined, id);

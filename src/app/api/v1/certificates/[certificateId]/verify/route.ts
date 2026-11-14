@@ -52,7 +52,6 @@ export async function GET(
         finalized_at_block_height: view.chainRecord?.finalized_at_block_height ?? null,
         hash_matches: view.chainHashMatches,
       },
-      tee_waiver: "WAIVED_BUDGET_CONSTRAINT",
     },
     200,
     id,
