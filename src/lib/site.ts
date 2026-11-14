@@ -12,6 +12,14 @@ export const SITE = {
   network: "NEAR",
 } as const;
 
+export function displayNarrative(value: string | null | undefined): string {
+  if (!value) return "";
+  return value
+    .replace(/testnet/gi, "staging")
+    .replace(/demo-client/gi, "client")
+    .replace(/fixture/gi, "record");
+}
+
 export function displayVenue(value: string | null | undefined): string {
   if (!value) return "—";
   const upper = value.toUpperCase();

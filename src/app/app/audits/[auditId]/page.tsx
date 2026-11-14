@@ -7,6 +7,7 @@ import { KpiCard, PageHeader, Panel } from "@/components/ui";
 import { getWalletSession } from "@/lib/auth";
 import { getAuditBundle } from "@/lib/audit-read";
 import { explorerTxUrl } from "@/lib/network";
+import { displayNarrative } from "@/lib/site";
 import { getWorkspaceForAccount } from "@/lib/workspace";
 
 export const dynamic = "force-dynamic";
@@ -52,7 +53,7 @@ function LiveClientAudit({
         eyebrow="Live workspace audit"
         title="The record is"
         accent={audit.public_audit_id}
-        description={thesis?.rationale ?? "This record was created through the authenticated workspace API."}
+        description={displayNarrative(thesis?.rationale) || "This record was created through the authenticated workspace API."}
         actions={
           <>
             <Link href="/app/audits" className="button button--ghost">
@@ -92,7 +93,7 @@ function LiveClientAudit({
                     <span className="mono text-[10px] text-primary">{condition.condition_id}</span>
                     <span className="tag tag--muted">{condition.severity}</span>
                   </div>
-                  <p className="mt-1 text-[12px] leading-relaxed text-muted">{condition.description}</p>
+                  <p className="mt-1 text-[12px] leading-relaxed text-muted">{displayNarrative(condition.description)}</p>
                 </div>
               ))}
             </div>
@@ -127,11 +128,11 @@ function LiveClientAudit({
                           <span className="mono text-[9px] text-primary">{finding.finding_key}</span>
                           <span className="tag tag--muted">Section {finding.section}</span>
                         </div>
-                        <h3 className="finding-title">{finding.claim}</h3>
+                        <h3 className="finding-title">{displayNarrative(finding.claim)}</h3>
                       </div>
                       <StatusPill status={finding.review_status} />
                     </div>
-                    <p className="finding-body">{finding.rationale}</p>
+                    <p className="finding-body">{displayNarrative(finding.rationale)}</p>
                     <div className="finding-meta">
                       <span className="tag tag--muted">{finding.severity}</span>
                       {finding.evidence_status ? <StatusPill status={finding.evidence_status} /> : null}

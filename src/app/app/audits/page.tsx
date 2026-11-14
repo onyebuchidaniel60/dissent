@@ -4,9 +4,10 @@ import { ArrowRight, Filter, Plus, Search, WalletCards, X } from "lucide-react";
 import { PageHeader, Panel } from "@/components/ui";
 import { StatusPill } from "@/components/status-pill";
 import { getWalletSession } from "@/lib/auth";
+import { maskAccount } from "@/lib/env";
 import { listWorkspaceAudits } from "@/lib/audit-service";
 import { getWorkspaceForAccount } from "@/lib/workspace";
-import { displayVenue } from "@/lib/site";
+import { displayNarrative, displayVenue } from "@/lib/site";
 
 const STATUS_OPTIONS = [
   "ALL",
@@ -69,7 +70,7 @@ export default async function AuditsPage({
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="tag tag--ok">{liveAudits.length} records</span>
-        {session ? <span className="tag tag--muted">{session.accountId}</span> : null}
+        {session ? <span className="tag tag--muted">{maskAccount(session.accountId)}</span> : null}
         {hasFilters ? <span className="tag tag--warn">Filtered</span> : null}
       </div>
 
@@ -148,7 +149,7 @@ export default async function AuditsPage({
                       <td data-label="Audit">
                         <div className="table-primary">
                           <Link href={`/app/audits/${audit.id}`}>
-                            {(audit.rationale ?? "Untitled audit").slice(0, 78)}
+                            {displayNarrative(audit.rationale ?? "Untitled audit").slice(0, 78)}
                           </Link>
                           <span>
                             {audit.publicAuditId} · {audit.symbol ?? audit.assetId ?? "NEAR"}

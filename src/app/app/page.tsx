@@ -23,7 +23,7 @@ import { checkDatabase } from "@/lib/db";
 import { ATTACKER_PROFILES } from "@/lib/attackers/profiles";
 import { MODEL_ASSIGNMENTS, PROVIDER_CONFIG } from "@/lib/model-assignments";
 import { NEAR_NETWORK_LABEL, registryAccountId } from "@/lib/network";
-import { displayVenue } from "@/lib/site";
+import { displayNarrative, displayVenue } from "@/lib/site";
 import { getWorkspaceForAccount } from "@/lib/workspace";
 
 export const dynamic = "force-dynamic";
@@ -125,7 +125,7 @@ export default async function AppOverviewPage() {
                         <td data-label="Audit">
                           <div className="table-primary">
                             <Link href={`/app/audits/${audit.id}`}>
-                              {(audit.rationale ?? "Untitled audit").slice(0, 72)}
+                              {displayNarrative(audit.rationale ?? "Untitled audit").slice(0, 72)}
                             </Link>
                             <span>
                               {audit.publicAuditId} · {audit.symbol ?? audit.assetId ?? "NEAR"}
