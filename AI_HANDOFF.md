@@ -4,7 +4,7 @@
 **Current phase:** Phase 12 — layout fix and production sweep. The hero phone is visible at 1440×900, the display breakpoint is 1099px, code defaults are mainnet/1Click/execution-disabled, and the customer-facing UI is network-neutral. Demo video generation is deferred. `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false`; the preview is an explicit testnet staging deployment, and no mainnet contract or real-fund transaction is claimed or authorized.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
-**Deployed app commit:** `aaa5bb1` (`fix: scrub residual network labels and verify signed wallet login`).
+**Deployed app commit:** `1298984` (`fix: lock preview to testnet fallback and route wallet RPC by account`).
 **Production/mainnet authority:** **not granted**. No mainnet transaction, production release or external posting is authorized.
 
 ## Live testnet artifacts
@@ -29,10 +29,10 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 - **Hero phone bug:** the phone was hidden by the 1340px breakpoint on narrower/zoomed desktop viewports and had no explicit minimum dimensions. The hero grid is now explicit (`minmax(0, 1fr) 300px`), the phone has `min-width: 280px` / `min-height: 566px`, and the hide breakpoint is **1099px**. The right column can no longer collapse. Playwright asserts the phone is visible at 1440×900 (width > 240, x > 800), captures `test-results/hero-1440.png`, and asserts it is hidden at 390×844.
 - **Production defaults:** `.env.example` and `src/lib/config.ts` default to `NEAR_NETWORK=mainnet`, `EXECUTION_VENUE=ONECLICK`, `EXECUTION_ENABLED=false` and `PROPRIETARY_LOOP_ENABLED=false`. `network.ts` consumes those defaults. 1Click remains the primary adapter at `https://1click.chaindefuser.com`.
 - **Frontend sweep:** no `testnet`, `demo-client` or `fixture` strings remain in `src/app` or `src/components`; the operator account display and wallet network defaults were made network-neutral. The UI is 100% network-neutral.
-- **Tests:** Vitest 13/13; local Playwright 4/4 at 390×844/1440×900, including the new hero-phone visibility test. Preview `aaa5bb1` is live; preview Playwright 4/4 passes; the 1440×900 screenshot shows the phone visible, and the 390×844 assertion confirms it is hidden.
+- **Tests:** Vitest 13/13; local Playwright 4/4 at 390×844/1440×900, including the new hero-phone visibility test. Preview `1298984` is live with `network=testnet`, `venue=TIDEPOOL`; preview Playwright 4/4 passes; the 1440×900 screenshot shows the phone visible, and the 390×844 assertion confirms it is hidden.
 - **Preview network fallback:** `config/preview-network.json` pins the live preview to testnet (`rpc.testnet.near.org`, `registry.dissent-demo.testnet`, `vault.dissent-demo.testnet`) and `AUTH_RECIPIENT`/`APP_BASE_URL` to `https://dissent-web.onrender.com`. `network.ts` resolves testnet from the registry suffix and falls back to testnet when `NEAR_NETWORK=mainnet` is set without a mainnet registry. `EXECUTION_VENUE` falls back to `TIDEPOOL` whenever the resolved network is testnet, preserving the historical `EXECUTED` certificate.
 - **Dynamic wallet RPC:** `auth.ts` selects `rpc.testnet.near.org` for `.testnet` accounts and `rpc.mainnet.near.org` for `.near` accounts before looking up the access key. A local server forced to `NEAR_RPC_URL=https://rpc.mainnet.near.org` still authenticated a `.testnet` account successfully (200, admin session).
-- **TEE banner removal:** `TeeWaiverNotice` deleted; every TEE/attestation/confidential tag, panel, footer line, status entry and public API field removed from `src/app`/`src/components`. Rendered-text scan of `/`, `/docs`, `/app`, `/app/attackers`, `/app/audits`, `/app/reputation`, `/app/settings/api-keys`, `/operator`, `/operator/providers`, `/operator/proprietary` and the verifier is clean for TEE/attestation/confidential and for testnet/demo-client/fixture. The workspace account tag is masked. The same scan is clean on the deployed preview at `aaa5bb1`.
+- **TEE banner removal:** `TeeWaiverNotice` deleted; every TEE/attestation/confidential tag, panel, footer line, status entry and public API field removed from `src/app`/`src/components`. Rendered-text scan of `/`, `/docs`, `/app`, `/app/attackers`, `/app/audits`, `/app/reputation`, `/app/settings/api-keys`, `/operator`, `/operator/providers`, `/operator/proprietary` and the verifier is clean for TEE/attestation/confidential and for testnet/demo-client/fixture. The workspace account tag is masked. The same scan is clean on the deployed preview at `1298984`.
 - **Wallet auth fix:** `AUTH_RECIPIENT` now defaults to `APP_BASE_URL` and the preview uses `https://dissent-web.onrender.com`. The frontend normalizes the public-key prefix and signature encoding; the backend decodes base64/base64url/array/hex signatures, strips an `ed25519:` prefix, normalizes the public key and verifies against the stored recipient/callback. Local API test with an unprefixed public key and prefixed base64 signature returned 200 and a valid admin session; the same request on the preview also returned 200 with an admin session.
 - **Demo:** deferred by operator instruction; no video or README finalisation was generated in this phase.
 
@@ -161,11 +161,11 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 | Live vault execution | `spend_ft_as` PASS; tx `DxvoRKhCnyYyKrmAopnVYPKZJB7g8ev5Er1wtW5JbSp`; `execution_readiness=EXECUTED` |
 | Tidepool settlement | `SUCCESS`; `0.035245 USDC` out; 3 swap txs recorded |
 | Local Playwright | 3/3 PASS at 390×844 and 1440×900, including the execution receipt |
-| Preview deploy | `aaa5bb1` live; `/healthz`, `/readyz`, both verifier pages 200 |
-| Preview Playwright | 4/4 PASS at 390×844 and 1440×900 on `aaa5bb1`, including the phone visibility test |
+| Preview deploy | `1298984` live; `/healthz`, `/readyz`, historical verifier and both verifier pages 200 |
+| Preview Playwright | 4/4 PASS at 390×844 and 1440×900 on `1298984`, including the phone visibility test |
 | TEE/network UI scan | Clean: no TEE/attestation/confidential or testnet/demo-client/fixture text on 11 rendered routes locally and on the preview |
 | Wallet login | Local and preview signed NEP-413 requests returned 200 with a valid admin session; `.testnet` account also works with a mainnet `NEAR_RPC_URL` |
-| Preview network fallback | `config/preview-network.json` resolves testnet/registry/vault/Tidepool with no env; mainnet overrides are explicit |
+| Preview network fallback | `1298984` reports `network=testnet`, `venue=TIDEPOOL`; historical certificate remains `VERIFIED`/`EXECUTED` |
 | Public verifier | `VERIFIED`; `execution_readiness=EXECUTED`; vault tx and venue swap hashes returned |
 | `/readyz` config check | PASS in staging (`network=testnet`, `venue=TIDEPOOL`); fail-closed in production if registry/vault/quote accounts are missing |
 | Typography | Orbitron display face; hero 2.8–7.3rem, section 1.6–2.8rem, page 1.8–3.1rem; animated hero phone; no overflow at 390×844/1440×900/1920×1080 |
@@ -215,7 +215,7 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 - Music: Kevin MacLeod — “Floating Cities”, CC BY 4.0, attributed in README and production notes.
 - Captions: burned in, max two lines; sampled review at 5s/30s/55s/75s.
 - E2E: 3 Playwright tests pass against both local and deployed preview.
-- Preview deploy: `aaa5bb1` live at `https://dissent-web.onrender.com`; health/readiness and the four E2E checks pass.
+- Preview deploy: `1298984` live at `https://dissent-web.onrender.com`; readiness reports testnet/Tidepool, the historical certificate verifies, and the four E2E checks pass.
 
 ## Next task
 
