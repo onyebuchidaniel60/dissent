@@ -1,0 +1,44 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1440
+PlayResY: 900
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,DejaVu Sans,26,&H00FFFFFF,&H00FFFFFF,&H90000000,&H90000000,-1,0,0,0,100,100,0,0,1,2,0,2,60,60,10,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:01.50,0:00:07.70,Default,,0,0,0,,Autonomous trading agents can make financial decisions faster than humans can supervise them.
+Dialogue: 0,0:00:07.70,0:00:11.70,Default,,0,0,0,,But an agent should not be the only judge of its own thesis.
+Dialogue: 0,0:00:12.26,0:00:16.14,Default,,0,0,0,,Dissent is an adversarial audit protocol for AI trading agents.
+Dialogue: 0,0:00:16.14,0:00:20.96,Default,,0,0,0,,A client submits a thesis, and the exact conditions that would prove it wrong.
+Dialogue: 0,0:00:20.96,0:00:25.22,Default,,0,0,0,,Those conditions are committed on NEAR before any attacker sees them.
+Dialogue: 0,0:00:25.77,0:00:28.62,Default,,0,0,0,,Eight isolated specialists attack the thesis.
+Dialogue: 0,0:00:28.62,0:00:32.86,Default,,0,0,0,,They see the committed conditions, but never each other's findings.
+Dialogue: 0,0:00:32.86,0:00:39.19,Default,,0,0,0,,Every condition is assessed exactly once, and Section B searches for risks beyond the committed set.
+Dialogue: 0,0:00:39.74,0:00:46.94,Default,,0,0,0,,The roster spans seven model families across two vendors, with an open- weight model and a documented TEE waiver.
+Dialogue: 0,0:00:46.94,0:00:50.79,Default,,0,0,0,,The certificate records that deviation instead of hiding it.
+Dialogue: 0,0:00:51.34,0:00:54.71,Default,,0,0,0,,Dissent also pays for its own intelligence.
+Dialogue: 0,0:00:54.71,0:01:00.42,Default,,0,0,0,,A dedicated agent wallet signs an x402 payment for each A01 and A02 call.
+Dialogue: 0,0:01:00.42,0:01:08.33,Default,,0,0,0,,The facilitator shim settles the transfer on-chain in test USDC, then forwards the inference request.
+Dialogue: 0,0:01:08.88,0:01:15.76,Default,,0,0,0,,This is the Agent Economy: an autonomous agent that can pay for the services it consumes, without a human in the loop.
+Dialogue: 0,0:01:16.31,0:01:19.35,Default,,0,0,0,,Evidence is re-fetched through fixed adapters.
+Dialogue: 0,0:01:19.35,0:01:23.51,Default,,0,0,0,,A missing source becomes unverifiable, never a negative result.
+Dialogue: 0,0:01:23.51,0:01:29.92,Default,,0,0,0,,The deterministic adjudicator evaluates coverage, verified evidence, and unresolved disagreement.
+Dialogue: 0,0:01:29.92,0:01:31.64,Default,,0,0,0,,There is no majority vote.
+Dialogue: 0,0:01:32.19,0:01:34.83,Default,,0,0,0,,The result is TRADE, REFUSE, or ABSTAIN.
+Dialogue: 0,0:01:34.83,0:01:41.12,Default,,0,0,0,,The certificate preserves the complete coverage table, accepted findings, and minority dissent.
+Dialogue: 0,0:01:41.67,0:01:44.50,Default,,0,0,0,,The certificate is hashed and anchored on NEAR.
+Dialogue: 0,0:01:44.50,0:01:48.40,Default,,0,0,0,,Anyone can recompute the hash and verify it against the registry.
+Dialogue: 0,0:01:48.95,0:01:51.28,Default,,0,0,0,,Dissent is not just a service.
+Dialogue: 0,0:01:51.28,0:01:53.39,Default,,0,0,0,,It is its own first client.
+Dialogue: 0,0:01:53.39,0:02:01.64,Default,,0,0,0,,It originated a thesis, audited it, executed it via its vault, and paid for its own AI compute using x402.
+Dialogue: 0,0:02:01.64,0:02:04.68,Default,,0,0,0,,It is a self-sustaining economic actor.
+Dialogue: 0,0:02:05.23,0:02:10.22,Default,,0,0,0,,Here is the historical proprietary run: the vault transfer, the Tidepool settlement,
+Dialogue: 0,0:02:10.22,0:02:13.48,Default,,0,0,0,,and the execution receipt preserved in the certificate.
+Dialogue: 0,0:02:14.03,0:02:18.91,Default,,0,0,0,,The same public verifier returns VERIFIED, with execution readiness EXECUTED.
+Dialogue: 0,0:02:19.46,0:02:21.31,Default,,0,0,0,,Dissent doesn't just judge autonomous agents.
+Dialogue: 0,0:02:21.31,0:02:23.21,Default,,0,0,0,,It is one.

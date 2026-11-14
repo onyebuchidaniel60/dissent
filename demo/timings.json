@@ -2,52 +2,98 @@
   "segments": [
     {
       "id": "S1",
-      "start": 1.0,
-      "duration": 9.875,
-      "end": 10.875
+      "text": "Autonomous trading agents can make financial decisions faster than humans can supervise them. But an agent should not be the only judge of its own thesis.",
+      "start": 1.5,
+      "duration": 10.205,
+      "end": 11.705
     },
     {
       "id": "S2",
-      "start": 11.475,
-      "duration": 10.757,
-      "end": 22.232
+      "text": "Dissent is an adversarial audit protocol for AI trading agents. A client submits a thesis, and the exact conditions that would prove it wrong. Those conditions are committed on NEAR before any attacker sees them.",
+      "start": 12.255,
+      "duration": 12.967,
+      "end": 25.222
     },
     {
       "id": "S3",
-      "start": 22.832,
-      "duration": 11.692,
-      "end": 34.524
+      "text": "Eight isolated specialists attack the thesis. They see the committed conditions, but never each other's findings. Every condition is assessed exactly once, and Section B searches for risks beyond the committed set.",
+      "start": 25.772,
+      "duration": 13.42,
+      "end": 39.192
     },
     {
       "id": "S4",
-      "start": 35.124,
-      "duration": 14.223,
-      "end": 49.347
+      "text": "The roster spans seven model families across two vendors, with an open-weight model and a documented TEE waiver. The certificate records that deviation instead of hiding it.",
+      "start": 39.742,
+      "duration": 11.052,
+      "end": 50.794
     },
     {
       "id": "S5",
-      "start": 49.947,
-      "duration": 14.618,
-      "end": 64.564
+      "text": "Dissent also pays for its own intelligence. A dedicated agent wallet signs an x402 payment for each A01 and A02 call. The facilitator shim settles the transfer on-chain in test USDC, then forwards the inference request.",
+      "start": 51.344,
+      "duration": 16.984,
+      "end": 68.328
+    },
+    {
+      "id": "S5B",
+      "text": "This is the Agent Economy: an autonomous agent that can pay for the services it consumes, without a human in the loop.",
+      "start": 68.878,
+      "duration": 6.885,
+      "end": 75.763
     },
     {
       "id": "S6",
-      "start": 65.164,
-      "duration": 10.682,
-      "end": 75.846
+      "text": "Evidence is re-fetched through fixed adapters. A missing source becomes unverifiable, never a negative result. The deterministic adjudicator evaluates coverage, verified evidence, and unresolved disagreement. There is no majority vote.",
+      "start": 76.313,
+      "duration": 15.323,
+      "end": 91.636
     },
     {
       "id": "S7",
-      "start": 76.446,
-      "duration": 10.896,
-      "end": 87.342
+      "text": "The result is TRADE, REFUSE, or ABSTAIN. The certificate preserves the complete coverage table, accepted findings, and minority dissent.",
+      "start": 92.186,
+      "duration": 8.939,
+      "end": 101.125
     },
     {
       "id": "S8",
-      "start": 87.942,
-      "duration": 10.304,
-      "end": 98.247
+      "text": "The certificate is hashed and anchored on NEAR. Anyone can recompute the hash and verify it against the registry.",
+      "start": 101.675,
+      "duration": 6.722,
+      "end": 108.397
+    },
+    {
+      "id": "S9",
+      "text": "Dissent is not just a service. It is its own first client. It originated a thesis, audited it, executed it via its vault, and paid for its own AI compute using x402. It is a self-sustaining economic actor.",
+      "start": 108.947,
+      "duration": 15.73,
+      "end": 124.677
+    },
+    {
+      "id": "S10",
+      "text": "Here is the historical proprietary run: the vault transfer, the Tidepool settlement, and the execution receipt preserved in the certificate.",
+      "start": 125.227,
+      "duration": 8.255,
+      "end": 133.481
+    },
+    {
+      "id": "S11",
+      "text": "The same public verifier returns VERIFIED, with execution readiness EXECUTED.",
+      "start": 134.031,
+      "duration": 4.876,
+      "end": 138.907
+    },
+    {
+      "id": "S12",
+      "text": "Dissent doesn't just judge autonomous agents. It is one.",
+      "start": 139.457,
+      "duration": 3.749,
+      "end": 143.207
     }
   ],
-  "total": 99.347
+  "intro": 1.5,
+  "gap": 0.55,
+  "outro": 1.0,
+  "total": 144.207
 }

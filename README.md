@@ -4,11 +4,43 @@
 
 Dissent challenges an AI trading agent's thesis before the agent acts. A client commits a thesis and machine-testable failure conditions on NEAR, funds a fixed audit quote, and receives eight isolated adversarial analyses. Evidence is re-fetched, attackers are reviewed for sycophancy, and a deterministic policy issues `TRADE`, `REFUSE` or `ABSTAIN`. The certificate preserves coverage, minority findings and disagreement instead of turning them into a majority vote.
 
-> **Current checkpoint:** Phase 16 — x402 autonomous compute procurement. A01/A02 pay for their own inference through a self-hosted x402 shim on NEAR testnet, settled in test USDC by a NEP-366 delegate. The eight-attacker pipeline, evidence re-fetch, deterministic adjudication, NEAR anchoring, public verifier and a capped NEP-141 vault remain implemented. Mainnet execution remains disabled by default; the live preview is explicit testnet staging.
+> **Current checkpoint:** Phase 17 — final demo and submission polish. The eight-attacker audit, evidence re-fetch, deterministic adjudication, NEAR anchoring, public verifier, capped NEP-141 vault and x402 compute procurement are complete and live on the testnet preview. The final 1440×900 demo is in [`demo/dissent-demo.mp4`](demo/dissent-demo.mp4). Mainnet execution remains disabled by default; the preview is explicit testnet staging.
+
+## Live Demo & Verification
+
+- **Live application:** <https://dissent-web.onrender.com>
+- **Final demo video:** [`demo/dissent-demo.mp4`](demo/dissent-demo.mp4) — 1440×900, 144.2 seconds, H.264/AAC, burned-in captions.
+- **Client audit certificate — `VERIFIED`, `ABSTAIN`:** <https://dissent-web.onrender.com/verify/a8df6a5a-8b3c-4f33-9953-4b64593256bf>
+- **Proprietary execution certificate — `VERIFIED`, `EXECUTED`:** <https://dissent-web.onrender.com/verify/0bf3728d-e457-4b2f-8fad-b53be9565498>
+- **Verification API:** `GET /api/v1/certificates/{certificateId}/verify` recomputes the certificate hash and compares it with the NEAR registry.
+- **Source:** <https://github.com/onyebuchidaniel60/dissent>
+
+The verifier never exposes the thesis preimage, positions, evidence payloads, attacker prompts or private keys. Only the certificate hash, verdict, policy version, registry account and transaction reference are public.
 
 ## Product boundaries
 
 Dissent is an audit and verification layer — not an exchange, broker, custodian, wallet, investment adviser or profit guarantee. The production build does not execute mainnet trades or move mainnet funds unless execution is explicitly enabled, the audit matches the operator gate, and the vault, certificate and venue quote address are approved. The historical staging run used testnet only. Failure, missing coverage and unresolved critical evidence produce `ABSTAIN`, not an assumed pass.
+
+## Hackathon Tracks
+
+### Agent Economy — primary track
+
+Dissent is an autonomous economic actor, not only an audit API:
+
+- It holds test USDC in a dedicated agent wallet and **pays for its own inference** through x402.
+- It originates its own thesis, runs the same eight-attacker audit, and can execute a `TRADE` certificate through a capped NEP-141 vault.
+- Client fees, bounty allocations and the proprietary execution path are recorded on the NEAR testnet registry.
+- The final demo shows both sides: a client audit and the proprietary, self-paying agent.
+
+**Evidence:** `AUD-2039-DDF2` paid A01/A02 through x402 and produced a `VERIFIED` certificate; the historical proprietary certificate `0bf3728d-e457-4b2f-8fad-b53be9565498` verifies `VERIFIED / EXECUTED` with a real vault transaction and Tidepool settlement.
+
+### Autonomous Agents / AI × Crypto
+
+Eight specialist attackers, committed failure conditions, evidence re-fetch, sycophancy review and a deterministic policy. The attackers are isolated from each other and from the verdict; disagreement is preserved instead of averaged away.
+
+### Verifiable AI / Infrastructure
+
+The public verifier recomputes the certificate hash from canonical bytes and checks the NEAR registry. The x402 shim settles real test-USDC transfers through a NEP-366 signed delegate; no provider key is exposed to the model.
 
 ## Stack
 
@@ -94,6 +126,15 @@ The pinned roster is recorded in [`config/model_assignments.json`](config/model_
 - Remaining OpenRouter credit at intake: **$7.747** (recorded; not a promise of future balance).
 - No paid fallback may replace a `:free` slug.
 
+## Economic Model
+
+Dissent autonomously pays for its own inference compute using the x402 protocol. It holds USDC in a dedicated agent wallet and settles payments on-chain via a self-hosted facilitator shim.
+
+- **Client audits:** the client commits a thesis and failure conditions, then funds a fixed on-chain audit quote. Accepted findings are allocated on the registry; no token is issued and no payout is automatic.
+- **Compute procurement:** A01 (OpenRouter) and A02 (Groq) pay `0.002` test USDC per inference through the x402 shim. The agent wallet is `x402-agent.testnet`; the settlement asset is Tidepool test USDC, which has no value.
+- **Proprietary arm:** Dissent can originate its own thesis and, only on a `TRADE` certificate, execute through a capped vault. The historical staging run is preserved as `VERIFIED / EXECUTED`; production mainnet execution remains disabled by default.
+- **Boundaries:** no mainnet deployment, no real-fund transfer, no profit guarantee, and no token sale. The preview is a testnet staging environment.
+
 ## Compute Procurement (x402)
 
 Dissent's audit workers can pay for their own inference. The procurement agent is a dedicated testnet account, `x402-agent.testnet`; A01 (OpenRouter) and A02 (Groq) call the self-hosted x402 shim instead of using provider keys directly. Each paid request follows the x402 v2 `exact` scheme on NEAR:
@@ -105,9 +146,23 @@ Dissent's audit workers can pay for their own inference. The procurement agent i
 
 Routes: `POST /api/x402/openrouter/chat/completions`, `POST /api/x402/groq/chat/completions`; capabilities are published at `GET /api/x402/supported`. The shim accepts only known model slugs, caps output tokens, limits body size and has no arbitrary URL fetch. Settlement is serialised so concurrent paid calls cannot race the relayer or payer nonces.
 
+```text
+A01/A02 audit worker
+  └─ model adapter
+      └─ POST /api/x402/{provider}/chat/completions   (no provider key)
+          ├─ 402 challenge: asset, amount, payee, near:testnet
+          ├─ agent signs one NEP-366 ft_transfer delegate
+          ├─ shim verifies + settles through the in-process facilitator
+          ├─ shim forwards to OpenRouter/Groq with the server-side key
+          └─ inference + PAYMENT-RESPONSE
+      └─ on x402/proxy failure: warn and fall back to the direct provider key
+```
+
+The facilitator and resource server run in the same trusted process as the web app for the preview. The relayer is isolated from the deployer account, and the x402 RPC is isolated from the app's FastNear authentication path.
+
 **Deployments and deviations.** The public reference facilitator (`https://test.x402.mikedotexe.com`) is live for `near:testnet` but its `/verify` and `/settle` routes require an allowlisted resource-server key. `httpay.xyz` currently returns `DEPLOYMENT_DISABLED`, and `@waterfall-finance/sdk`/`@ai42/sdk` are not NEAR adapters. The implementation therefore self-hosts the facilitator and resource server with `@fastnear/x402` and uses the Tidepool test USDC token (`usdc.tidepool-sandbox.testnet`, six decimals, no value) as the settlement asset. `@neargate/cli` was rejected for this flow because it settles in native NEAR, not USDC. The agent was funded by an on-chain transfer from `demo-client.testnet`; the Circle faucet was not used.
 
-**Configuration:** `X402_SHIM_ENABLED`, `X402_AGENT_ACCOUNT_ID`, `X402_AGENT_KEY`, `X402_PAY_TO_ACCOUNT_ID`, `X402_USDC_TOKEN_ID`, `X402_PRICE_ATOMIC` (default `2000` = 0.002 USDC), `X402_ATTACKERS` (default `A01,A02`), `X402_RELAYER_ACCOUNT_ID`, `X402_RELAYER_KEY`, `OPENROUTER_X402_PROXY_URL`, `GROQ_X402_PROXY_URL`. The shim is disabled by default and uses a testnet full-access key only; it is not a mainnet payment path.
+**Configuration:** `X402_SHIM_ENABLED`, `X402_AGENT_ACCOUNT_ID`, `X402_AGENT_KEY`, `X402_PAY_TO_ACCOUNT_ID`, `X402_USDC_TOKEN_ID`, `X402_PRICE_ATOMIC` (default `2000` = 0.002 USDC), `X402_ATTACKERS` (default `A01,A02`), `X402_RELAYER_ACCOUNT_ID`, `X402_RELAYER_KEY`, `X402_RPC_URL`, `OPENROUTER_X402_PROXY_URL`, `GROQ_X402_PROXY_URL`. The shim is disabled by default and uses a testnet full-access key only; it is not a mainnet payment path.
 
 **Operator checks:**
 
@@ -151,13 +206,14 @@ Render free services spin down after idle. The first request can take ~50 second
 
 Output directory: [`demo/`](demo/).
 
-Expected outputs:
+Final output:
 
-- `demo/dissent-demo.mp4` — H.264 + AAC, 1280×720, ≤180 seconds.
+- `demo/dissent-demo.mp4` — H.264 + AAC, **1440×900**, **144.2 seconds**, 8.6 MB, SHA-256 `25066d678beef048ae10f69267d38b04cd220fdce4104270cc2757ea8f5bd75e`.
 - `demo/NARRATION.md` — final script with per-segment timing.
-- `demo/PRODUCTION_NOTES.md` — voice ID, music source/license, ffmpeg commands, sync and review results.
+- `demo/PRODUCTION_NOTES.md` — voice, music source/license, ffmpeg commands, sync and review results.
+- `demo/timings.json` — measured narration timings used by the capture script.
 
-The delivered demo uses a public-domain local Piper/LJSpeech fallback because the operator-supplied ElevenLabs library voice returned `paid_plan_required` on the free tier (no charge was made). Background music is CC BY 4.0, mixed approximately −20 dB under the voice, with a 1.5s fade-in and 2s fade-out. See `demo/PRODUCTION_NOTES.md`.
+The delivered demo uses a public-domain local Piper/LJSpeech fallback because the operator-supplied ElevenLabs library voice returned `paid_plan_required` on the free tier (no charge was made). Background music is Kevin MacLeod's “Floating Cities” (CC BY 4.0), mixed approximately −20 dB under the voice, with a 1.5s fade-in and 2s fade-out. See `demo/PRODUCTION_NOTES.md`.
 
 ### Music attribution
 
@@ -193,6 +249,16 @@ See [`docs/SECURITY_SPEC.md`](docs/SECURITY_SPEC.md) and the in-app [`/docs`](ht
 - [`docs/API_SPEC.md`](docs/API_SPEC.md) — REST API.
 - [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) — schema and classifications.
 - [`OPERATOR_INTAKE.md`](OPERATOR_INTAKE.md) — completed intake and authorization boundary.
+
+## Future Roadmap
+
+- **Mainnet readiness:** fresh `#[init]` registry and vault on operator-owned mainnet accounts, a multisig/timelock owner, 1Click as the primary execution venue, and a separate operator authorization record before any real-fund execution.
+- **x402 expansion:** extend paid inference beyond A01/A02, add independent facilitator/relayer operators, and add cost-aware provider routing while preserving the model-family, vendor and open-weight gates.
+- **Evidence and models:** more typed adapters, broader model-family coverage, and a TEE re-evaluation if the budget constraint changes. The current TEE waiver remains explicit.
+- **Developer surface:** a client SDK, webhook/event delivery, and verifier integrations for third-party audit consumers.
+- **Operations:** stronger queue observability, automated certificate monitoring, and a public status page.
+
+Roadmap items are planned work, not claims about the current deployment.
 
 ## License
 

@@ -1,14 +1,15 @@
 # AI_HANDOFF.md — Dissent
 
 **Last updated:** 2026-11-14
-**Current phase:** Phase 16 — x402 autonomous compute procurement is **implemented and live on the testnet preview**. `x402-agent.testnet` holds test USDC and pays for A01/A02 inference through the self-hosted x402 shim; the shim settles one NEP-141 `ft_transfer` per call via a NEP-366 `SignedDelegateAction`, then forwards to OpenRouter/Groq with the existing provider keys. The live preview remains on testnet with the Phase 14 client execution UI. No mainnet contract or real-fund transaction is claimed or authorized.
+**Current phase:** Phase 17 — final demo and submission polish is **complete**. The repository now includes the 1440×900 final demo, the Agent Economy/x402 README narrative, live demo and verification links, hackathon-track framing and a future roadmap. The live preview remains on testnet with x402 compute procurement and the client execution UI. No mainnet contract or real-fund transaction is claimed or authorized.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
-**Deployed app commit:** `efcf38f` (`fix: decouple audit dispatch and fall back from x402 failures`; includes Phase 16 x402 compute procurement, the wallet RPC failover list, the asynchronous dispatch boundary and the direct-provider fallback).
+**Deployed app commit:** `bc25b65` (`fix: fall back across RPCs for certificate verification`; includes Phase 16 x402 compute procurement, the wallet RPC failover list, asynchronous dispatch and the direct-provider fallback). The final video was captured against this build and the live testnet database.
 **Production/mainnet authority:** **not granted**. No mainnet transaction, production release or external posting is authorized.
 
 ## Live testnet artifacts
 
+- **Final demo video:** `demo/dissent-demo.mp4` — 1440×900, 144.20s, SHA-256 `25066d678beef048ae10f69267d38b04cd220fdce4104270cc2757ea8f5bd75e`. Client and proprietary verifier shots use `a8df6a5a…` (`VERIFIED / ABSTAIN`) and `0bf3728d…` (`VERIFIED / EXECUTED`).
 - **Phase 16 x402 audit:** `88114e6f-0cc7-479d-af0a-49425b9f3ea5` (`AUD-2039-DDF2`), verdict `ABSTAIN`, certificate `a8df6a5a-8b3c-4f33-9953-4b64593256bf`, hash `504a9c30163dae2a3f28833c80372d0031fdb14ad1812f1123494a58f29bb3cb`, anchor tx `Dz8wm14QrcKhkdzQpVMSZ5RCbFgRDc8cSg62rPqpfhJK`, public verify `https://dissent-web.onrender.com/verify/a8df6a5a-8b3c-4f33-9953-4b64593256bf`. A01 OpenRouter and A02 Groq each paid `0.002` test USDC through the deployed x402 shim.
 - **Audit ID:** `394c2192-8d9f-4463-99f2-a15d45dc54a2` (`AUD-C963-E660`)
 - **Commitment transaction:** `JkqwT3Zc9scWxKxkq2jyLwqCALhkfeVrbNbASxhExiJ`
@@ -39,6 +40,15 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 - **Wallet auth fix:** `AUTH_RECIPIENT` now defaults to `APP_BASE_URL` and the preview uses `https://dissent-web.onrender.com`. The frontend normalizes the public-key prefix and signature encoding; the backend decodes base64/base64url/array/hex signatures, strips an `ed25519:` prefix, normalizes the public key and verifies against the stored recipient/callback. Local API test with an unprefixed public key and prefixed base64 signature returned 200 and a valid admin session; the same request on the preview also returned 200 with an admin session.
 - **Global page gutter:** `.app-main` used the `padding` shorthand with zero horizontal padding, overriding `.page-width`'s `clamp(24px, 4.8vw, 88px)`. It now sets only `padding-top`/`padding-bottom`; `/docs` gained `src/app/docs/layout.tsx` with the same `page-width app-main` wrapper. At 1440×900 the page header starts at `x=69.12px` with a matching right gap and the existing `--page-max: 1520px` centers wider screens. Playwright screenshots: `test-results/gutter-reputation-1440.png`, `gutter-audits-1440.png`, `gutter-docs-1440.png`.
 - **Demo:** deferred by operator instruction; no video or README finalisation was generated in this phase.
+
+### Phase 17 — final demo and submission polish — 2026-11-14
+
+- **Final video:** `demo/dissent-demo.mp4`, 1440×900, 144.20s, H.264/AAC, 8,610,222 bytes, SHA-256 `25066d678beef048ae10f69267d38b04cd220fdce4104270cc2757ea8f5bd75e`. Captured from the current build and live testnet data with Playwright; voice is local Piper/LJSpeech; music is Kevin MacLeod's “Floating Cities” at approximately −20 dB. Act 1 covers the client audit, attacker runs, x402 log excerpt, `ABSTAIN`, certificate anchor and `VERIFIED` client verifier. Act 2 covers `/operator/proprietary`, the historical `EXECUTED` receipt, vault tx `DxvoRKhCnyYyKrmAopnVYPKZJB7g8ev5Er1wtW5JbSp`, Tidepool swap txs and the proprietary verifier returning `VERIFIED / EXECUTED`.
+- **README:** added prominent **Live Demo & Verification**, **Hackathon Tracks** (Agent Economy primary), **Economic Model**, final x402 architecture, and **Future Roadmap** sections. The Economic Model contains the exact statement: “Dissent autonomously pays for its own inference compute using the x402 protocol. It holds USDC in a dedicated agent wallet and settles payments on-chain via a self-hosted facilitator shim.” The demo section records 1440×900, 144.2s and the final hash.
+- **Narration and production notes:** `demo/NARRATION.md` and `demo/PRODUCTION_NOTES.md` are rewritten for the final 13-segment 144.2s cut, including measured timings, voice/music attribution, build commands and review evidence. `demo/timings.json`, `demo/phase17-captions.ass` and the capture script are checked in.
+- **Verification evidence in the video:** client certificate `a8df6a5a-8b3c-4f33-9953-4b64593256bf` (`VERIFIED`, `ABSTAIN`) and proprietary certificate `0bf3728d-e457-4b2f-8fad-b53be9565498` (`VERIFIED / EXECUTED`). The x402 log card quotes the Render runtime lines for `AUD-2039-DDF2`.
+- **Tests:** `pnpm typecheck`, `pnpm lint`, Vitest `16/16`, `pnpm build` and Playwright `7/7` pass on the final build. The Playwright draft-creation test left `AUD-7592-D199`; it was deleted after confirming zero commitments. The two pre-hotfix user drafts remain `AWAITING_COMMITMENT` and are not touched.
+- **Deployment:** code commit `bc25b65` is live. Final README/docs commit follows this handoff update. No mainnet deployment, real-fund transfer, TEE claim or production release was made.
 
 ### Phase 16.1 — wallet RPC and dispatch hotfix — 2026-11-14
 

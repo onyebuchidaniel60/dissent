@@ -1,9 +1,9 @@
 # Dissent — Product Demo Video Plan
 
-> **Production status:** delivered 2026-11-13. The operator-supplied ElevenLabs library voice returned `paid_plan_required` on the free tier; no charge was made. The delivered video uses a public-domain Piper/LJSpeech fallback. See `demo/PRODUCTION_NOTES.md` for evidence and the operator action needed to regenerate with the requested voice.
+> **Production status:** final Phase 17 video delivered 2026-11-14 at **1440×900**, 144.2 seconds, SHA-256 `25066d678beef048ae10f69267d38b04cd220fdce4104270cc2757ea8f5bd75e`. The operator-supplied ElevenLabs library voice returned `paid_plan_required` on the free tier; no charge was made. The delivered video uses a public-domain Piper/LJSpeech fallback. See `demo/PRODUCTION_NOTES.md` for evidence and the operator action needed to regenerate with the requested voice.
 
 **Length:** Target 90–150 seconds; hard limit 180 seconds.  
-**Capture:** Playwright at **1280×720**, deterministic demo data, clean browser profile, service warmed for ~2 minutes. Render free cold starts can take ~50 seconds; never record a cold service.  
+**Capture:** Playwright at **1440×900**, current build and live testnet data, clean browser profile, service warmed. Render free cold starts can take ~50 seconds; never record a cold service.  
 **Voice:** **ElevenLabs**, using the exact operator-supplied `ELEVENLABS_VOICE_ID` for every segment. Do not substitute a default voice.  
 **Music:** Royalty-free instrumental from Pixabay Music, Free Music Archive or Incompetech; prefer CC0 or CC BY. Ambient/cinematic, no vocals, no percussion stabs. Credit the source, title, artist and license in `demo/PRODUCTION_NOTES.md` and the README “Music attribution” section.
 
