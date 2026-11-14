@@ -234,6 +234,13 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Loop shutdown: a second loop-originated audit `AUD-F3D9-57A1` (`71563af5-05d3-4bc0-aaa2-94bffd55c094`) was created during the shutdown tick. The first dispatch hit pg-boss's 900s expiry; the retry completed all eight runs after the idempotent-resume fix. Verdict `ABSTAIN`; certificate `b734b045-3f62-485a-b682-471ee1bc45e1`, hash `8fd8fea096646daee641531eaee4c99634b885abe9687fea4f59b50bcb0d4643`, anchor `8oCzZThL82UPKXTpHzDCLTAwqaEWZX7rnGgBovGrJEbY`. `src/lib/queue.ts` now calls `unschedule("proprietary.loop")` and `deleteQueuedJobs("proprietary.loop")` when the flag is false.
 - `pnpm typecheck`, `pnpm lint`, Vitest `16/16`, `pnpm build` and Playwright `7/7` pass after the queue cleanup. The Playwright draft-creation test left `AUD-53CA-0931` (`AWAITING_COMMITMENT`, zero commitments); it was deleted, leaving zero open drafts. The final preview deploy is `c860b17`; `/readyz` and `/api/x402/supported` are healthy and `pgboss.schedule` no longer contains `proprietary.loop`.
 
+## Phase 18 — repository declutter and public README — 2026-11-14
+
+- Moved the root planning/spec/handoff documents into `docs/` with `git mv`; root Markdown is now only `README.md`. Removed the generated `SHA256SUMS.txt` and the duplicate `demo/DEMO_VIDEO_PLAN.md`.
+- Removed internal state from `README.md`: the phase checkpoint, Budget section, handoff/commit references and internal planning links. Kept Live Demo & Verification, Hackathon Tracks, Economic Model and Compute Procurement. Added hosted/local Quickstart, How to use Dissent, How to verify a certificate and public documentation links.
+- Updated `src/app/docs/page.tsx` repository links to `docs/PROJECT_SPEC.md` and `docs/ARCHITECTURE.md`; updated moved-document cross-links and `docs/UI_UX_SPEC.md` reference paths. Local Markdown link check: 0 broken relative links.
+- `pnpm typecheck`, `pnpm lint` and `pnpm build` pass.
+
 ## Phase 17 — final demo and submission polish — 2026-11-14
 
 - Polished `README.md` with prominent **Live Demo & Verification**, **Hackathon Tracks** (Agent Economy primary), **Economic Model**, the final x402 architecture diagram/flow, and **Future Roadmap**. The Economic Model includes the exact self-paying-agent statement requested for the submission.

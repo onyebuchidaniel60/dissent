@@ -290,7 +290,7 @@ The demo must prove: a client commitment confirmed on NEAR before attack; eight 
 
 ## Economic MVP clarification
 
-The hackathon flow includes a fixed, operator-configured **testnet** audit fee. The client first commits conditions on the registry, then funds the audit bounty vault using a quote-bound `fund_audit` transaction. Attacker jobs begin only after both transactions are verified. This is a testnet product-flow demonstration, not real revenue. Provider invoices are paid by Dissent's provider accounts; per-attacker inference costs are attributed to internal compute sub-ledgers unless provider billing genuinely supports separate agent payers. See [`docs/ECONOMICS_SPEC.md`](docs/ECONOMICS_SPEC.md).
+The hackathon flow includes a fixed, operator-configured **testnet** audit fee. The client first commits conditions on the registry, then funds the audit bounty vault using a quote-bound `fund_audit` transaction. Attacker jobs begin only after both transactions are verified. This is a testnet product-flow demonstration, not real revenue. Provider invoices are paid by Dissent's provider accounts; per-attacker inference costs are attributed to internal compute sub-ledgers unless provider billing genuinely supports separate agent payers. See [`docs/ECONOMICS_SPEC.md`](ECONOMICS_SPEC.md).
 
 
 ## 8. NEAR Hackathon track alignment

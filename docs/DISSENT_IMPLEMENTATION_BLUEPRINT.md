@@ -30,7 +30,7 @@ The agent must complete one consolidated intake before repository modification, 
 **Secondary use cases:** Audit staking/lending/swap decisions, portfolio exposure and investment theses; future Dissent-originated theses use the same pipeline.  
 **Does not do:** It is not a broker, exchange, custodian, retail financial adviser, profit guarantee or open attacker marketplace. The hackathon MVP does not trade live funds.
 
-Detailed product spec: [`PROJECT_SPEC.md`](PROJECT_SPEC.md) and [`DISSENT_PRD.md`](DISSENT_PRD.md). Screen-by-screen interaction and state requirements: [`docs/UI_UX_SPEC.md`](docs/UI_UX_SPEC.md).
+Detailed product spec: [`PROJECT_SPEC.md`](PROJECT_SPEC.md) and [`DISSENT_PRD.md`](DISSENT_PRD.md). Screen-by-screen interaction and state requirements: [`docs/UI_UX_SPEC.md`](UI_UX_SPEC.md).
 
 # 2. MVP scope
 
@@ -120,13 +120,13 @@ Adjudication precedence:
 3. `TRADE` only when all eight attackers, diversity, TEE, material evidence, reviews and conflict gates pass.
 4. Otherwise `ABSTAIN`.
 
-No majority vote. Exact severity/evidence/reproducibility factors, divergence formula, bounty formula and 16 test vectors are in [`docs/ADJUDICATION_SPEC.md`](docs/ADJUDICATION_SPEC.md).
+No majority vote. Exact severity/evidence/reproducibility factors, divergence formula, bounty formula and 16 test vectors are in [`docs/ADJUDICATION_SPEC.md`](ADJUDICATION_SPEC.md).
 
 # 7. Data model
 
 PostgreSQL tables: `users`, `workspaces`, `workspace_members`, `client_api_keys`, `audits`, `theses`, `failure_conditions`, `commitments`, `attacker_runs`, `data_snapshots`, `evidence_records`, `findings`, `condition_assessments`, `review_records`, `tee_verifications`, `certificates`, `reputation_events`, `bounty_pools`, `bounty_payments`, `audit_events`, `provider_configs`.
 
-All records use UUIDs unless sequence IDs are specified; timestamps are UTC; amount values are integer smallest-unit strings/NUMERIC, never floating point. Workspace ID is derived from authenticated principal, not request data. Unique constraints cover idempotency keys, condition IDs, attacker/run generation, condition assessment, certificate hash, reputation event and settlement ID. See [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) for fields, relationships, indexes and privacy classification.
+All records use UUIDs unless sequence IDs are specified; timestamps are UTC; amount values are integer smallest-unit strings/NUMERIC, never floating point. Workspace ID is derived from authenticated principal, not request data. Unique constraints cover idempotency keys, condition IDs, attacker/run generation, condition assessment, certificate hash, reputation event and settlement ID. See [`docs/DATA_MODEL.md`](DATA_MODEL.md) for fields, relationships, indexes and privacy classification.
 
 # 8. System architecture
 
@@ -164,11 +164,11 @@ Base `/api/v1`, JSON, scoped bearer API keys for client agents, secure HTTP-only
 - `POST /audits/{id}/cancel` (only before commit)
 - Admin: `GET /admin/audits`, `POST /admin/audits/{id}/retry`, `GET /admin/attackers`, `GET /admin/providers/health`, `GET /admin/reputation`, `GET /admin/system/health`.
 
-All create/mutate operations use idempotency. Error envelope, request samples, validation, permissions and side effects: [`docs/API_SPEC.md`](docs/API_SPEC.md).
+All create/mutate operations use idempotency. Error envelope, request samples, validation, permissions and side effects: [`docs/API_SPEC.md`](API_SPEC.md).
 
 # 11. Database operations
 
-Use transactions for audit creation, commitment confirmation, run completion, adjudication, bounty reservation and reputation events. Never hold DB transactions open across third-party API/model calls. Use outbox pattern; queue handlers are idempotent. Lock audit/pool rows for adjudication and payout. Record an immutable event per state transition. See [`docs/DATABASE_OPERATIONS.md`](docs/DATABASE_OPERATIONS.md).
+Use transactions for audit creation, commitment confirmation, run completion, adjudication, bounty reservation and reputation events. Never hold DB transactions open across third-party API/model calls. Use outbox pattern; queue handlers are idempotent. Lock audit/pool rows for adjudication and payout. Record an immutable event per state transition. See [`docs/DATABASE_OPERATIONS.md`](DATABASE_OPERATIONS.md).
 
 # 12. Authentication and authorization
 
@@ -181,7 +181,7 @@ Use transactions for audit creation, commitment confirmation, run completion, ad
 
 # 13. Security architecture
 
-Controls include strict schemas, rate/cost caps, parameterized DB access, CSRF/CSP/XSS defenses, adapter host allowlists, SSRF blocks, untrusted-data prompt-injection boundaries, sealed sibling contexts, server-owned model provenance, verified TEE receipts, bounded retries, idempotency, contract access control, restricted Function Call Keys, no live trade executor, and fail-closed verdict handling. Full threat matrix and release gates: [`docs/SECURITY_SPEC.md`](docs/SECURITY_SPEC.md).
+Controls include strict schemas, rate/cost caps, parameterized DB access, CSRF/CSP/XSS defenses, adapter host allowlists, SSRF blocks, untrusted-data prompt-injection boundaries, sealed sibling contexts, server-owned model provenance, verified TEE receipts, bounded retries, idempotency, contract access control, restricted Function Call Keys, no live trade executor, and fail-closed verdict handling. Full threat matrix and release gates: [`docs/SECURITY_SPEC.md`](SECURITY_SPEC.md).
 
 # 14. UI/UX architecture
 
@@ -228,7 +228,7 @@ Exact model IDs/versions and quotas are frozen during intake. A substitution is 
 
 # 18. Payment/financial architecture
 
-The MVP demonstrates client audit funding and accepted-finding bounties on NEAR testnet only. The client commits conditions, receives a fixed testnet fee quote, then funds the bounded bounty vault before attacker dispatch. This is testnet-only and is not real revenue. Provider invoices are billed to Dissent's configured vendor accounts; per-attacker compute budgets are internal sub-ledgers unless provider billing truly supports distinct per-agent payer accounts. No mainnet fee, bounty transfer or proprietary trade is authorized by this blueprint. See [`docs/ECONOMICS_SPEC.md`](docs/ECONOMICS_SPEC.md).
+The MVP demonstrates client audit funding and accepted-finding bounties on NEAR testnet only. The client commits conditions, receives a fixed testnet fee quote, then funds the bounded bounty vault before attacker dispatch. This is testnet-only and is not real revenue. Provider invoices are billed to Dissent's configured vendor accounts; per-attacker compute budgets are internal sub-ledgers unless provider billing truly supports distinct per-agent payer accounts. No mainnet fee, bounty transfer or proprietary trade is authorized by this blueprint. See [`docs/ECONOMICS_SPEC.md`](ECONOMICS_SPEC.md).
 
 Bounty rules: only accepted findings qualify; Section B multiplier 1.25 versus Section A 1.0 for equivalent severity/reproducibility; per-audit/per-attacker caps; duplicate cluster rewards are split; integer smallest-unit arithmetic; idempotent settlement. Rejected findings receive zero.
 
@@ -238,7 +238,7 @@ Minimal admin console: provider/TEE status, source adapter health, queue state, 
 
 # 20. Error and edge-case matrix
 
-Full matrix: [`docs/ERROR_EDGE_CASE_MATRIX.md`](docs/ERROR_EDGE_CASE_MATRIX.md). Principal fail-closed rules:
+Full matrix: [`docs/ERROR_EDGE_CASE_MATRIX.md`](ERROR_EDGE_CASE_MATRIX.md). Principal fail-closed rules:
 - malformed or uncommitted audit → no jobs;
 - attacker/model/TEE failure → explicit failed coverage and ABSTAIN unless a verified disqualifying REFUSE applies;
 - stale/missing evidence → unverifiable, not NOT_HIT;
@@ -256,7 +256,7 @@ Full matrix: [`docs/ERROR_EDGE_CASE_MATRIX.md`](docs/ERROR_EDGE_CASE_MATRIX.md).
 - Contracts: local sandbox tests and testnet smoke.
 - Gate: E2E on preview and no unresolved critical/high issues before final visual refinement.
 
-See [`docs/TESTING.md`](docs/TESTING.md).
+See [`docs/TESTING.md`](TESTING.md).
 
 # 22. Repository structure
 
@@ -325,7 +325,7 @@ Required server-only variables:
 - `DEMO_AUDIT_FEE_YOCTO`, `DEMO_BOUNTY_POOL_YOCTO`, `DEMO_FEE_QUOTE_TTL_SECONDS`, `DEMO_TREASURY_ACCOUNT_ID` for testnet economic demonstration.
 - `MAX_CONCURRENT_AUDITS`, `MAX_INFERENCE_COST_PER_AUDIT`, `MAX_INFERENCE_COST_GLOBAL`, `MAX_RETRIES`, `LOG_LEVEL`.
 
-Optional: `FASTNEAR_API_KEY`, `PIKESPEAK_API_KEY`, `NEARBLOCKS_API_KEY`, `REDSTONE_CONFIG_REF`, `NEAR_BOUNTY_CONTRACT_ID`, restricted settlement signer reference, `SENTRY_DSN`, TTS API credentials if free tier is verified and authorized. Full descriptions and exposure classifications: [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md).
+Optional: `FASTNEAR_API_KEY`, `PIKESPEAK_API_KEY`, `NEARBLOCKS_API_KEY`, `REDSTONE_CONFIG_REF`, `NEAR_BOUNTY_CONTRACT_ID`, restricted settlement signer reference, `SENTRY_DSN`, TTS API credentials if free tier is verified and authorized. Full descriptions and exposure classifications: [`docs/CONFIGURATION.md`](CONFIGURATION.md).
 
 # 24. Phased implementation plan
 

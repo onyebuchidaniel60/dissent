@@ -1,7 +1,7 @@
 # AI_HANDOFF.md — Dissent
 
 **Last updated:** 2026-11-14
-**Current phase:** Phase 17 — final demo and submission polish is **complete**. The repository now includes the 1440×900 final demo, the Agent Economy/x402 README narrative, live demo and verification links, hackathon-track framing and a future roadmap. The live preview remains on testnet with x402 compute procurement and the client execution UI. No mainnet contract or real-fund transaction is claimed or authorized.
+**Current phase:** Phase 18 — repository declutter and public README overhaul is **complete**. All internal planning, spec and handoff documents now live under `docs/`; the root contains only the public README and project configuration. The public README has no phase checkpoints, budget state, handoff links or commit hashes, and includes the live demo, verification, hackathon tracks, economic model, quickstart, usage and certificate-verification guidance. The deployed testnet preview is unchanged. No mainnet contract or real-fund transaction is claimed or authorized.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
 **Deployed app commit:** `79e5029` (`feat: final Phase 17 demo video and README submission polish`; code base `bc25b65` includes Phase 16 x402 compute procurement, the wallet RPC failover list, asynchronous dispatch and the direct-provider fallback). The final video was captured against `bc25b65` and the live testnet database.
@@ -40,6 +40,14 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 - **Wallet auth fix:** `AUTH_RECIPIENT` now defaults to `APP_BASE_URL` and the preview uses `https://dissent-web.onrender.com`. The frontend normalizes the public-key prefix and signature encoding; the backend decodes base64/base64url/array/hex signatures, strips an `ed25519:` prefix, normalizes the public key and verifies against the stored recipient/callback. Local API test with an unprefixed public key and prefixed base64 signature returned 200 and a valid admin session; the same request on the preview also returned 200 with an admin session.
 - **Global page gutter:** `.app-main` used the `padding` shorthand with zero horizontal padding, overriding `.page-width`'s `clamp(24px, 4.8vw, 88px)`. It now sets only `padding-top`/`padding-bottom`; `/docs` gained `src/app/docs/layout.tsx` with the same `page-width app-main` wrapper. At 1440×900 the page header starts at `x=69.12px` with a matching right gap and the existing `--page-max: 1520px` centers wider screens. Playwright screenshots: `test-results/gutter-reputation-1440.png`, `gutter-audits-1440.png`, `gutter-docs-1440.png`.
 - **Demo:** deferred by operator instruction; no video or README finalisation was generated in this phase.
+
+### Phase 18 — repository declutter and public README — 2026-11-14
+
+- Moved the root planning/spec/handoff set into `docs/`: `PROJECT_SPEC.md`, `ARCHITECTURE.md`, `AGENTS.md`, `AI_HANDOFF.md`, `IMPLEMENTATION_PLAN.md`, `OPERATOR_INTAKE.md`, `DEMO_VIDEO_PLAN.md`, `DISSENT_ATTACKER_OUTPUT_SCHEMA.md`, `DISSENT_IMPLEMENTATION_BLUEPRINT.md`, `DISSENT_PRD.md`, `PROPER_VIBE_CODING_WORKFLOW.md` and `REFERENCE_ASSETS.md`. The root now contains only `README.md` as Markdown.
+- Removed the generated root `SHA256SUMS.txt` and the duplicate `demo/DEMO_VIDEO_PLAN.md`.
+- Rewrote the public README: removed the phase checkpoint, the Budget section, handoff/commit references and internal planning links; kept Live Demo & Verification, Hackathon Tracks (Agent Economy primary), Economic Model and Compute Procurement; added a hosted/local Quickstart, How to use Dissent, How to verify a certificate, public documentation links and the final demo hash.
+- Updated in-app documentation links and moved-document cross-links; a local Markdown link check reports zero broken relative links. `pnpm typecheck`, `pnpm lint` and `pnpm build` pass.
+- **Future agents:** the persistent instructions are now at `docs/AGENTS.md`; the handoff is `docs/AI_HANDOFF.md` and the build log is `docs/BUILD_LOG.md`.
 
 ### Phase 17 — final demo and submission polish — 2026-11-14
 

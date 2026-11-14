@@ -106,7 +106,7 @@ export default function DocsPage() {
                   <ArrowRight size={12} aria-hidden="true" />
                 </Link>
                 <a
-                  href={`${REPO_DOCS}/PROJECT_SPEC.md`}
+                  href={`${REPO_DOCS}/docs/PROJECT_SPEC.md`}
                   className="button button--ghost button--small"
                   target="_blank"
                   rel="noreferrer"
@@ -159,7 +159,7 @@ curl -i http://localhost:3000/readyz`}</code>
             <p className="mt-3 text-[12px] leading-relaxed text-muted">
               The durable queue runs in-process with a small connection pool. Concurrency is capped
               at one audit and three parallel attackers for a 512 MB instance. See{" "}
-              <DocLink href={`${REPO_DOCS}/ARCHITECTURE.md`}>ARCHITECTURE.md</DocLink>.
+              <DocLink href={`${REPO_DOCS}/docs/ARCHITECTURE.md`}>docs/ARCHITECTURE.md</DocLink>.
             </p>
           </Panel>
 

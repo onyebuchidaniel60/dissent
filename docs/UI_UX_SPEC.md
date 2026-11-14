@@ -100,7 +100,7 @@ Every async component must support loading, empty, success, error, stale/degrade
 
 ## 6. Reference-image procedure
 
-Current asset register: `../REFERENCE_ASSETS.md`. Two operator-supplied, operator-owned references are received and inspected: `design/dissent-reference1.webp` (2048×1536) and `design/dissent-reference2.webp` (2018×12858). The visual language is adapted to Dissent; ShibaNex branding, copy, mascot and trade dress are not copied. At the start of Phase 7, re-read the references, run `npx skills add benjitaylor/skills --skill stageshow` if not already installed, record exact paths and design observations in `DESIGN_NOTES.md`, and implement the real UI. Do not create mockups or ask for mockup approval.
+Current asset register: `REFERENCE_ASSETS.md`. Two operator-supplied, operator-owned references are received and inspected: `design/dissent-reference1.webp` (2048×1536) and `design/dissent-reference2.webp` (2018×12858). The visual language is adapted to Dissent; ShibaNex branding, copy, mascot and trade dress are not copied. At the start of Phase 7, re-read the references, run `npx skills add benjitaylor/skills --skill stageshow` if not already installed, record exact paths and design observations in `DESIGN_NOTES.md`, and implement the real UI. Do not create mockups or ask for mockup approval.
 
 ## 7. UI acceptance criteria
 

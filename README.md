@@ -4,8 +4,6 @@
 
 Dissent challenges an AI trading agent's thesis before the agent acts. A client commits a thesis and machine-testable failure conditions on NEAR, funds a fixed audit quote, and receives eight isolated adversarial analyses. Evidence is re-fetched, attackers are reviewed for sycophancy, and a deterministic policy issues `TRADE`, `REFUSE` or `ABSTAIN`. The certificate preserves coverage, minority findings and disagreement instead of turning them into a majority vote.
 
-> **Current checkpoint:** Phase 17 — final demo and submission polish. The eight-attacker audit, evidence re-fetch, deterministic adjudication, NEAR anchoring, public verifier, capped NEP-141 vault and x402 compute procurement are complete and live on the testnet preview. The final 1440×900 demo is in [`demo/dissent-demo.mp4`](demo/dissent-demo.mp4). Mainnet execution remains disabled by default; the preview is explicit testnet staging.
-
 ## Live Demo & Verification
 
 - **Live application:** <https://dissent-web.onrender.com>
@@ -59,12 +57,34 @@ The public verifier recomputes the certificate hash from canonical bytes and che
 
 ## Quickstart
 
+### Try the hosted app
+
+Open <https://dissent-web.onrender.com>, connect a NEAR **Testnet** wallet (Nightly is the tested path), and follow [How to use Dissent](#how-to-use-dissent). The preview is testnet staging: no real funds are moved.
+
+### Run locally
+
+Prerequisites:
+
+- Node.js 22+ and pnpm 10+
+- PostgreSQL 16+ (Neon or local)
+- A NEAR testnet registry/deployer account and a testnet wallet for signing
+- OpenRouter and Groq API keys; see [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) for the full list
+
 ```bash
+git clone https://github.com/onyebuchidaniel60/dissent.git
+cd dissent
 pnpm install
 cp .env.example .env.local     # fill locally; never commit it
+pnpm db:migrate                # apply Drizzle migrations
 pnpm dev                       # http://localhost:3000
+```
+
+Useful checks:
+
+```bash
 pnpm typecheck
 pnpm test
+pnpm test:e2e
 pnpm build
 pnpm start
 ```
@@ -76,11 +96,38 @@ curl -i http://localhost:3000/healthz   # 200 without touching the database
 curl -i http://localhost:3000/readyz    # 200/503 after a database check
 ```
 
-If port 3000 is already occupied on the host, use `PORT=3100 pnpm start`.
+If port 3000 is occupied, use `PORT=3100 pnpm start`.
+
+## How to use Dissent
+
+1. **Connect Wallet:** open <https://dissent-web.onrender.com>, click **Connect Wallet**, and select **Nightly**. Make sure Nightly is set to **Testnet**.
+2. **Submit a Thesis:** go to `/app/audits/new` and fill out the form. Define the asset, action, rationale, position, time horizon and at least one measurable failure condition.
+3. **Commit & Fund:** click **Create Draft in Console**, then sign the two wallet popups — one commits the thesis and failure conditions to NEAR, and the second funds the **0.1 NEAR** testnet audit fee.
+4. **Watch the Attackers:** the audit is queued and the eight AI agents run asynchronously. The dashboard updates as each attacker completes; no need to keep the form open.
+5. **Review the Verdict:** when the audit completes, open the certificate. The deterministic verdict is **TRADE**, **REFUSE** or **ABSTAIN**. Coverage, minority findings and the gate trace are preserved.
+6. **Execute (Optional):** if the verdict is **TRADE**, the client execution panel lets you sign your own swap via 1Click on mainnet or Tidepool on testnet. The preview uses Tidepool; mainnet execution is disabled by default.
+
+The preview is a testnet staging environment. The audit fee, x402 compute payments and any execution are testnet-only and have no monetary value.
+
+## How to verify a certificate
+
+Every completed audit produces a certificate ID. To verify one:
+
+1. Copy the certificate ID from the results page or the certificate URL.
+2. Open `https://dissent-web.onrender.com/verify/<certificate-id>`.
+3. The verifier recomputes the SHA-256 hash from the canonical certificate bytes, compares it with the stored certificate and the NEAR registry record, and shows **VERIFIED** or **MISMATCH**.
+4. The same result is available from `GET /api/v1/certificates/<certificate-id>/verify`.
+
+The public verifier exposes only the certificate hash, verdict, policy version, registry account and transaction reference. It never reveals the thesis preimage, positions, evidence payloads or attacker prompts.
+
+Examples:
+
+- Client audit: <https://dissent-web.onrender.com/verify/a8df6a5a-8b3c-4f33-9953-4b64593256bf>
+- Proprietary execution: <https://dissent-web.onrender.com/verify/0bf3728d-e457-4b2f-8fad-b53be9565498>
 
 ## Environment
 
-See [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) and [`.env.example`](.env.example). Never commit `.env.local`, provider keys, wallet keys or Railway/Render tokens. The preview uses synthetic data only.
+See [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) and [`.env.example`](.env.example). Never commit `.env.local`, provider keys, wallet keys or deployment tokens. The preview is testnet staging with testnet data.
 
 Key variables:
 
@@ -117,14 +164,6 @@ Key variables:
 The pinned roster is recorded in [`config/model_assignments.json`](config/model_assignments.json). The roster currently spans seven distinct model families across OpenRouter and Groq, with one open-weight model (`openai/gpt-oss-120b` on Groq). A06 and A07 share the Flint family as a documented free-model availability substitution; the family/vendor gate still passes. The OpenRouter catalogue changes; substitutions are recorded with a reason and may never silently collapse the family/vendor gate.
 
 **Groq free-tier note:** A02's 200K TPD limit is the binding constraint — roughly two audits per day. The adapter uses a per-provider token bucket so one audit cannot exhaust the daily quota.
-
-## Budget
-
-- New spend ceiling: **$0.00**. No card, paid hosting, paid TTS or auto-billing trial.
-- Pre-purchased OpenRouter credit is the only inference budget.
-- Per-audit inference ceiling: **$0.50**.
-- Remaining OpenRouter credit at intake: **$7.747** (recorded; not a promise of future balance).
-- No paid fallback may replace a `:free` slug.
 
 ## Economic Model
 
@@ -179,9 +218,9 @@ Render's shared egress IP is rate-limited on the public FastNear and `rpc.testne
 
 ## TEE waiver
 
-The frozen decision requires at least one open-weight model in a NEAR AI Cloud TEE with verified attestation and response signatures. The direct NEAR AI API is not authorized under the zero-new-spend constraint. OpenRouter's `near-ai` route is not an attested gateway, so the TEE sub-clause is recorded as `WAIVED_BUDGET_CONSTRAINT`. No TEE badge is rendered. The model-family, vendor and open-weight gates are still enforced. This deviation is recorded in [`ARCHITECTURE.md`](ARCHITECTURE.md), [`AI_HANDOFF.md`](AI_HANDOFF.md) and [`docs/BUILD_LOG.md`](docs/BUILD_LOG.md).
+The frozen decision requires at least one open-weight model in a NEAR AI Cloud TEE with verified attestation and response signatures. The direct NEAR AI API is not authorized under the zero-new-spend constraint. OpenRouter's `near-ai` route is not an attested gateway, so the TEE sub-clause is recorded as `WAIVED_BUDGET_CONSTRAINT`. No TEE badge is rendered. The model-family, vendor and open-weight gates are still enforced. This deviation is documented in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and the certificate policy.
 
-## Historical staging record
+## Verified testnet record
 
 A real testnet audit has been committed, funded, attacked by all eight specialists, reviewed and anchored:
 
@@ -192,15 +231,15 @@ A real testnet audit has been committed, funded, attacked by all eight specialis
 - Registry transaction: `6G7Yd3uvZozLC9SbXtNW5jxFetV4TLqgTMFxN76MmYJF`
 - Bounty accounting: 7 accepted-finding allocations totaling `0.025 NEAR` on testnet; no payout claim executed.
 
-An earlier development audit ended `ABSTAIN` when execution-depth evidence was unavailable. It remains anchored as an immutable test artifact.
+An earlier testnet audit ended `ABSTAIN` when execution-depth evidence was unavailable. It remains anchored as an immutable test artifact.
 
-This is a development audit; the UI fixture set remains separately labelled.
+These records are testnet-only and have no monetary value.
 
 ## Deployment
 
-Render free web service + Neon free PostgreSQL. The service URL and deployed commit are recorded in [`AI_HANDOFF.md`](AI_HANDOFF.md). See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+Render free web service + Neon free PostgreSQL. See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for environment setup, migrations, health checks and rollback guidance.
 
-Render free services spin down after idle. The first request can take ~50 seconds. `/healthz` is kept warm by an external cron ping. Do not record the demo before the service is warm.
+Render free services spin down after idle. The first request can take ~50 seconds; `/healthz` is kept warm by an external cron ping.
 
 ## Demo
 
@@ -238,23 +277,24 @@ See [`docs/SECURITY_SPEC.md`](docs/SECURITY_SPEC.md) and the in-app [`/docs`](ht
 
 ## Documentation
 
-- [`PROJECT_SPEC.md`](PROJECT_SPEC.md) — canonical product definition.
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) — fixed stack and boundaries.
-- [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) — Phase 0–9 sequence.
-- [`DISSENT_ATTACKER_OUTPUT_SCHEMA.md`](DISSENT_ATTACKER_OUTPUT_SCHEMA.md) — attacker contract.
+- [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) — product definition and boundaries.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — stack, modules and trust boundaries.
+- [`docs/DISSENT_ATTACKER_OUTPUT_SCHEMA.md`](docs/DISSENT_ATTACKER_OUTPUT_SCHEMA.md) — attacker contract.
 - [`docs/ADJUDICATION_SPEC.md`](docs/ADJUDICATION_SPEC.md) — verdict and bounty policy.
 - [`docs/SECURITY_SPEC.md`](docs/SECURITY_SPEC.md) — threat model.
 - [`docs/SMART_CONTRACT_SPEC.md`](docs/SMART_CONTRACT_SPEC.md) — contract interfaces.
-- [`docs/MAINNET_READINESS.md`](docs/MAINNET_READINESS.md) — mainnet audit, findings and deployment gates.
+- [`docs/MAINNET_READINESS.md`](docs/MAINNET_READINESS.md) — mainnet audit and deployment gates.
 - [`docs/API_SPEC.md`](docs/API_SPEC.md) — REST API.
 - [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) — schema and classifications.
-- [`OPERATOR_INTAKE.md`](OPERATOR_INTAKE.md) — completed intake and authorization boundary.
+- [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) — environment reference.
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — deployment and operations.
+- [`docs/OPERATOR_GUIDE.md`](docs/OPERATOR_GUIDE.md) — operator runbook.
 
 ## Future Roadmap
 
 - **Mainnet readiness:** fresh `#[init]` registry and vault on operator-owned mainnet accounts, a multisig/timelock owner, 1Click as the primary execution venue, and a separate operator authorization record before any real-fund execution.
 - **x402 expansion:** extend paid inference beyond A01/A02, add independent facilitator/relayer operators, and add cost-aware provider routing while preserving the model-family, vendor and open-weight gates.
-- **Evidence and models:** more typed adapters, broader model-family coverage, and a TEE re-evaluation if the budget constraint changes. The current TEE waiver remains explicit.
+- **Evidence and models:** more typed adapters, broader model-family coverage, and a TEE re-evaluation if an attested provider becomes available. The current TEE waiver remains explicit.
 - **Developer surface:** a client SDK, webhook/event delivery, and verifier integrations for third-party audit consumers.
 - **Operations:** stronger queue observability, automated certificate monitoring, and a public status page.
 
@@ -274,7 +314,7 @@ The proprietary arm originates Dissent-owned theses, runs them through the same 
 - Loop: pg-boss scheduled task, gated by `PROPRIETARY_LOOP_ENABLED` (default `false`).
 - Operator view: `/operator/proprietary`.
 - **Live evidence:** a proprietary `0.01 wNEAR → USDC` quote was audited, returned `TRADE`, and executed through `vault.spend_ft_as` at tx `DxvoRKhCnyYyKrmAopnVYPKZJB7g8ev5Er1wtW5JbSp`. Certificate `0bf3728d-e457-4b2f-8fad-b53be9565498` records `execution_readiness=EXECUTED`, hash `d5f1b00d3702d9e5fcee194f601f9537f64c237ac176150a398a6a7d75b6584d`, anchored at `3WQ6aQnJzsQRcRVTHsVGKUbrx2k1ueMFUwvWDY85XS9o`. Tidepool settled `0.035245 USDC` with swap txs `AYoAmq…`, `67jpWF…`, `7XAHSg…`. Public verifier: [`/verify/0bf3728d-e457-4b2f-8fad-b53be9565498`](https://dissent-web.onrender.com/verify/0bf3728d-e457-4b2f-8fad-b53be9565498).
-- No mainnet execution is claimed by this build. The historical staging run was an explicit operator action with `PROPRIETARY_EXECUTION_AUDIT_ID` set; `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false` for the preview.
+- No mainnet execution is claimed. The historical run was testnet-only and is preserved as a verified certificate. Mainnet execution remains disabled by default.
 
 ### Mainnet deployment checklist
 
