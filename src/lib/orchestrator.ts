@@ -56,7 +56,11 @@ function labelEvidence(evidence: Awaited<ReturnType<typeof getAuditEvidence>>): 
   });
 }
 
-async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+async function mapLimit<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
   const results = new Array<R>(items.length);
   let cursor = 0;
   async function worker() {
@@ -125,9 +129,7 @@ export async function dispatchAudit(auditId: string): Promise<{ status: string; 
     await db
       .update(audits)
       .set({ status: "ATTACKING", marketSnapshotAt: new Date(snapshotAt), updatedAt: new Date() })
-      .where(
-        and(eq(audits.id, audit.id), inArray(audits.status, ["FUNDED", "QUEUED"])),
-      );
+      .where(and(eq(audits.id, audit.id), inArray(audits.status, ["FUNDED", "QUEUED"])));
 
     await db.insert(auditEvents).values({
       auditId: audit.id,
@@ -144,10 +146,7 @@ export async function dispatchAudit(auditId: string): Promise<{ status: string; 
     });
   }
 
-  const existing = await db
-    .select()
-    .from(attackerRuns)
-    .where(eq(attackerRuns.auditId, audit.id));
+  const existing = await db.select().from(attackerRuns).where(eq(attackerRuns.auditId, audit.id));
 
   let runs = existing;
   if (runs.length === 0) {
@@ -187,8 +186,7 @@ export async function dispatchAudit(auditId: string): Promise<{ status: string; 
       run.status === "FAILED" ||
       run.status === "INVALID_OUTPUT" ||
       run.status === "TEE_UNVERIFIED" ||
-      (run.status === "RUNNING" &&
-        (!run.startedAt || run.startedAt.getTime() < staleBefore)),
+      (run.status === "RUNNING" && (!run.startedAt || run.startedAt.getTime() < staleBefore)),
   );
 
   if (runnable.length === 0) {
@@ -256,10 +254,7 @@ export async function dispatchAudit(auditId: string): Promise<{ status: string; 
             repairErrors,
           }),
           temperature: attempt === 0 ? 0.2 : 0,
-          maxTokens:
-            assignment.provider === "groq"
-              ? 3000
-              : 8000,
+          maxTokens: assignment.provider === "groq" ? 3000 : 8000,
           jsonMode: false,
         });
         lastCall = call;
@@ -286,6 +281,12 @@ export async function dispatchAudit(auditId: string): Promise<{ status: string; 
     }
 
     if (!output) {
+      // A resumed run may already have partial rows from an earlier attempt.
+      // Clear them so the unique run/condition and run/finding indexes hold.
+      await db.delete(findings).where(eq(findings.attackerRunId, run.id));
+      await db.delete(conditionAssessments).where(eq(conditionAssessments.attackerRunId, run.id));
+      await db.delete(teeVerifications).where(eq(teeVerifications.attackerRunId, run.id));
+
       await db
         .update(attackerRuns)
         .set({
@@ -295,7 +296,9 @@ export async function dispatchAudit(auditId: string): Promise<{ status: string; 
           completedAt: new Date(),
           inputTokens: lastCall?.inputTokens ?? null,
           outputTokens: lastCall?.outputTokens ?? null,
-          estimatedCostMicrounits: lastCall ? Math.round(lastCall.estimatedCostUsd * 1_000_000) : null,
+          estimatedCostMicrounits: lastCall
+            ? Math.round(lastCall.estimatedCostUsd * 1_000_000)
+            : null,
         })
         .where(eq(attackerRuns.id, run.id));
       await db.insert(teeVerifications).values({
@@ -336,6 +339,12 @@ export async function dispatchAudit(auditId: string): Promise<{ status: string; 
     );
 
     await db.transaction(async (tx) => {
+      // Make completion idempotent for resumed or re-run attackers. The unique
+      // indexes are scoped to the attacker run, so prior rows must be replaced.
+      await tx.delete(findings).where(eq(findings.attackerRunId, run.id));
+      await tx.delete(conditionAssessments).where(eq(conditionAssessments.attackerRunId, run.id));
+      await tx.delete(teeVerifications).where(eq(teeVerifications.attackerRunId, run.id));
+
       await tx
         .update(attackerRuns)
         .set({
@@ -346,7 +355,9 @@ export async function dispatchAudit(auditId: string): Promise<{ status: string; 
           completedAt: new Date(completedAt),
           inputTokens: lastCall?.inputTokens ?? null,
           outputTokens: lastCall?.outputTokens ?? null,
-          estimatedCostMicrounits: lastCall ? Math.round(lastCall.estimatedCostUsd * 1_000_000) : null,
+          estimatedCostMicrounits: lastCall
+            ? Math.round(lastCall.estimatedCostUsd * 1_000_000)
+            : null,
         })
         .where(eq(attackerRuns.id, run.id));
 
