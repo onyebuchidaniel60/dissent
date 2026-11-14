@@ -82,7 +82,7 @@ dccdd4bc64a9e9ea581d6bfba485365dfc978b3fb430f8f93f470e0100746eca  ./packages/exe
 08d75840c97ab0e72d1d9b5b84a17e47a2e06cb159a5fbec5ee0a6a56682dad7  ./pnpm-workspace.yaml
 dfac7ac2d86d326a0e5adb024e7943c181393ed17a5fcb8f0315b24c7da6ddde  ./postcss.config.mjs
 61b4394b3c6def09488db445a1bfd1b5289732d764c160d826568671ec6f7d26  ./schemas/attacker-output-v1.schema.json
-840f4ccfea0c066a9d9b27dcb0d84caf3e739bc536810bb03fb02bdd6db3ec99  ./scripts/proprietary-live.ts
+96ea5c140ed9fe46b989db33f3b7f1be77a37a1c2e9906757b5b4a0380264f7c  ./scripts/proprietary-live.ts
 6a005768034a95025ce10a7d156562e9391310e15a1987faa41f76deb97e338e  ./scripts/provision-client.ts
 644d0496e24eb28e3b19e8fe5a2c83924992f1e3421658ca079aea767ad186bb  ./src/app/api/v1/audits/[auditId]/certificate/route.ts
 5e30d8a8cdccf3632a47d218d3cc4e4cc5dced993df7e3dd6f598dccc622b4b5  ./src/app/api/v1/audits/[auditId]/commitment/verify/route.ts
@@ -155,11 +155,11 @@ f45f7afa0f4f898590b52171084996d4bfadcf28286b0bbaa9ad60d03af093e9  ./src/lib/evid
 48f1fb364d6b8d46b999d4598b7eb69a7644c313e33366efa7860d215b097c00  ./src/lib/http.ts
 f62cb92012c7bd0591f13a381ede78088b1d9c52f2884988584f2347ea1bea20  ./src/lib/logger.ts
 fdcb0be4c56f8723658bf7129a0f977e6201073cce94542a8ee40e31f0ca2a37  ./src/lib/model-assignments.ts
-34652c15d7c2ac4952781a8d83efbc405d5892307aecb80228ffb633003c57d2  ./src/lib/near.ts
+8322d97332496cb3a8ff8147d724b871af4a716b0e1591e7519837fe7455407d  ./src/lib/near.ts
 2857a4511af74caa07e82e59ab64d8b5e798b9db848845f49a94a7de51aca730  ./src/lib/network.ts
 25282823babcf22178da1923cda1e5662235819cd24a8d6c9ed9684dcc1a6a23  ./src/lib/orchestrator.ts
 8f1efaea38d58ced21984cbc8efe5dfe2322cd8e317ed513f452f0e98b3d3893  ./src/lib/policy.ts
-a35114e472c2fa45eaec49d3c4b8bcb672c5f9f188851f149ab33c20707eddb8  ./src/lib/proprietary/loop.ts
+01cd68caca8908e39adc2d9e77c4fd8a659c3b4d276e5856e1198b95ee787826  ./src/lib/proprietary/loop.ts
 d7a0be08aad81e496c2d0251d5b6bc013c19ac9b6c2b7e4d4bea8555c172af58  ./src/lib/proprietary/venue.ts
 835828cf55ff046f76a4578fa3d3cfe5a9593d822ad2bf11f4815b5fc852a34e  ./src/lib/providers/openai-compatible.ts
 cfcdb530779b37f2ba666630f8ca541e23182f12ac536f5d037afbdf40a99e3e  ./src/lib/queue.ts

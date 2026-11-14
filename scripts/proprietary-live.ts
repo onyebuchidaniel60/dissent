@@ -148,7 +148,7 @@ async function main() {
 
   try {
     console.log(`[1/8] Originating a real ${VENUE} wNEAR/USDC quote and preparing the audit…`);
-    const loop = await runProprietaryLoop();
+    const loop = await runProprietaryLoop({ autoCommit: false });
     if (loop.status !== "ORIGINATED") {
       throw new Error(`PROPRIETARY_LOOP_${loop.status}:${loop.status === "BLOCKED_VENUE" ? loop.reason : ""}`);
     }

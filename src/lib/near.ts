@@ -50,21 +50,30 @@ function provider(): JsonRpcProvider {
   return new JsonRpcProvider({ url: NEAR_RPC_URL });
 }
 
-function deployerAccount(): Account {
+export type NearSigner = {
+  accountId: string;
+  privateKey: KeyPairString;
+};
+
+export function deployerSigner(): NearSigner {
   const accountId = process.env.NEAR_DEPLOYER_ACCOUNT_ID;
-  const key = process.env.NEAR_DEPLOYER_KEY;
-  if (!accountId || !key) throw new Error("NEAR deployer credentials are not configured");
-  return new Account(accountId, provider(), key as KeyPairString);
+  const privateKey = process.env.NEAR_DEPLOYER_KEY;
+  if (!accountId || !privateKey) throw new Error("NEAR deployer credentials are not configured");
+  return { accountId, privateKey: privateKey as KeyPairString };
 }
 
-export async function viewRegistry<T>(method: string, args: Record<string, unknown>): Promise<T | null> {
+export async function viewContract<T>(
+  contractId: string,
+  method: string,
+  args: Record<string, unknown>,
+): Promise<T | null> {
   const argsBase64 = Buffer.from(JSON.stringify(args), "utf8").toString("base64");
   const result = await rpc<{
     result: number[];
   }>("query", {
     request_type: "call_function",
     finality: "final",
-    account_id: requireRegistryAccountId(),
+    account_id: contractId,
     method_name: method,
     args_base64: argsBase64,
   });
@@ -73,14 +82,20 @@ export async function viewRegistry<T>(method: string, args: Record<string, unkno
   return JSON.parse(text) as T;
 }
 
-export async function callRegistry(
+export function viewRegistry<T>(method: string, args: Record<string, unknown>): Promise<T | null> {
+  return viewContract<T>(requireRegistryAccountId(), method, args);
+}
+
+export async function callContractAs(
+  signer: NearSigner,
+  receiverId: string,
   method: string,
   args: Record<string, unknown>,
   options?: { gas?: bigint; deposit?: bigint },
 ): Promise<{ transactionHash: string; blockHash: string }> {
-  const account = deployerAccount();
+  const account = new Account(signer.accountId, provider(), signer.privateKey);
   const outcome = await account.signAndSendTransaction({
-    receiverId: requireRegistryAccountId(),
+    receiverId,
     actions: [
       actions.functionCall(
         method,
@@ -97,6 +112,23 @@ export async function callRegistry(
     transactionHash: outcome.transaction_outcome.id,
     blockHash: outcome.transaction_outcome.block_hash,
   };
+}
+
+export function callRegistryAs(
+  signer: NearSigner,
+  method: string,
+  args: Record<string, unknown>,
+  options?: { gas?: bigint; deposit?: bigint },
+): Promise<{ transactionHash: string; blockHash: string }> {
+  return callContractAs(signer, requireRegistryAccountId(), method, args, options);
+}
+
+export function callRegistry(
+  method: string,
+  args: Record<string, unknown>,
+  options?: { gas?: bigint; deposit?: bigint },
+): Promise<{ transactionHash: string; blockHash: string }> {
+  return callRegistryAs(deployerSigner(), method, args, options);
 }
 
 type TransactionAction = {
