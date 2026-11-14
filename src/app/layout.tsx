@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Manrope, Orbitron, Russo_One } from "next/font/google";
+import { JetBrains_Mono, Manrope, Orbitron } from "next/font/google";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -8,17 +8,10 @@ import { SITE } from "@/lib/site";
 import "@near-wallet-selector/modal-ui/styles.css";
 import "./globals.css";
 
-const orbitron = Orbitron({
+const display = Orbitron({
   subsets: ["latin"],
   weight: ["500", "600", "700", "800", "900"],
   variable: "--font-orbitron",
-  display: "swap",
-});
-
-const display = Russo_One({
-  subsets: ["latin"],
-  weight: "400",
-  variable: "--font-russo",
   display: "swap",
 });
 
@@ -75,7 +68,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${display.variable} ${orbitron.variable} ${body.variable} ${mono.variable}`}>
+    <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body>
         <a className="skip-link" href="#main">
           Skip to content

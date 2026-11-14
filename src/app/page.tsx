@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { TeeWaiverNotice } from "@/components/tee-waiver-notice";
+import { HeroPhone } from "@/components/hero-phone";
 import { SectionHeading } from "@/components/ui";
 import { ATTACKER_PROFILES } from "@/lib/attackers/profiles";
 import { MODEL_ASSIGNMENTS } from "@/lib/model-assignments";
@@ -67,7 +68,8 @@ export default function HomePage() {
     <>
       <section className="hero">
         <div className="page-width">
-          <div className="hero-copy">
+          <div className="hero-grid">
+            <div className="hero-copy">
             <span className="eyebrow">
               <span className="eyebrow-dot" />
               Adversarial audit protocol
@@ -100,21 +102,23 @@ export default function HomePage() {
                 <ArrowUpRight size={14} aria-hidden="true" />
               </a>
             </div>
-            <div className="hero-meta">
-              <span>
-                <strong>8</strong> isolated attackers
-              </span>
-              <span>
-                <strong>7</strong> distinct model families
-              </span>
-              <span>
-                <strong>2</strong> inference vendors
-              </span>
-              <span>
-                <strong>1</strong> deterministic verdict
-              </span>
-              <span className="text-primary-bright">TEE unavailable</span>
+              <div className="hero-meta">
+                <span>
+                  <strong>8</strong> isolated attackers
+                </span>
+                <span>
+                  <strong>7</strong> distinct model families
+                </span>
+                <span>
+                  <strong>2</strong> inference vendors
+                </span>
+                <span>
+                  <strong>1</strong> deterministic verdict
+                </span>
+                <span className="text-primary-bright">TEE unavailable</span>
+              </div>
             </div>
+            <HeroPhone />
           </div>
 
           <div className="landing-preview" aria-label="Dissent audit console">

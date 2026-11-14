@@ -1,7 +1,7 @@
 # AI_HANDOFF.md — Dissent
 
 **Last updated:** 2026-11-14
-**Current phase:** Phase 11 — mainnet readiness, production UI cleanup and typography. Code defaults to mainnet and the primary execution adapter is 1Click. `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false`. The preview is an explicit testnet staging deployment with testnet records hidden behind a network-neutral UI; no mainnet contract or real-fund transaction is claimed or authorized.
+**Current phase:** Phase 11 — mainnet readiness, production UI cleanup and typography; operator UI correction applied (Orbitron restored, wider gutters, animated hero phone). Code defaults to mainnet and the primary execution adapter is 1Click. `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false`. The preview is an explicit testnet staging deployment with testnet records hidden behind a network-neutral UI; no mainnet contract or real-fund transaction is claimed or authorized.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
 **Deployed app commit:** `e400b47` (`feat: mainnet readiness, production UI and Russo One typography`).
@@ -24,13 +24,21 @@
 
 An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-depth evidence was unavailable and a preimage-hash bug produced a false contradiction. The bug is fixed in `src/lib/evidence/service.ts`; the earlier anchored certificate is retained unchanged as an immutable test artifact.
 
+### Phase 11 UI correction (operator feedback)
+
+- Restored **Orbitron** as the display face; Russo One removed. The previous Phase 10 typography is back.
+- Hero heading increased ~18%: `clamp(2.8rem, 7.3vw, 7.3rem)`; mobile retains the existing safe clamp and the phone is hidden.
+- Global gutter increased to `clamp(24px, 4.8vw, 88px)` — at least 24px mobile and 65–88px on desktop, rather than content touching the viewport edge.
+- Added a pure-CSS/SVG-free hero phone mockup with a dark bezel, tap ripple, sequential A01–A08 lighting, and a final `TRADE · Certificate anchored` badge. It loops every 9s, is decorative (`aria-hidden`, no interactive controls), supports `prefers-reduced-motion`, and is hidden at widths ≤1340px so mobile stacks the hero copy without the phone.
+- Verified visually at 1440×900, 1920×1080 and 390×844; no horizontal overflow. Vitest 13/13 and Playwright 3/3 at 390×844/1440×900 pass locally.
+
 ## Phase 11 — mainnet readiness and production polish
 
 - Network defaults: `NEAR_NETWORK=mainnet`, `NEXT_PUBLIC_NEAR_NETWORK=mainnet`, `NEAR_RPC_URL=https://rpc.mainnet.near.org`, `NEAR_EXPLORER_URL=https://explorer.near.org`. Registry, vault, payout and deployer accounts have no testnet defaults; missing configuration fails closed.
 - Execution: `EXECUTION_VENUE=ONECLICK` is the primary adapter. Base URL `https://1click.chaindefuser.com`; wNEAR `nep141:wrap.near`; USDC `nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1` from the live `/v0/tokens` catalogue. A read-only mainnet precheck on 2026-11-14 returned 231 tokens and a dry `0.01 wNEAR → 0.034224 USDC` quote with no deposit address and no transaction. No mainnet execution or account approval was performed. Tidepool remains available only when `EXECUTION_VENUE=TIDEPOOL` for staging.
 - Contract audit fixes in the mainnet source: `#[init]` instead of `ignore_state`; certificate replay protection; quote-window recipient expiry (`set_recipient_until`); 24-decimal wNEAR assertion. Source wasm SHA-256 `f8475b3998114e9970e51a6473c6acccdb14517986267f4ef058df747f43f582`; 12/12 vault tests pass. The deployed `vault.dissent-demo.testnet` remains the staging v2 artifact and is not the mainnet template. See `docs/SMART_CONTRACT_SPEC.md`.
 - UI cleanup: removed `NEAR TESTNET`, `DEMO FIXTURE`, demo-client/testnet account labels and fixture-only pages from customer-facing routes. The app overview, audit ledger, audit detail, operator, providers, reputation, attackers, settings, docs and verifier now use live data or honest empty states. The historical staging execution receipt remains in the operator page with a network-neutral label.
-- Typography: added Russo One as the display face (Google Fonts, OFL), retained Orbitron as fallback. Hero, section and page titles use the display face with reduced clamps: hero `clamp(2.4rem, 6.2vw, 6.2rem)`, section `clamp(1.6rem, 3.1vw, 2.8rem)`, page `clamp(1.8rem, 3.4vw, 3.1rem)`. Verified at 1440×900 and 390×844 with no horizontal overflow.
+- Typography: Orbitron display face (Phase 10); hero `clamp(2.8rem, 7.3vw, 7.3rem)`, section `clamp(1.6rem, 3.1vw, 2.8rem)`, page `clamp(1.8rem, 3.4vw, 3.1rem)`. Global gutter `clamp(24px, 4.8vw, 88px)`. Verified at 1440×900, 1920×1080 and 390×844 with no horizontal overflow.
 - Preview remains staging: Render env explicitly sets `NEAR_NETWORK=testnet`, `NEXT_PUBLIC_NEAR_NETWORK=testnet`, `EXECUTION_VENUE=TIDEPOOL`, testnet registry/vault accounts and `DEMO_MODE=false`. The UI does not display a testnet label. Production must use a fresh mainnet database and the mainnet `.env.example`; do not carry staging records into mainnet.
 - No mainnet deployment, mainnet transaction or real-fund transfer was performed. No new spend. Demo regeneration remains deferred.
 
@@ -145,7 +153,7 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 | Preview Playwright | 3/3 PASS at 390×844 and 1440×900 on `e400b47` |
 | Public verifier | `VERIFIED`; `execution_readiness=EXECUTED`; vault tx and venue swap hashes returned |
 | `/readyz` config check | PASS in staging (`network=testnet`, `venue=TIDEPOOL`); fail-closed in production if registry/vault/quote accounts are missing |
-| Typography | Russo One display face; hero 2.4–6.2rem, section 1.6–2.8rem, page 1.8–3.1rem; no overflow at 390×844/1440×900 |
+| Typography | Orbitron display face; hero 2.8–7.3rem, section 1.6–2.8rem, page 1.8–3.1rem; animated hero phone; no overflow at 390×844/1440×900/1920×1080 |
 
 ## Budget consumed
 

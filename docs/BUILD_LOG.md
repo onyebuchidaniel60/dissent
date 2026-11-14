@@ -198,13 +198,21 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Public verifier for the proprietary certificate: `https://dissent-web.onrender.com/verify/0bf3728d-e457-4b2f-8fad-b53be9565498` returns `VERIFIED` with `execution_readiness=EXECUTED` and the Tidepool swap hashes.
 - Demo intentionally not regenerated; operator approval is the next gate.
 
+## Phase 11 UI correction — operator feedback
+
+- Reverted the display face from Russo One to **Orbitron** (the Phase 10 font).
+- Increased the hero clamp ~18% to `clamp(2.8rem, 7.3vw, 7.3rem)`; mobile stayed within the existing safe clamp.
+- Increased the global gutter to `clamp(24px, 4.8vw, 88px)` so content has 24px mobile / 65–88px desktop breathing room.
+- Added the decorative hero phone animation: tap ripple + `Submitted`, sequential A01–A08 dots, final `TRADE · Certificate anchored` badge. CSS keyframes, 9s loop, reduced-motion fallback, hidden at ≤1340px.
+- Visual checks: 1440×900, 1920×1080 and 390×844; no horizontal overflow. Vitest 13/13; Playwright 3/3 at 390×844/1440×900 locally. Preview deploy and Playwright recorded after the commit.
+
 ## Phase 11 — mainnet readiness and production polish
 
 - Network config defaults: `NEAR_NETWORK=mainnet`, `NEXT_PUBLIC_NEAR_NETWORK=mainnet`, mainnet RPC/explorer; no testnet fallback for registry, vault, payout or deployer accounts. Missing accounts fail closed.
 - Execution adapter: 1Click mainnet is primary (`EXECUTION_VENUE=ONECLICK`, `https://1click.chaindefuser.com`). wNEAR `nep141:wrap.near`; USDC asset ID read from the live `/v0/tokens` catalogue (`nep141:17208628…`). Read-only mainnet precheck: 231 tokens and a dry `0.01 wNEAR → 0.034224 USDC` quote; no deposit address, transaction or real funds. Tidepool retained only for `EXECUTION_VENUE=TIDEPOOL` staging.
 - Vault contract audit: `#[init]` replaces `ignore_state`; certificate replay protection added; `set_recipient_until` quote-window allowlist added; 24-decimal wNEAR assertion added. `cargo test` 12/12; mainnet-ready wasm SHA-256 `f8475b3998114e9970e51a6473c6acccdb14517986267f4ef058df747f43f582`. The deployed staging v2 vault is unchanged and is not the mainnet template.
 - UI cleanup: customer-facing `NEAR TESTNET`, `DEMO FIXTURE`, demo-client account labels and fixture-only routes removed. App overview, audit ledger, audit detail, operator, providers, reputation, attackers, settings, docs and verifier use live data or empty states. The historical staging receipt remains on the operator page with a network-neutral label.
-- Typography: Russo One display face added; Orbitron retained as fallback. Hero clamp `2.4rem–6.2rem`; section `1.6rem–2.8rem`; page title `1.8rem–3.1rem`. Verified at 1440×900 and 390×844 with no horizontal overflow.
+- Typography: Orbitron display face; hero clamp `2.8rem–7.3rem`; section `1.6rem–2.8rem`; page title `1.8rem–3.1rem`; global gutter `24px–88px`; animated hero phone. Verified at 1440×900, 1920×1080 and 390×844 with no horizontal overflow.
 - Tests: `pnpm typecheck` PASS; `pnpm lint` PASS; Vitest 13/13 PASS; `pnpm build` PASS; local Playwright 3/3 PASS at 390×844 and 1440×900. Preview deployed at `e400b47`; `/healthz`, `/readyz`, both verifier pages 200; preview Playwright 3/3 PASS. `/readyz` reports `network=testnet`, `venue=TIDEPOOL` for staging.
 - Preview is explicit testnet staging (`NEAR_NETWORK=testnet`, `EXECUTION_VENUE=TIDEPOOL`, testnet accounts, no testnet UI label). Production requires a fresh mainnet database and the mainnet config.
 - No mainnet deployment, mainnet transaction, real-fund transfer or new spend. Demo regeneration remains deferred.
