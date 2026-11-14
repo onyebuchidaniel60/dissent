@@ -4,7 +4,7 @@
 **Current phase:** Phase 17 — final demo and submission polish is **complete**. The repository now includes the 1440×900 final demo, the Agent Economy/x402 README narrative, live demo and verification links, hackathon-track framing and a future roadmap. The live preview remains on testnet with x402 compute procurement and the client execution UI. No mainnet contract or real-fund transaction is claimed or authorized.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
-**Deployed app commit:** `bc25b65` (`fix: fall back across RPCs for certificate verification`; includes Phase 16 x402 compute procurement, the wallet RPC failover list, asynchronous dispatch and the direct-provider fallback). The final video was captured against this build and the live testnet database.
+**Deployed app commit:** `79e5029` (`feat: final Phase 17 demo video and README submission polish`; code base `bc25b65` includes Phase 16 x402 compute procurement, the wallet RPC failover list, asynchronous dispatch and the direct-provider fallback). The final video was captured against `bc25b65` and the live testnet database.
 **Production/mainnet authority:** **not granted**. No mainnet transaction, production release or external posting is authorized.
 
 ## Live testnet artifacts
