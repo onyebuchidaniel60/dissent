@@ -1,7 +1,7 @@
 {
   "network": "testnet",
   "walletNetwork": "testnet",
-  "rpcUrl": "https://rpc.testnet.near.org",
+  "rpcUrl": "https://rpc.testnet.fastnear.com",
   "explorerUrl": "https://explorer.testnet.near.org",
   "appBaseUrl": "https://dissent-web.onrender.com",
   "registryAccountId": "registry.dissent-demo.testnet",

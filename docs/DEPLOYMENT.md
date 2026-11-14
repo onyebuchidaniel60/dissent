@@ -33,7 +33,7 @@ Set these on the Render service. Values come from the shell/secret store and mus
 | `ADMIN_WALLET_ADDRESSES` | Yes | Comma-separated operator allowlist |
 | `NEAR_NETWORK` | Yes | `mainnet` in production; explicit `testnet` only for the staging preview |
 | `NEXT_PUBLIC_NEAR_NETWORK` | Yes | Must match `NEAR_NETWORK` for the wallet selector |
-| `NEAR_RPC_URL` | Yes | `https://rpc.mainnet.near.org` in production |
+| `NEAR_RPC_URL` | Yes | `https://rpc.mainnet.fastnear.com` in production |
 | `NEAR_EXPLORER_URL` | Optional | `https://explorer.near.org` in production |
 | `AUTH_RECIPIENT` | Optional | NEP-413 session recipient; defaults to the deployer account |
 | `NEAR_DEPLOYER_ACCOUNT_ID` | Yes | Operator-owned mainnet identity |

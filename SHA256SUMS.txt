@@ -1,4 +1,4 @@
-1bec0d367ab32e78f8a212efb77e15e876e0352c53f95bcc4ed7197b63cf8278  ./.env.example
+0e0a0dd8c44a95c2bece2de5936d99df6c948bf413745be92c243e8b7df97926  ./.env.example
 1e5a65cbad7dda99a442e362f43a14fe331f7b451d8cab7f8a5e288cc467f781  ./.github/workflows/keepalive.yml
 d16848d08250adcb5dcba23fe15970e9b88e45f9acee3ba6f5a433f486d4f408  ./.gitignore
 f14b4987904bcb5814e4459a057ed4d20f58a633152288a761214dcd28780b56  ./.nvmrc
@@ -20,7 +20,7 @@ b7395ae5b4ff36ae8147171f4755efeda33396c9dc1d1d177a34cc76c089f4a1  ./LICENSE
 7c9591d202420171c3568883be37e9c1228720e2449f0089e3256596deeb6251  ./REFERENCE_ASSETS.md
 f87545f4f29254899f5fd2b4565992d76e24e1be0d9bb1e9931705444333af4b  ./config/adjudication-policy-v1.0.json
 88c7f0da4eb935c66a4ba67138d9bab2aa0a0ecfe5e801ea56950dcdf1d69694  ./config/model_assignments.json
-ed1a777256463f6dc2323abbebff2a7517a673776a15e9c13534846067580cc1  ./config/preview-network.json
+f7572b983eaba217ee355fb28a06d7df125223f8daafdd9fefae4c456d4abeaa  ./config/preview-network.json
 58e338bb8bc45554092b2de2a8f015f9c2b0b8faffee72860625bc087501d135  ./contracts/dissent-registry/Cargo.lock
 b94482085c7ebde55b59186183470cbf9d99e58652fb1da80a862b120365204c  ./contracts/dissent-registry/Cargo.toml
 7a3a271da5911dd93396fb06899649262a0d621fc0c3344bb6d899bfa18e267b  ./contracts/dissent-registry/src/lib.rs
@@ -38,10 +38,10 @@ f5a8d128d962cb44b117981e21a7254e5b969805c3de400b81c6cc4ff8526425  ./demo/PRODUCT
 29b38bb8084f4c22896582977c26445eb100eb57756f57a0f88b22eddf90441a  ./docs/ADJUDICATION_SPEC.md
 e4cfba29296fb73d1bfef56151cfc7f5cd60966cecd1448c6cd2710009b3dfef  ./docs/API_SPEC.md
 66ad5b61dc4b1e8adce8f9391d484fac07e3a55685a29c1134d7287433d9ec61  ./docs/BUILD_LOG.md
-9e76dbf1a1ab24b20c6058fa7f92ed7467dff65126198375004f93e82d6a3790  ./docs/CONFIGURATION.md
+c411dac2558529c3169984964f8eb4ddd1783f3ac0913bd629573984db355646  ./docs/CONFIGURATION.md
 7ab848fe7b6fea7558d944e2b1b52e946737c63df3c2ca496ccca4d08d1738c9  ./docs/DATABASE_OPERATIONS.md
 3087a3ddf760669bd9d018ee29996f5b5efaf2fb63842f969d10ddf273073a3b  ./docs/DATA_MODEL.md
-9c1b3ad5d34760fde5d6b9c5c6d20a59fccee5b34d93a5b4ec81a9dca203e7e5  ./docs/DEPLOYMENT.md
+1fc1dbf93b3e71fbf4396c623f6032f846c1a6f2a41da66a2340808db84d12b6  ./docs/DEPLOYMENT.md
 a9a1f4f0166f0f242b9eb42ac500013b123b1b41aa0fdf132f7e72ad96f023d2  ./docs/DESIGN_NOTES.md
 16cd7e8238ac369c2f5a65ffc8fd8f14bdfe22b68c9d67efa14183960a510884  ./docs/ECONOMICS_SPEC.md
 d2ffaf00cedf3bccce0ac2468c7457c627e6890390e4ba7c2126827525677b18  ./docs/ERROR_EDGE_CASE_MATRIX.md
@@ -82,7 +82,7 @@ dccdd4bc64a9e9ea581d6bfba485365dfc978b3fb430f8f93f470e0100746eca  ./packages/exe
 08d75840c97ab0e72d1d9b5b84a17e47a2e06cb159a5fbec5ee0a6a56682dad7  ./pnpm-workspace.yaml
 dfac7ac2d86d326a0e5adb024e7943c181393ed17a5fcb8f0315b24c7da6ddde  ./postcss.config.mjs
 61b4394b3c6def09488db445a1bfd1b5289732d764c160d826568671ec6f7d26  ./schemas/attacker-output-v1.schema.json
-96ea5c140ed9fe46b989db33f3b7f1be77a37a1c2e9906757b5b4a0380264f7c  ./scripts/proprietary-live.ts
+a177bce03fe40979ecc8a633f662dd7b0a506944654807108f983a3a33ac39d0  ./scripts/proprietary-live.ts
 6a005768034a95025ce10a7d156562e9391310e15a1987faa41f76deb97e338e  ./scripts/provision-client.ts
 644d0496e24eb28e3b19e8fe5a2c83924992f1e3421658ca079aea767ad186bb  ./src/app/api/v1/audits/[auditId]/certificate/route.ts
 7f7204f596a5673855a1ddb266d7365e671475df3e2baf652e94d72ca753c517  ./src/app/api/v1/audits/[auditId]/commitment/verify/route.ts
@@ -146,12 +146,12 @@ d43ec556c04481947488c871d3bbb7f67ea75477e9c59185f7d4ef85abadc26e  ./src/lib/atta
 069a094f3a812d5def74de2d2726d44a921e7c3bbccf673a134c39e2282ad0db  ./src/lib/audit-principal.ts
 fb9bfd46c54bf91878ff9ee837fbe251b83ac2445d95ca5150c1c1dd6df6822b  ./src/lib/audit-read.ts
 4909f5b680a4ae4874c3ed82be0c9afd3b3bee70e40087ef08d9e14e3751f821  ./src/lib/audit-service.ts
-75942f55ca78d585e3ad0a4ff7a918098521d61d96aa1727d2080c261805e7e5  ./src/lib/auth.ts
+8674c37c510429a78b9d1a82b551141b42fce1ddfb7538df066a517fc4729d2e  ./src/lib/auth.ts
 e6633ed737d8e3dd8b37bb60dbdeb339decf74d5f102eb6c74016495433246c8  ./src/lib/canonical.ts
 1cf444839be23c2105ee51479e2dc6ae21aee5fa5f03528c35677700275351aa  ./src/lib/certificates.ts
 7fdaa51055f227c5163f1e1ed3bfe3945f8da1a8edb534ea54abe2bd6bf023d6  ./src/lib/client-execution.ts
 d1f1e0d62cb8d8d1e04c26e14de842d8a151f75812d81b046c65b5d1fe8e4b27  ./src/lib/cn.ts
-e56e270d7657d94e878172361807be48fb85f0c545e6c3e110dfda6ced33a2b4  ./src/lib/config.ts
+27367d95d7ddd6e9d4105abffdcc9f429c5ce36da911c30d90d80b8719a85254  ./src/lib/config.ts
 c29a10ac7e618ff2e7dd8fe7c8df2e45ff893c5f485f87d9412b883179721506  ./src/lib/db.ts
 3ad96309bbcb4df3e539d0aeab5f524e5824a53016a7b9411d3466aafa51a3ee  ./src/lib/env.ts
 3bd2f3e591484e9bd9d33c48c34653633121931da591a74b09484f54e4045aaa  ./src/lib/evidence/adapters.ts

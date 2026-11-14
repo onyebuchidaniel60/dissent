@@ -18,7 +18,7 @@ export const DEFAULT_PROPRIETARY_LOOP_ENABLED = false;
 export const DEFAULT_APP_BASE_URL = preview.appBaseUrl;
 export const PREVIEW_AUTH_RECIPIENT = "https://dissent-web.onrender.com";
 export const DEFAULT_RPC_URL =
-  preview.network === "mainnet" ? "https://rpc.mainnet.near.org" : preview.rpcUrl;
+  preview.network === "mainnet" ? "https://rpc.mainnet.fastnear.com" : preview.rpcUrl;
 export const DEFAULT_EXPLORER_URL =
   preview.network === "mainnet" ? "https://explorer.near.org" : preview.explorerUrl;
 

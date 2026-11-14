@@ -33,8 +33,8 @@ import { fetchTidepoolStatus } from "@/lib/proprietary/venue";
 const RPC_URL =
   process.env.NEAR_RPC_URL ??
   (process.env.NEAR_NETWORK?.toLowerCase() === "testnet"
-    ? "https://rpc.testnet.near.org"
-    : "https://rpc.mainnet.near.org");
+    ? "https://rpc.testnet.fastnear.com"
+    : "https://rpc.mainnet.fastnear.com");
 const VENUE = process.env.EXECUTION_VENUE?.trim().toUpperCase() === "TIDEPOOL" ? "TIDEPOOL" : "ONECLICK";
 const REGISTRY = process.env.NEAR_REGISTRY_ACCOUNT_ID?.trim() ?? "";
 const VAULT = process.env.NEAR_VAULT_ACCOUNT_ID?.trim() ?? "";

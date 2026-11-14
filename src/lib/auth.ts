@@ -83,11 +83,11 @@ function rpcUrlForAccount(accountId: string): string {
   const normalized = accountId.toLowerCase();
   if (/^[0-9a-f]{64}$/i.test(normalized)) {
     return NEAR_NETWORK === "testnet"
-      ? "https://rpc.testnet.near.org"
-      : "https://rpc.mainnet.near.org";
+      ? "https://rpc.testnet.fastnear.com"
+      : "https://rpc.mainnet.fastnear.com";
   }
-  if (normalized.endsWith(".testnet")) return "https://rpc.testnet.near.org";
-  if (normalized.endsWith(".near")) return "https://rpc.mainnet.near.org";
+  if (normalized.endsWith(".testnet")) return "https://rpc.testnet.fastnear.com";
+  if (normalized.endsWith(".near")) return "https://rpc.mainnet.fastnear.com";
   return NEAR_RPC_URL;
 }
 
@@ -241,8 +241,8 @@ export async function verifyWalletSignature(input: {
 
   const primaryRpc = rpcUrlForAccount(input.accountId);
   const fallbackRpc = primaryRpc.includes("testnet")
-    ? "https://rpc.mainnet.near.org"
-    : "https://rpc.testnet.near.org";
+    ? "https://rpc.mainnet.fastnear.com"
+    : "https://rpc.testnet.fastnear.com";
 
   const primary = await viewAccessKeyRaw(primaryRpc, input.accountId, publicKey);
   if (!primary.ok) {

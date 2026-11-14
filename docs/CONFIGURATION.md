@@ -16,7 +16,7 @@ All secrets are server-only. The authoritative template is [`.env.example`](../.
 | `ADMIN_WALLET_ADDRESSES` | Yes | Server config | Comma-separated operator allowlist |
 | `NEAR_NETWORK` | Yes | Server config | `mainnet` (default) or explicit `testnet` for staging |
 | `NEXT_PUBLIC_NEAR_NETWORK` | Yes | Public config | Must match `NEAR_NETWORK` for the wallet selector |
-| `NEAR_RPC_URL` | Yes | Server config | Mainnet RPC by default; staging may override |
+| `NEAR_RPC_URL` | Yes | Server config | `https://rpc.mainnet.fastnear.com` by default; staging may override with a testnet provider |
 | `NEAR_EXPLORER_URL` | Optional | Public config | `https://explorer.near.org` by default |
 | `NEAR_DEPLOYER_ACCOUNT_ID` | Yes | Server config | Operator-owned mainnet identity |
 | `NEAR_DEPLOYER_KEY` | Yes | Secret manager only | Operator-owned signer; never prompt/tool context |
