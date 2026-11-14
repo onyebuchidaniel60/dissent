@@ -107,9 +107,27 @@ export async function startQueue(): Promise<PgBoss | null> {
 
     if (process.env.PROPRIETARY_LOOP_ENABLED === "true") {
       await boss.schedule("proprietary.loop", "*/5 * * * *");
-      await boss.work("proprietary.loop", { pollingIntervalSeconds: 20, batchSize: 1 }, async () => {
-        const { runProprietaryLoop } = await import("@/lib/proprietary/loop");
-        return runProprietaryLoop();
+      await boss.work(
+        "proprietary.loop",
+        { pollingIntervalSeconds: 20, batchSize: 1 },
+        async () => {
+          const { runProprietaryLoop } = await import("@/lib/proprietary/loop");
+          return runProprietaryLoop();
+        },
+      );
+    } else {
+      // A previously enabled deployment persists the cron schedule in
+      // pg-boss. Remove it and any queued ticks so re-enabling the flag later
+      // does not replay a backlog of audits.
+      await boss.unschedule("proprietary.loop").catch((error: unknown) => {
+        console.warn("[queue] could not unschedule proprietary.loop", {
+          message: error instanceof Error ? error.message : "unknown",
+        });
+      });
+      await boss.deleteQueuedJobs("proprietary.loop").catch((error: unknown) => {
+        console.warn("[queue] could not clear queued proprietary.loop jobs", {
+          message: error instanceof Error ? error.message : "unknown",
+        });
       });
     }
 
