@@ -19,6 +19,7 @@ Dissent is an audit and verification layer — not an exchange, broker, custodia
   - OpenRouter is primary (`OPENROUTER_API_KEY`).
   - Groq is secondary for A02 only (`GROQ_API_KEY`).
   - No OpenAI or Anthropic SDKs are installed.
+- **Compute procurement:** x402 v2 `exact` payments on NEAR testnet through `@fastnear/x402`. A self-hosted shim settles test USDC for A01/A02 inference; it is disabled by default and has no mainnet path.
 - **Trusted execution:** the TEE sub-clause is formally **waived** under the zero-new-spend constraint. No TEE badge is displayed and no confidential-inference claim is made. Model-family, vendor and open-weight diversity gates remain enforced.
 - **Chain:** Rust + `near-sdk` registry/escrow on **NEAR**; mainnet deployment requires operator-owned accounts and explicit authorization.
 - **Tests:** Vitest, Playwright, `near-workspaces`/sandbox for contracts.
@@ -115,7 +116,11 @@ pnpm exec tsx scripts/fund-x402-agent.ts   # register storage and top up the age
 pnpm exec tsx scripts/x402-live-check.ts   # one paid call per provider + balance delta
 ```
 
-The first live check settled OpenRouter tx `9cGnGNvFVXfpcFr8SmQbxa8Jb1W4GjqLsTkdSDBhuZtu` and Groq tx `3ytvSNjh5rxbzHSM7C44pfsaGtkeiLJnADDqLtjMMkJq`; `x402-agent.testnet` spent exactly `0.004` test USDC and both inference responses were returned.
+The first local live check settled OpenRouter tx `9cGnGNvFVXfpcFr8SmQbxa8Jb1W4GjqLsTkdSDBhuZtu` and Groq tx `3ytvSNjh5rxbzHSM7C44pfsaGtkeiLJnADDqLtjMMkJq`; `x402-agent.testnet` spent exactly `0.004` test USDC and both inference responses were returned. The deployed preview has since settled additional paid calls, including OpenRouter tx `Hx9UmqqCWNLjQyt8pTVx7BJ37AzQyuL3MkA5LnXa3cfZ` and Groq tx `8NEkPnFnjoPz2pdHMt543WT7ThVeE52ihU7bhF8Hwd2H`.
+
+**Full-audit evidence:** `AUD-2039-DDF2` (`88114e6f-0cc7-479d-af0a-49425b9f3ea5`) ran all eight attackers on the deployed preview. A01 and A02 paid through the deployed shim; Render logged `[x402] Paid 0.002 USDC to dissent-demo.testnet for openrouter inference.` and `[x402] Paid 0.002 USDC to dissent-demo.testnet for groq inference.` The agent moved from `9.988` to `9.984` test USDC. The audit completed `ABSTAIN`; certificate `a8df6a5a-8b3c-4f33-9953-4b64593256bf` has hash `504a9c30163dae2a3f28833c80372d0031fdb14ad1812f1123494a58f29bb3cb`, is anchored at `Dz8wm14QrcKhkdzQpVMSZ5RCbFgRDc8cSg62rPqpfhJK`, and verifies at [`/verify/a8df6a5a-8b3c-4f33-9953-4b64593256bf`](https://dissent-web.onrender.com/verify/a8df6a5a-8b3c-4f33-9953-4b64593256bf).
+
+Render's shared egress IP is rate-limited on the public FastNear and `rpc.testnet.near.org` endpoints, so the x402 relayer uses `X402_RPC_URL=https://near-testnet.drpc.org`. This isolates facilitator reads/settlement from the app's cached FastNear authentication path.
 
 ## TEE waiver
 

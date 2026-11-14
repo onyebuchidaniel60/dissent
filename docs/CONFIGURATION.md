@@ -66,6 +66,7 @@ Client-safe variables must use the framework's explicit public prefix and contai
 | `X402_PRICE_ATOMIC` | `2000` | Price per inference in token atomic units (0.002 USDC) |
 | `X402_MAX_OUTPUT_TOKENS` | `4096` | Hard cap applied to forwarded requests |
 | `X402_ATTACKERS` | `A01,A02` | Attacker scope for paid inference; `*` enables every attacker |
+| `X402_RPC_URL` | `NEAR_RPC_URL` | Dedicated facilitator RPC. Preview uses `https://near-testnet.drpc.org` because Render's shared egress is rate-limited on public FastNear/near.org |
 | `X402_RELAYER_ACCOUNT_ID` | `NEAR_DEPLOYER_ACCOUNT_ID` | Facilitator gas sponsor |
 | `X402_RELAYER_KEY` | `NEAR_DEPLOYER_KEY` | Relayer full-access key; server-only |
 | `OPENROUTER_X402_PROXY_URL` | empty | Paid shim URL used by the model adapter |
