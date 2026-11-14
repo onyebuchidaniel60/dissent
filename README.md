@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/logo.svg" width="120" alt="Dissent logo" />
+</p>
+
 # Dissent
 
 **Adversarial audit protocol for AI trading agents.**
@@ -7,7 +11,7 @@ Dissent challenges an AI trading agent's thesis before the agent acts. A client 
 ## Live Demo & Verification
 
 - **Live application:** <https://dissent-web.onrender.com>
-- **Final demo video:** [`demo/dissent-demo.mp4`](demo/dissent-demo.mp4) — 1440×900, 144.2 seconds, H.264/AAC, burned-in captions.
+- **Final demo video:** [`demo/dissent-demo.mp4`](demo/dissent-demo.mp4)
 - **Client audit certificate — `VERIFIED`, `ABSTAIN`:** <https://dissent-web.onrender.com/verify/a8df6a5a-8b3c-4f33-9953-4b64593256bf>
 - **Proprietary execution certificate — `VERIFIED`, `EXECUTED`:** <https://dissent-web.onrender.com/verify/0bf3728d-e457-4b2f-8fad-b53be9565498>
 - **Verification API:** `GET /api/v1/certificates/{certificateId}/verify` recomputes the certificate hash and compares it with the NEAR registry.
@@ -137,7 +141,6 @@ Key variables:
 - `NEAR_DEPLOYER_ACCOUNT_ID`, `NEAR_DEPLOYER_KEY`
 - `NEAR_REGISTRY_ACCOUNT_ID`, `NEAR_ESCROW_ACCOUNT_ID`
 - `OPENROUTER_API_KEY`, `GROQ_API_KEY`
-- `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`
 - `MAX_COST_PER_AUDIT_USD=0.5`
 
 ## Routes
@@ -240,28 +243,6 @@ These records are testnet-only and have no monetary value.
 Render free web service + Neon free PostgreSQL. See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for environment setup, migrations, health checks and rollback guidance.
 
 Render free services spin down after idle. The first request can take ~50 seconds; `/healthz` is kept warm by an external cron ping.
-
-## Demo
-
-Output directory: [`demo/`](demo/).
-
-Final output:
-
-- `demo/dissent-demo.mp4` — H.264 + AAC, **1440×900**, **144.2 seconds**, 8.6 MB, SHA-256 `25066d678beef048ae10f69267d38b04cd220fdce4104270cc2757ea8f5bd75e`.
-- `demo/NARRATION.md` — final script with per-segment timing.
-- `demo/PRODUCTION_NOTES.md` — voice, music source/license, ffmpeg commands, sync and review results.
-- `demo/timings.json` — measured narration timings used by the capture script.
-
-The delivered demo uses a public-domain local Piper/LJSpeech fallback because the operator-supplied ElevenLabs library voice returned `paid_plan_required` on the free tier (no charge was made). Background music is Kevin MacLeod's “Floating Cities” (CC BY 4.0), mixed approximately −20 dB under the voice, with a 1.5s fade-in and 2s fade-out. See `demo/PRODUCTION_NOTES.md`.
-
-### Music attribution
-
-- **Track:** Floating Cities
-- **Artist:** Kevin MacLeod
-- **Source:** https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1600018
-- **License:** Creative Commons Attribution 4.0 (CC BY 4.0)
-
-The track is used as an ambient bed at approximately −20 dB under the narration, with a 1.5s fade-in and 2s fade-out. Full production details, including the ElevenLabs free-tier blocker and the public-domain Piper fallback voice, are in `demo/PRODUCTION_NOTES.md`.
 
 ## Security
 
