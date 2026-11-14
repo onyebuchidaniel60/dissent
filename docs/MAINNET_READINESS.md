@@ -4,7 +4,7 @@
 
 ## Configuration
 
-- Default network is `mainnet` (`NEAR_NETWORK`, `NEXT_PUBLIC_NEAR_NETWORK`).
+- Defaults are centralized in `src/lib/config.ts`: `mainnet`, `ONECLICK`, execution disabled. `NEAR_NETWORK` and `NEXT_PUBLIC_NEAR_NETWORK` are mainnet.
 - Mainnet RPC and explorer are the defaults. Registry, vault, payout, deployer and agent accounts have no testnet fallback; missing values fail closed.
 - `EXECUTION_ENABLED=false` and `PROPRIETARY_LOOP_ENABLED=false` by default.
 - `/readyz` validates database health plus runtime network/venue/account configuration.

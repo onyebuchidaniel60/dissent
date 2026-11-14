@@ -203,7 +203,7 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Fixed the hero phone visibility: explicit `minmax(0, 1fr) 300px` grid, `min-width: 280px` / `min-height: 566px` on `.hero-phone`, and the hide breakpoint lowered from 1340px to 1099px. Added `data-testid="hero-phone"` and a Playwright assertion/screenshot at 1440×900.
 - Confirmed `.env.example` and `src/lib/config.ts` default to `mainnet`, `ONECLICK`, `EXECUTION_ENABLED=false`, `PROPRIETARY_LOOP_ENABLED=false`; `network.ts` consumes the config defaults.
 - Swept `src/app` and `src/components`: no `testnet`, `demo-client` or `fixture` strings remain. The operator account display and wallet-network default are network-neutral.
-- Tests: Vitest 13/13; Playwright 4/4 at 390×844/1440×900, including the new phone visibility test. Preview deploy and preview Playwright recorded after the commit.
+- Tests: Vitest 13/13; Playwright 4/4 at 390×844/1440×900, including the new phone visibility test. Preview deployed at `6121e36`; preview Playwright 4/4; the 1440×900 screenshot shows the phone and the 390×844 check hides it.
 - Demo video generation deferred by operator instruction.
 
 ## Phase 11 UI correction — operator feedback
