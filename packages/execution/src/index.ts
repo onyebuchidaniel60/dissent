@@ -40,8 +40,13 @@ export type ExecutionConfig = {
 };
 
 export function executionConfigFromEnv(): ExecutionConfig {
+  const configuredVenue = process.env.EXECUTION_VENUE?.trim().toUpperCase();
   const venue: ExecutionVenue =
-    process.env.EXECUTION_VENUE?.trim().toUpperCase() === "TIDEPOOL" ? "TIDEPOOL" : "ONECLICK";
+    configuredVenue === "TIDEPOOL" || configuredVenue === "ONECLICK"
+      ? configuredVenue
+      : process.env.NEAR_NETWORK?.trim().toLowerCase() === "testnet"
+        ? "TIDEPOOL"
+        : "ONECLICK";
   return {
     enabled: process.env.EXECUTION_ENABLED === "true",
     venue,

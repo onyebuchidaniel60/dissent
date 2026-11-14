@@ -4,7 +4,7 @@
 
 ## Configuration
 
-- Defaults are centralized in `src/lib/config.ts`: `mainnet`, `ONECLICK`, execution disabled. `NEAR_NETWORK` and `NEXT_PUBLIC_NEAR_NETWORK` are mainnet.
+- Mainnet production defaults are centralized in `src/lib/config.ts`; `config/preview-network.json` is the explicit testnet fallback used by the live preview when mainnet accounts are missing. A resolved `.testnet` registry pins the app to testnet and Tidepool.
 - Mainnet RPC and explorer are the defaults. Registry, vault, payout, deployer and agent accounts have no testnet fallback; missing values fail closed.
 - `EXECUTION_ENABLED=false` and `PROPRIETARY_LOOP_ENABLED=false` by default.
 - `/readyz` validates database health plus runtime network/venue/account configuration.

@@ -80,4 +80,6 @@ Client-safe variables must use the framework's explicit public prefix and contai
 | `TIDEPOOL_DEPOSIT_ADDRESS` | empty | Staging-only quote address |
 | `TIDEPOOL_WNEAR_TOKEN_ID` | `wnear.tidepool-sandbox.testnet` | Staging-only fixed token |
 
+`config/preview-network.json` is the explicit preview fallback (testnet RPC, registry, vault, preview URL, Tidepool). Production mainnet requires env values that resolve to `.near`; otherwise the app deliberately falls back to testnet staging.
+
 Execution is fail-closed: a TRADE certificate alone is not enough. The audit must match `PROPRIETARY_EXECUTION_AUDIT_ID`, the vault must be NEP-141-capable, the quote deposit address must be allowlisted for its window, the certificate must be approved, and `EXECUTION_ENABLED` must be explicitly `true`. The preview uses `NEAR_NETWORK=testnet` and `EXECUTION_VENUE=TIDEPOOL` for the historical staging record; the customer-facing UI does not display a testnet label. Production must use a fresh mainnet database and the mainnet configuration above.

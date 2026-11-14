@@ -5,7 +5,7 @@ import { AlertTriangle, ArrowLeft, CheckCircle2, CircleAlert, LockKeyhole, Refre
 import { PageHeader, Panel } from "@/components/ui";
 import { getDb } from "@/db";
 import { executionReceipts } from "@/db/schema";
-import { executionVenue } from "@/lib/network";
+import { executionVenue, vaultAccountId, vaultAgentAccountId } from "@/lib/network";
 import { checkExecutionVenue, proprietaryLoopEnabled } from "@/lib/proprietary/venue";
 
 export const dynamic = "force-dynamic";
@@ -21,8 +21,8 @@ export default async function ProprietaryPage() {
   const loopEnabled = proprietaryLoopEnabled();
   const executionEnabled = process.env.EXECUTION_ENABLED === "true";
   const vaultSupportsNep141 = process.env.VAULT_SUPPORTS_NEP141 === "true";
-  const vault = process.env.NEAR_VAULT_ACCOUNT_ID ?? null;
-  const agent = process.env.NEAR_VAULT_AGENT_ACCOUNT_ID ?? null;
+  const vault = vaultAccountId();
+  const agent = vaultAgentAccountId();
   const configuredVenue = executionVenue();
   const accountsConfigured = Boolean(
     process.env.PROPRIETARY_RECIPIENT &&

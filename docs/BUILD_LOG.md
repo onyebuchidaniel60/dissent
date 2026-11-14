@@ -206,6 +206,8 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Tests: Vitest 13/13; Playwright 4/4 at 390×844/1440×900, including the new phone visibility test. Preview deployed at `aaa5bb1`; preview Playwright 4/4; the 1440×900 screenshot shows the phone and the 390×844 check hides it; the TEE/network scan and signed wallet login also pass on the preview.
 - Removed the TEE banner and all TEE/attestation/confidential UI strings, status entries and public API fields; the `TeeWaiverNotice` component was deleted. Rendered scan of 11 routes is clean for TEE/attestation/confidential and for testnet/demo-client/fixture; the workspace account tag is masked.
 - Wallet auth: `AUTH_RECIPIENT` is the app URL; frontend normalizes public-key/signature encodings; backend decodes base64/base64url/array/hex signatures and verifies against the stored recipient. Local API test returned 200 with an admin session.
+- Preview network fallback added in `config/preview-network.json`: testnet RPC/registry/vault, preview URL, and Tidepool when the resolved network is testnet. Mainnet remains opt-in via env.
+- Wallet auth now routes `.testnet` accounts to the testnet RPC and `.near` accounts to mainnet before the access-key lookup. A local `NEAR_RPC_URL=https://rpc.mainnet.near.org` server still authenticated `dissent-demo.testnet` with 200/admin.
 - Demo video generation deferred by operator instruction.
 
 ## Phase 11 UI correction — operator feedback

@@ -1,5 +1,7 @@
 import "server-only";
 
+import { DEFAULT_APP_BASE_URL } from "@/lib/config";
+
 export function getAdminAllowlist(): string[] {
   return (process.env.ADMIN_WALLET_ADDRESSES ?? "")
     .split(",")
@@ -19,7 +21,7 @@ export function maskAccount(accountId: string): string {
 }
 
 export function getAppBaseUrl(): string {
-  return process.env.APP_BASE_URL ?? "http://localhost:3000";
+  return process.env.APP_BASE_URL ?? DEFAULT_APP_BASE_URL;
 }
 
 export function isTeeEnabled(): boolean {

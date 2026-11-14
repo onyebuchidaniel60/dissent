@@ -1,0 +1,12 @@
+{
+  "network": "testnet",
+  "walletNetwork": "testnet",
+  "rpcUrl": "https://rpc.testnet.near.org",
+  "explorerUrl": "https://explorer.testnet.near.org",
+  "appBaseUrl": "https://dissent-web.onrender.com",
+  "registryAccountId": "registry.dissent-demo.testnet",
+  "vaultAccountId": "vault.dissent-demo.testnet",
+  "vaultAgentAccountId": "vault-agent.dissent-demo.testnet",
+  "proprietaryRecipient": "demo-client.testnet",
+  "proprietaryRefundTo": "vault.dissent-demo.testnet"
+}

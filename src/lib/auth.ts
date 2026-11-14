@@ -9,6 +9,7 @@ import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import { getDb } from "@/db";
 import { authNonces, walletSessions } from "@/db/schema";
 import { getAdminAllowlist, getAppBaseUrl } from "@/lib/env";
+import { NEAR_RPC_URL } from "@/lib/network";
 
 export const SESSION_COOKIE = "dissent_session";
 export const SESSION_TTL_SECONDS = 8 * 60 * 60;
@@ -62,6 +63,13 @@ function decodeNep413Signature(signature: string): Uint8Array {
   const bytes = Buffer.from(normalized, "base64");
   if (bytes.length !== 64) throw new Error("INVALID_SIGNATURE_ENCODING");
   return new Uint8Array(bytes);
+}
+
+function rpcUrlForAccount(accountId: string): string {
+  const normalized = accountId.toLowerCase();
+  if (normalized.endsWith(".testnet")) return "https://rpc.testnet.near.org";
+  if (normalized.endsWith(".near")) return "https://rpc.mainnet.near.org";
+  return NEAR_RPC_URL;
 }
 
 export function buildAuthMessage(accountId: string, nonce: string): string {
@@ -144,7 +152,7 @@ export async function verifyWalletSignature(input: {
   const publicKey = normalizePublicKey(input.publicKey);
   const signature = decodeNep413Signature(input.signature);
   const provider = new JsonRpcProvider({
-    url: process.env.NEAR_RPC_URL ?? "https://rpc.mainnet.near.org",
+    url: rpcUrlForAccount(input.accountId),
   });
 
   try {
