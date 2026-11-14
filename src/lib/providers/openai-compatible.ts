@@ -1,5 +1,6 @@
 import "server-only";
 
+import { payAndRequest, X402PaymentError } from "../../../packages/execution/x402-payment-client";
 import { MODEL_ASSIGNMENTS, PROVIDER_CONFIG } from "@/lib/model-assignments";
 
 export type ProviderName = "openrouter" | "groq";
@@ -120,10 +121,7 @@ function costUsd(modelId: string, inputTokens: number, outputTokens: number): nu
   );
   const pricing = assignment?.pricing_usd_per_million;
   if (!pricing) return 0;
-  return (
-    (inputTokens / 1_000_000) * pricing.input +
-    (outputTokens / 1_000_000) * pricing.output
-  );
+  return (inputTokens / 1_000_000) * pricing.input + (outputTokens / 1_000_000) * pricing.output;
 }
 
 function endpoint(provider: ProviderName): string {
@@ -131,11 +129,38 @@ function endpoint(provider: ProviderName): string {
   return `${base}/chat/completions`;
 }
 
+/**
+ * The x402 shim URL for an attacker. Paid compute is used only for the
+ * configured attacker scope (`X402_ATTACKERS`, default `A01,A02`), when the
+ * shim URL and procurement agent credentials are configured. Other attackers
+ * keep the direct-provider path so one slow paid call cannot stall the whole
+ * eight-attacker audit.
+ */
+function x402Endpoint(attackerId: string, provider: ProviderName): string | null {
+  const configured =
+    provider === "openrouter"
+      ? process.env.OPENROUTER_X402_PROXY_URL
+      : process.env.GROQ_X402_PROXY_URL;
+  if (!configured?.trim()) return null;
+  if (!process.env.X402_AGENT_ACCOUNT_ID?.trim() || !process.env.X402_AGENT_KEY?.trim()) {
+    return null;
+  }
+  const scope = process.env.X402_ATTACKERS?.trim() || "A01,A02";
+  if (scope !== "*") {
+    const allowed = new Set(
+      scope
+        .split(",")
+        .map((value) => value.trim().toUpperCase())
+        .filter(Boolean),
+    );
+    if (!allowed.has(attackerId.toUpperCase())) return null;
+  }
+  return configured.trim();
+}
+
 function credential(provider: ProviderName): string {
   const value =
-    provider === "openrouter"
-      ? process.env.OPENROUTER_API_KEY
-      : process.env.GROQ_API_KEY;
+    provider === "openrouter" ? process.env.OPENROUTER_API_KEY : process.env.GROQ_API_KEY;
   if (!value) throw new ProviderError("AUTH", `${provider} credential is not configured`);
   return value;
 }
@@ -178,7 +203,8 @@ export async function callAttackerModel(input: ProviderCallInput): Promise<Provi
   const models = modelCandidates(input.attackerId);
   const maxTokens = input.maxTokens ?? 2600;
   const estimated = estimateTokens(input.messages, maxTokens);
-  const key = credential(provider);
+  const proxy = x402Endpoint(input.attackerId, provider);
+  const key = proxy ? null : credential(provider);
   const route = providerRouting(input.attackerId);
 
   let lastError: ProviderError | null = null;
@@ -205,22 +231,37 @@ export async function callAttackerModel(input: ProviderCallInput): Promise<Provi
     input.signal?.addEventListener("abort", onAbort);
 
     try {
-      const response = await fetch(endpoint(provider), {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${key}`,
-          "Content-Type": "application/json",
-          "User-Agent": "Dissent/1.0 (adversarial audit worker)",
-          ...(provider === "openrouter"
-            ? {
-                "HTTP-Referer": process.env.APP_BASE_URL ?? "https://dissent-web.onrender.com",
-                "X-Title": "Dissent adversarial audit",
-              }
-            : {}),
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "User-Agent": "Dissent/1.0 (adversarial audit worker)",
+        ...(provider === "openrouter"
+          ? {
+              "HTTP-Referer": process.env.APP_BASE_URL ?? "https://dissent-web.onrender.com",
+              "X-Title": "Dissent adversarial audit",
+            }
+          : {}),
+      };
+      if (key) headers.Authorization = `Bearer ${key}`;
+
+      const response = proxy
+        ? (
+            await payAndRequest(
+              proxy,
+              {
+                method: "POST",
+                headers,
+                body: JSON.stringify(body),
+                signal: controller.signal,
+              },
+              { provider, requirePayment: true },
+            )
+          ).response
+        : await fetch(endpoint(provider), {
+            method: "POST",
+            headers,
+            body: JSON.stringify(body),
+            signal: controller.signal,
+          });
 
       if (!response.ok) {
         const raw = await response.text().catch(() => "");
@@ -272,7 +313,14 @@ export async function callAttackerModel(input: ProviderCallInput): Promise<Provi
         if (index < models.length - 1) continue;
         throw lastError;
       }
-      lastError = new ProviderError("UNAVAILABLE", `${provider} request failed`);
+      if (error instanceof X402PaymentError) {
+        lastError = new ProviderError("UNAVAILABLE", `x402 ${error.code}: ${error.message}`);
+        throw lastError;
+      }
+      lastError = new ProviderError(
+        "UNAVAILABLE",
+        `${provider} request failed${error instanceof Error ? `: ${error.message}` : ""}`,
+      );
       if (index < models.length - 1) continue;
       throw lastError;
     } finally {

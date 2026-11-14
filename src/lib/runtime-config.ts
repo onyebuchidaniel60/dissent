@@ -52,6 +52,38 @@ export function validateRuntimeConfig(): RuntimeConfigCheck {
     }
   }
 
+  if (process.env.X402_SHIM_ENABLED === "true") {
+    if (!process.env.X402_PAY_TO_ACCOUNT_ID?.trim()) {
+      errors.push("X402_PAY_TO_NOT_CONFIGURED");
+    }
+    if (!process.env.X402_USDC_TOKEN_ID?.trim()) {
+      errors.push("X402_ASSET_NOT_CONFIGURED");
+    }
+    if (!/^\d+$/.test(process.env.X402_PRICE_ATOMIC?.trim() ?? "")) {
+      errors.push("X402_PRICE_INVALID");
+    }
+    if (!process.env.NEAR_DEPLOYER_ACCOUNT_ID?.trim() || !process.env.NEAR_DEPLOYER_KEY?.trim()) {
+      errors.push("X402_RELAYER_NOT_CONFIGURED");
+    }
+    if (!process.env.OPENROUTER_API_KEY?.trim() || !process.env.GROQ_API_KEY?.trim()) {
+      errors.push("X402_UPSTREAM_PROVIDER_NOT_CONFIGURED");
+    }
+    if (
+      IS_MAINNET &&
+      process.env.X402_USDC_TOKEN_ID?.trim() !==
+        "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1"
+    ) {
+      errors.push("X402_NON_CANONICAL_ASSET_ON_MAINNET");
+    }
+  }
+
+  if (
+    (process.env.OPENROUTER_X402_PROXY_URL?.trim() || process.env.GROQ_X402_PROXY_URL?.trim()) &&
+    (!process.env.X402_AGENT_ACCOUNT_ID?.trim() || !process.env.X402_AGENT_KEY?.trim())
+  ) {
+    errors.push("X402_AGENT_NOT_CONFIGURED");
+  }
+
   return {
     ok: errors.length === 0,
     errors,

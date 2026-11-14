@@ -4,7 +4,7 @@
 
 Dissent challenges an AI trading agent's thesis before the agent acts. A client commits a thesis and machine-testable failure conditions on NEAR, funds a fixed audit quote, and receives eight isolated adversarial analyses. Evidence is re-fetched, attackers are reviewed for sycophancy, and a deterministic policy issues `TRADE`, `REFUSE` or `ABSTAIN`. The certificate preserves coverage, minority findings and disagreement instead of turning them into a majority vote.
 
-> **Current checkpoint:** Phase 11 — mainnet readiness and production polish. The eight-attacker pipeline, evidence re-fetch, deterministic adjudication, NEAR anchoring, public verifier and a capped NEP-141 vault are implemented. The primary execution adapter is mainnet 1Click and remains disabled by default. A historical staging execution is preserved in the handoff; the demo video predates the trading beat.
+> **Current checkpoint:** Phase 16 — x402 autonomous compute procurement. A01/A02 pay for their own inference through a self-hosted x402 shim on NEAR testnet, settled in test USDC by a NEP-366 delegate. The eight-attacker pipeline, evidence re-fetch, deterministic adjudication, NEAR anchoring, public verifier and a capped NEP-141 vault remain implemented. Mainnet execution remains disabled by default; the live preview is explicit testnet staging.
 
 ## Product boundaries
 
@@ -92,6 +92,30 @@ The pinned roster is recorded in [`config/model_assignments.json`](config/model_
 - Per-audit inference ceiling: **$0.50**.
 - Remaining OpenRouter credit at intake: **$7.747** (recorded; not a promise of future balance).
 - No paid fallback may replace a `:free` slug.
+
+## Compute Procurement (x402)
+
+Dissent's audit workers can pay for their own inference. The procurement agent is a dedicated testnet account, `x402-agent.testnet`; A01 (OpenRouter) and A02 (Groq) call the self-hosted x402 shim instead of using provider keys directly. Each paid request follows the x402 v2 `exact` scheme on NEAR:
+
+1. The model adapter sends the chat-completion request without credentials. The shim answers `402 Payment Required` with a base64 `PAYMENT-REQUIRED` challenge naming the asset, amount, payee and `near:testnet`.
+2. The agent signs exactly one NEP-141 `ft_transfer` in a NEP-366 `SignedDelegateAction` using its full-access key. The delegate is attached as `PAYMENT-SIGNATURE`; no provider key or wallet key reaches the model.
+3. The shim verifies the delegate against on-chain state, sponsors gas through the relayer, settles the transfer, forwards the request to OpenRouter/Groq with the existing provider credential, and returns the inference with a `PAYMENT-RESPONSE` header.
+4. The adapter logs the settled payment exactly as `[x402] Paid <amount> USDC to <payee> for <provider> inference.`
+
+Routes: `POST /api/x402/openrouter/chat/completions`, `POST /api/x402/groq/chat/completions`; capabilities are published at `GET /api/x402/supported`. The shim accepts only known model slugs, caps output tokens, limits body size and has no arbitrary URL fetch. Settlement is serialised so concurrent paid calls cannot race the relayer or payer nonces.
+
+**Deployments and deviations.** The public reference facilitator (`https://test.x402.mikedotexe.com`) is live for `near:testnet` but its `/verify` and `/settle` routes require an allowlisted resource-server key. `httpay.xyz` currently returns `DEPLOYMENT_DISABLED`, and `@waterfall-finance/sdk`/`@ai42/sdk` are not NEAR adapters. The implementation therefore self-hosts the facilitator and resource server with `@fastnear/x402` and uses the Tidepool test USDC token (`usdc.tidepool-sandbox.testnet`, six decimals, no value) as the settlement asset. `@neargate/cli` was rejected for this flow because it settles in native NEAR, not USDC. The agent was funded by an on-chain transfer from `demo-client.testnet`; the Circle faucet was not used.
+
+**Configuration:** `X402_SHIM_ENABLED`, `X402_AGENT_ACCOUNT_ID`, `X402_AGENT_KEY`, `X402_PAY_TO_ACCOUNT_ID`, `X402_USDC_TOKEN_ID`, `X402_PRICE_ATOMIC` (default `2000` = 0.002 USDC), `X402_ATTACKERS` (default `A01,A02`), `X402_RELAYER_ACCOUNT_ID`, `X402_RELAYER_KEY`, `OPENROUTER_X402_PROXY_URL`, `GROQ_X402_PROXY_URL`. The shim is disabled by default and uses a testnet full-access key only; it is not a mainnet payment path.
+
+**Operator checks:**
+
+```bash
+pnpm exec tsx scripts/fund-x402-agent.ts   # register storage and top up the agent
+pnpm exec tsx scripts/x402-live-check.ts   # one paid call per provider + balance delta
+```
+
+The first live check settled OpenRouter tx `9cGnGNvFVXfpcFr8SmQbxa8Jb1W4GjqLsTkdSDBhuZtu` and Groq tx `3ytvSNjh5rxbzHSM7C44pfsaGtkeiLJnADDqLtjMMkJq`; `x402-agent.testnet` spent exactly `0.004` test USDC and both inference responses were returned.
 
 ## TEE waiver
 

@@ -23,10 +23,12 @@
     "test:vault": "cargo test --manifest-path contracts/dissent-vault/Cargo.toml"
   },
   "dependencies": {
+    "@fastnear/x402": "2.5.0",
     "@near-wallet-selector/core": "10.1.4",
     "@near-wallet-selector/modal-ui": "10.1.4",
     "@near-wallet-selector/my-near-wallet": "10.1.4",
     "@near-wallet-selector/nightly": "10.1.4",
+    "@x402/core": "2.18.0",
     "ajv": "8.20.0",
     "ajv-formats": "3.0.1",
     "borsh": "2.0.0",

@@ -53,6 +53,28 @@ Client-safe variables must use the framework's explicit public prefix and contai
 - **NearBlocks:** public API rate limits documented at request time; no key is assumed.
 - **FastNEAR:** public RPC; no key is assumed for the preview.
 
+## Compute procurement (x402)
+
+| Variable | Default | Notes |
+|---|---|---|
+| `X402_SHIM_ENABLED` | `false` | Must be explicitly `true` to expose the paid inference routes |
+| `X402_AGENT_ACCOUNT_ID` | empty | Testnet payer account (`x402-agent.testnet` in the preview) |
+| `X402_AGENT_KEY` | empty | Full-access testnet key; never a mainnet or treasury key |
+| `X402_FACILITATOR_URL` | empty | Reference facilitator recorded for interoperability; settlement is in-process |
+| `X402_PAY_TO_ACCOUNT_ID` | empty | Settlement payee; must be NEP-145 registered on the token |
+| `X402_USDC_TOKEN_ID` | testnet Tidepool USDC | Explicit NEP-141 asset. Mainnet requires canonical Circle USDC |
+| `X402_PRICE_ATOMIC` | `2000` | Price per inference in token atomic units (0.002 USDC) |
+| `X402_MAX_OUTPUT_TOKENS` | `4096` | Hard cap applied to forwarded requests |
+| `X402_ATTACKERS` | `A01,A02` | Attacker scope for paid inference; `*` enables every attacker |
+| `X402_RELAYER_ACCOUNT_ID` | `NEAR_DEPLOYER_ACCOUNT_ID` | Facilitator gas sponsor |
+| `X402_RELAYER_KEY` | `NEAR_DEPLOYER_KEY` | Relayer full-access key; server-only |
+| `OPENROUTER_X402_PROXY_URL` | empty | Paid shim URL used by the model adapter |
+| `GROQ_X402_PROXY_URL` | empty | Paid shim URL used by the model adapter |
+
+`packages/execution/x402-payment-client.ts` implements the generic `payAndRequest` flow: `402` challenge, NEP-366 `SignedDelegateAction` for exactly one NEP-141 `ft_transfer`, retry with `PAYMENT-SIGNATURE`, and settlement logging. Paid calls are serialised per process because delegates consume the payer access-key nonce. The shim (`src/lib/x402/server.ts`) verifies and settles in-process through `@fastnear/x402`, with a separate settlement lock for the relayer nonce. It restricts model slugs, caps output tokens and body size, and never fetches a model-supplied URL.
+
+The public reference facilitator is API-key gated for `/verify` and `/settle`; `httpay.xyz` is disabled; `@neargate/cli` settles native NEAR rather than USDC. The preview therefore uses a self-hosted facilitator and the Tidepool test USDC token, which has no value. The agent is funded with `scripts/fund-x402-agent.ts` and verified with `scripts/x402-live-check.ts`. No mainnet payment path is enabled.
+
 ## Proprietary execution (mainnet-ready)
 
 | Variable | Default | Notes |
