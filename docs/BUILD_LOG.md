@@ -218,6 +218,8 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 
 - Global page gutter fix: `.app-main` was overriding `.page-width` horizontal padding via the `padding` shorthand. Changed it to `padding-top`/`padding-bottom`; added `src/app/docs/layout.tsx` using `page-width app-main`. At 1440×900, `/app/reputation`, `/app/audits` and `/docs` page headers start at `x=69.12px` with a matching right gap; no horizontal overflow. Added a Playwright 1440×900 gutter test and screenshots; local 5/5, preview gutter 1/1. Full preview suite is 4/5 because `ADMIN_WALLET_ADDRESSES` now points to the Nightly implicit account, so the deployer-signed admin assertions are gated.
 
+- Proprietary loop autonomy: deleted 11 stuck `AWAITING_COMMITMENT` drafts from Neon (3 completed audits remain). Added `PROPRIETARY_CLIENT_KEY`/`PROPRIETARY_CLIENT_ACCOUNT_ID` to Render for `demo-client.testnet`; verified the derived key `ed25519:DXHED…xsrM` is `FullAccess`. `src/lib/proprietary/loop.ts` now signs and submits `commit_audit` and `fund_audit`, issues the fixed quote, prepares vault approval/recipient/token storage, pins `PROPRIETARY_EXECUTION_AUDIT_ID`, and enqueues dispatch; it resumes active drafts and returns BUSY while attacking/adjudicating. `scripts/proprietary-live.ts` uses `autoCommit:false`. Typecheck/lint and Vitest 13/13 pass; missing-key preflight fails before draft creation. Deployed `d482326`; no audit was originated during verification to avoid unattended model spend.
+
 ## Phase 11 UI correction — operator feedback
 
 - Reverted the display face from Russo One to **Orbitron** (the Phase 10 font).

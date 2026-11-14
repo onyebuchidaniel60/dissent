@@ -73,13 +73,17 @@ Client-safe variables must use the framework's explicit public prefix and contai
 | `VAULT_PER_TX_CAP_YOCTO` | `500000000000000000000000` | 0.5 NEAR |
 | `VAULT_DAILY_CAP_YOCTO` | `1000000000000000000000000` | 1 NEAR |
 | `PROPRIETARY_THESIS_AMOUNT_YOCTO` | `10000000000000000000000` | 0.01 wNEAR thesis position for execution |
+| `PROPRIETARY_CLIENT_ACCOUNT_ID` | empty | Workspace client that signs `commit_audit` and `fund_audit`; falls back to `DEMO_CLIENT_ACCOUNT_ID` |
+| `PROPRIETARY_CLIENT_KEY` | empty | Testnet full-access key for `PROPRIETARY_CLIENT_ACCOUNT_ID`; falls back to `DEMO_CLIENT_KEY` |
 | `PROPRIETARY_RECIPIENT` | empty | Destination for the USDC leg of the quote |
 | `PROPRIETARY_REFUND_TO` | empty | Refund account for the wNEAR leg; normally the vault |
-| `PROPRIETARY_EXECUTION_AUDIT_ID` | empty | Per-run gate: only this audit may execute |
+| `PROPRIETARY_EXECUTION_AUDIT_ID` | empty | Per-run gate: only this audit may execute; the loop sets it at runtime |
 | `TIDEPOOL_BASE_URL` | empty | Staging-only testnet venue |
 | `TIDEPOOL_DEPOSIT_ADDRESS` | empty | Staging-only quote address |
 | `TIDEPOOL_WNEAR_TOKEN_ID` | `wnear.tidepool-sandbox.testnet` | Staging-only fixed token |
 
 `config/preview-network.json` is the explicit preview fallback (testnet RPC, registry, vault, preview URL, Tidepool). Production mainnet requires env values that resolve to `.near`; otherwise the app deliberately falls back to testnet staging.
+
+With `PROPRIETARY_LOOP_ENABLED=true`, `NEAR_DEPLOYER_KEY` and `PROPRIETARY_CLIENT_KEY` (or `DEMO_CLIENT_KEY`), the 5-minute worker originates an audit, signs `commit_audit` and `fund_audit`, prepares the testnet vault approval and token storage, pins `PROPRIETARY_EXECUTION_AUDIT_ID` to the audit, and enqueues dispatch. It resumes `AWAITING_COMMITMENT`, `COMMITTED`, `FUNDED` or `QUEUED` audits instead of creating duplicates, and skips while an audit is attacking or awaiting adjudication. The explicit operator script uses `autoCommit: false` and keeps its own ordering.
 
 Execution is fail-closed: a TRADE certificate alone is not enough. The audit must match `PROPRIETARY_EXECUTION_AUDIT_ID`, the vault must be NEP-141-capable, the quote deposit address must be allowlisted for its window, the certificate must be approved, and `EXECUTION_ENABLED` must be explicitly `true`. The preview uses `NEAR_NETWORK=testnet` and `EXECUTION_VENUE=TIDEPOOL` for the historical staging record; the customer-facing UI does not display a testnet label. Production must use a fresh mainnet database and the mainnet configuration above.

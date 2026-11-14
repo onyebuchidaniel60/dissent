@@ -45,6 +45,8 @@ Set these on the Render service. Values come from the shell/secret store and mus
 | `EXECUTION_VENUE` | Yes | `ONECLICK` in production; `TIDEPOOL` only for staging |
 | `EXECUTION_ENABLED` | Yes | `false` by default; explicit operator action required |
 | `PROPRIETARY_LOOP_ENABLED` | Yes | `false` by default |
+| `PROPRIETARY_CLIENT_ACCOUNT_ID` | For loop | Workspace client that signs `commit_audit`/`fund_audit`; falls back to `DEMO_CLIENT_ACCOUNT_ID` |
+| `PROPRIETARY_CLIENT_KEY` | For loop | Testnet-only full-access key for the client account; falls back to `DEMO_CLIENT_KEY` |
 | `OPENROUTER_API_KEY` | Yes | Primary inference provider |
 | `GROQ_API_KEY` | Yes | A02 only |
 | `ELEVENLABS_API_KEY` | Demo | Voiceover only; not used by the app runtime |
