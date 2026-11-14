@@ -38,6 +38,14 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 - **Wallet auth fix:** `AUTH_RECIPIENT` now defaults to `APP_BASE_URL` and the preview uses `https://dissent-web.onrender.com`. The frontend normalizes the public-key prefix and signature encoding; the backend decodes base64/base64url/array/hex signatures, strips an `ed25519:` prefix, normalizes the public key and verifies against the stored recipient/callback. Local API test with an unprefixed public key and prefixed base64 signature returned 200 and a valid admin session; the same request on the preview also returned 200 with an admin session.
 - **Demo:** deferred by operator instruction; no video or README finalisation was generated in this phase.
 
+### Nightly login root cause — 2026-11-14
+
+- **Exact rejected request:** `accountId=b52f34aa6569312b691e649dec777467bac7ae92980a4572d1e878cf0fd0b4be`, `publicKey=ed25519:DCGYTDp47rChgauHcdQYNYeWXMPY9jZWuJKwxqXSugi9`, expected and supplied recipient both `https://dissent-web.onrender.com`, resolved network `testnet`.
+- **RPC result:** the primary `https://rpc.testnet.near.org` `view_access_key` returned “does not exist”; the fallback `https://rpc.mainnet.near.org` returned the same. The route correctly returned `ACCESS_KEY_NOT_FOUND`. Recipient matching and routing were correct.
+- **Actual cause:** the 64-hex account ID is the hex encoding of Nightly's public key, but `view_account` returned `UNKNOWN_ACCOUNT` on both networks. Nightly's Testnet implicit account had never been created/funded, so it had no access key.
+- **Remediation:** transferred `0.05` testnet NEAR to that implicit account from the testnet deployer. Funding tx `9H5hYkhr4UgDHcGpnZKdDJurnLdk7NDD3oX1cdE6iKWw`; the account now exists with `ed25519:DCGYTDp47rChgauHcdQYNYeWXMPY9jZWuJKwxqXSugi9` as a `FullAccess` key. `view_access_key_list` on Testnet returns that key. This was testnet-only; no real funds were moved.
+- **Post-fix probe:** a verification request with a deliberately invalid signature reached `SIGNATURE_MISMATCH` after `view_access_key` returned `FullAccess`, proving the key lookup now passes. The operator must retry with Nightly's real signature.
+
 ### Phase 11 UI correction (operator feedback)
 
 - Restored **Orbitron** as the display face; Russo One removed. The previous Phase 10 typography is back.
@@ -167,6 +175,7 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 | Preview Playwright | 4/4 PASS at 390×844 and 1440×900 on `035cf97`, including the phone visibility test |
 | TEE/network UI scan | Clean: no TEE/attestation/confidential or testnet/demo-client/fixture text on 11 rendered routes locally and on the preview |
 | Wallet login | Local and preview signed NEP-413 requests returned 200 with a valid admin session; `.testnet` and 64-hex implicit accounts both work; `.testnet` also works with a mainnet `NEAR_RPC_URL` |
+| Nightly implicit account | Account `b52f…b4be` did not exist on either network; created on Testnet with `0.05` testnet NEAR, tx `9H5hYkhr4UgDHcGpnZKdDJurnLdk7NDD3oX1cdE6iKWw`; `FullAccess` key now present; real-signature retry pending |
 | Preview network fallback | `035cf97` reports `network=testnet`, `venue=TIDEPOOL`; historical certificate remains `VERIFIED`/`EXECUTED` |
 | FunctionCall key | Preview returned 401 with `Nightly is using a Function Call key. Please use a wallet with a Full Access key.` |
 | Wrong-network fallback | `aurora` (mainnet key) returned 401 wrong-network; logs show testnet miss then mainnet hit |

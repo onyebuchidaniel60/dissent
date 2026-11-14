@@ -212,6 +212,7 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Preview recipient is hardcoded to `https://dissent-web.onrender.com` for the production testnet preview.
 - Deployed `207e7c4` and verified in Render logs: a newly funded 64-hex testnet implicit account authenticated with `rpcUrl=https://rpc.testnet.near.org` and `permission=FullAccess`; the FunctionCall key returned the explicit 401; mainnet account `aurora` produced `view_access_key_failed` on testnet, `view_access_key` on mainnet and a `wrong_network` warning with the wrong-network 401.
 - Final diagnostics commit `035cf97` adds `[auth/verify] failure` logging with the error code, account, public key and supplied recipient; deployed and verified with a 401 nonce failure in Render logs.
+- Nightly login logs at 07:23–07:25 UTC identified an unfunded Testnet implicit account: `b52f34aa…fd0b4be` / `ed25519:DCGY…XSugi9`; both Testnet and Mainnet `view_access_key` returned “does not exist”. The recipient matched exactly and the RPC routing was correct. The Testnet account was created with `0.05` testnet NEAR (tx `9H5hYkhr4UgDHcGpnZKdDJurnLdk7NDD3oX1cdE6iKWw`); `view_access_key` now returns `FullAccess`. A probe with an invalid signature reached `SIGNATURE_MISMATCH`, confirming the key lookup passes; the operator's real-signature retry is pending.
 - Demo video generation deferred by operator instruction.
 
 ## Phase 11 UI correction — operator feedback
