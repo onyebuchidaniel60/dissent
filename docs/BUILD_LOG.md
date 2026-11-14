@@ -216,6 +216,8 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Nightly signature mismatch at 08:08:40 UTC: FullAccess lookup and recipient matched, then `SIGNATURE_MISMATCH`. Root cause: the `@near-wallet-selector/nightly` adapter drops `callbackUrl` when calling `wallet.signMessage`, so Nightly signs without it while the backend verified with it. Commit `846846b` verifies both payload variants using the official `near-api-js` `verifyMessage` and logs the raw signature, exact message/nonce/recipient/callbackUrl, verifier errors and the successful variant. Deployed preview accepted both variants: `verifiedWith=no_callbackUrl` and `verifiedWith=callbackUrl`. Nonce is only consumed after successful verification.
 - Demo video generation deferred by operator instruction.
 
+- Global page gutter fix: `.app-main` was overriding `.page-width` horizontal padding via the `padding` shorthand. Changed it to `padding-top`/`padding-bottom`; added `src/app/docs/layout.tsx` using `page-width app-main`. At 1440×900, `/app/reputation`, `/app/audits` and `/docs` page headers start at `x=69.12px` with a matching right gap; no horizontal overflow. Added a Playwright 1440×900 gutter test and screenshots; local 5/5, preview gutter 1/1. Full preview suite is 4/5 because `ADMIN_WALLET_ADDRESSES` now points to the Nightly implicit account, so the deployer-signed admin assertions are gated.
+
 ## Phase 11 UI correction — operator feedback
 
 - Reverted the display face from Russo One to **Orbitron** (the Phase 10 font).

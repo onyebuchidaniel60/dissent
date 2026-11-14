@@ -4,7 +4,7 @@
 **Current phase:** Phase 12 — layout fix and production sweep. The hero phone is visible at 1440×900, the display breakpoint is 1099px, the codebase is mainnet-ready (mainnet template, 1Click primary, execution-disabled by default), and the live preview is an explicit testnet staging deployment. The customer-facing UI is network-neutral. Demo video generation is deferred. `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false`; no mainnet contract or real-fund transaction is claimed or authorized.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
-**Deployed app commit:** `846846b` (`fix: verify NEP-413 signatures with and without callbackUrl`; includes `207e7c4` implicit routing and `[auth/verify]` diagnostics).
+**Deployed app commit:** `be5ac45` (`fix: restore global page gutter on app and docs routes`; includes `846846b` NEP-413 callbackUrl handling).
 **Production/mainnet authority:** **not granted**. No mainnet transaction, production release or external posting is authorized.
 
 ## Live testnet artifacts
@@ -29,13 +29,14 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 - **Hero phone bug:** the phone was hidden by the 1340px breakpoint on narrower/zoomed desktop viewports and had no explicit minimum dimensions. The hero grid is now explicit (`minmax(0, 1fr) 300px`), the phone has `min-width: 280px` / `min-height: 566px`, and the hide breakpoint is **1099px**. The right column can no longer collapse. Playwright asserts the phone is visible at 1440×900 (width > 240, x > 800), captures `test-results/hero-1440.png`, and asserts it is hidden at 390×844.
 - **Production defaults:** `.env.example` is the mainnet production template (`NEAR_NETWORK=mainnet`, `EXECUTION_VENUE=ONECLICK`, `EXECUTION_ENABLED=false`, `PROPRIETARY_LOOP_ENABLED=false`). `src/lib/config.ts` reads `config/preview-network.json` as the explicit testnet fallback; `network.ts` selects testnet/Tidepool when mainnet accounts are absent. 1Click remains the primary mainnet adapter at `https://1click.chaindefuser.com`.
 - **Frontend sweep:** no `testnet`, `demo-client` or `fixture` strings remain in `src/app` or `src/components`; the operator account display and wallet network defaults were made network-neutral. The UI is 100% network-neutral.
-- **Tests:** Vitest 13/13; local Playwright 4/4 at 390×844/1440×900, including the new hero-phone visibility test. Preview `846846b` is live with `network=testnet`, `venue=TIDEPOOL`; preview Playwright 4/4 passes; the 1440×900 screenshot shows the phone visible, and the 390×844 assertion confirms it is hidden.
+- **Tests:** Vitest 13/13; local Playwright 5/5 at 390×844/1440×900, including the new global-gutter and hero-phone tests. Preview `be5ac45` is live with `network=testnet`, `venue=TIDEPOOL`; the preview gutter test passes 1/1; the full preview suite is 4/5 because the operator allowlist now targets the Nightly implicit account, so the deployer-signed session is correctly shown the “Wallet not allowlisted” gate while the admin-only test expectation still assumes deployer admin access.
 - **Preview network fallback:** `config/preview-network.json` pins the live preview to testnet (`rpc.testnet.near.org`, `registry.dissent-demo.testnet`, `vault.dissent-demo.testnet`) and `AUTH_RECIPIENT`/`APP_BASE_URL` to `https://dissent-web.onrender.com`. `network.ts` resolves testnet from the registry suffix and falls back to testnet when `NEAR_NETWORK=mainnet` is set without a mainnet registry. `EXECUTION_VENUE` falls back to `TIDEPOOL` whenever the resolved network is testnet, preserving the historical `EXECUTED` certificate.
 - **Dynamic wallet RPC:** `auth.ts` selects `rpc.testnet.near.org` for `.testnet` accounts and `rpc.mainnet.near.org` for `.near` accounts; 64-hex implicit accounts route to testnet when the resolved network is testnet. A local server forced to `NEAR_RPC_URL=https://rpc.mainnet.near.org` still authenticated a `.testnet` account successfully (200, admin session). On the deployed preview, a freshly funded 64-hex testnet implicit account (`b3f03585…c8645a40`) authenticated successfully with `rpcUrl=https://rpc.testnet.near.org` and `permission=FullAccess` (200, `authenticated=true`).
 - **Wallet diagnostics:** every verification logs `[auth/verify] request` (account, public key, expected/supplied recipient, network) and the raw RPC `view_access_key` response with the exact RPC URL. If the key is missing on the primary RPC, the backend queries the other network and logs `wrong_network`; if the key is a FunctionCall key, it returns the exact message `Nightly is using a Function Call key. Please use a wallet with a Full Access key.` A local and deployed-preview Function Call key test returned that exact 401 message; a FullAccess key returned 200/admin. A fallback test with the mainnet top-level account `aurora` failed on `rpc.testnet.near.org`, found its key on `rpc.mainnet.near.org`, and returned the wrong-network 401 while logging both RPCs. Every rejected verification now also logs `[auth/verify] failure` with the error code, account, public key and supplied recipient (verified on the deployed preview with a 401 nonce failure).
 - **Preview recipient:** `authRecipient()` is hardcoded to `https://dissent-web.onrender.com` for a production testnet preview and trims trailing slashes; the frontend passes the challenge recipient back for logging and comparison.
-- **TEE banner removal:** `TeeWaiverNotice` deleted; every TEE/attestation/confidential tag, panel, footer line, status entry and public API field removed from `src/app`/`src/components`. Rendered-text scan of `/`, `/docs`, `/app`, `/app/attackers`, `/app/audits`, `/app/reputation`, `/app/settings/api-keys`, `/operator`, `/operator/providers`, `/operator/proprietary` and the verifier is clean for TEE/attestation/confidential and for testnet/demo-client/fixture. The workspace account tag is masked. The same scan is clean on the deployed preview at `846846b`.
+- **TEE banner removal:** `TeeWaiverNotice` deleted; every TEE/attestation/confidential tag, panel, footer line, status entry and public API field removed from `src/app`/`src/components`. Rendered-text scan of `/`, `/docs`, `/app`, `/app/attackers`, `/app/audits`, `/app/reputation`, `/app/settings/api-keys`, `/operator`, `/operator/providers`, `/operator/proprietary` and the verifier is clean for TEE/attestation/confidential and for testnet/demo-client/fixture. The workspace account tag is masked. The same scan is clean on the deployed preview at `be5ac45`.
 - **Wallet auth fix:** `AUTH_RECIPIENT` now defaults to `APP_BASE_URL` and the preview uses `https://dissent-web.onrender.com`. The frontend normalizes the public-key prefix and signature encoding; the backend decodes base64/base64url/array/hex signatures, strips an `ed25519:` prefix, normalizes the public key and verifies against the stored recipient/callback. Local API test with an unprefixed public key and prefixed base64 signature returned 200 and a valid admin session; the same request on the preview also returned 200 with an admin session.
+- **Global page gutter:** `.app-main` used the `padding` shorthand with zero horizontal padding, overriding `.page-width`'s `clamp(24px, 4.8vw, 88px)`. It now sets only `padding-top`/`padding-bottom`; `/docs` gained `src/app/docs/layout.tsx` with the same `page-width app-main` wrapper. At 1440×900 the page header starts at `x=69.12px` with a matching right gap and the existing `--page-max: 1520px` centers wider screens. Playwright screenshots: `test-results/gutter-reputation-1440.png`, `gutter-audits-1440.png`, `gutter-docs-1440.png`.
 - **Demo:** deferred by operator instruction; no video or README finalisation was generated in this phase.
 
 ### Nightly login root cause — 2026-11-14
@@ -179,13 +180,13 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 | Live vault execution | `spend_ft_as` PASS; tx `DxvoRKhCnyYyKrmAopnVYPKZJB7g8ev5Er1wtW5JbSp`; `execution_readiness=EXECUTED` |
 | Tidepool settlement | `SUCCESS`; `0.035245 USDC` out; 3 swap txs recorded |
 | Local Playwright | 3/3 PASS at 390×844 and 1440×900, including the execution receipt |
-| Preview deploy | `846846b` live; `/healthz`, `/readyz`, historical verifier and both verifier pages 200 |
-| Preview Playwright | 4/4 PASS at 390×844 and 1440×900 on `846846b`, including the phone visibility test |
+| Preview deploy | `be5ac45` live; `/healthz`, `/readyz`, historical verifier and both verifier pages 200 |
+| Preview Playwright | Gutter test 1/1 PASS at 1440×900 on `be5ac45`; full suite 4/5 (admin-only assertion gated by the current `ADMIN_WALLET_ADDRESSES`) |
 | TEE/network UI scan | Clean: no TEE/attestation/confidential or testnet/demo-client/fixture text on 11 rendered routes locally and on the preview |
 | Wallet login | Local and preview signed NEP-413 requests returned 200 with a valid admin session; `.testnet` and 64-hex implicit accounts both work; `.testnet` also works with a mainnet `NEAR_RPC_URL` |
 | Nightly implicit account | Account `b52f…b4be` did not exist on either network; created on Testnet with `0.05` testnet NEAR, tx `9H5hYkhr4UgDHcGpnZKdDJurnLdk7NDD3oX1cdE6iKWw`; `FullAccess` key now present |
 | NEP-413 callbackUrl variants | Preview accepted both signatures with `callbackUrl` and without it (`verifiedWith=callbackUrl` / `no_callbackUrl`); Nightly uses the no-callbackUrl variant |
-| Preview network fallback | `846846b` reports `network=testnet`, `venue=TIDEPOOL`; historical certificate remains `VERIFIED`/`EXECUTED` |
+| Preview network fallback | `be5ac45` reports `network=testnet`, `venue=TIDEPOOL`; historical certificate remains `VERIFIED`/`EXECUTED` |
 | FunctionCall key | Preview returned 401 with `Nightly is using a Function Call key. Please use a wallet with a Full Access key.` |
 | Wrong-network fallback | `aurora` (mainnet key) returned 401 wrong-network; logs show testnet miss then mainnet hit |
 | Public verifier | `VERIFIED`; `execution_readiness=EXECUTED`; vault tx and venue swap hashes returned |
@@ -211,12 +212,13 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 6. Render free cold start ~50 seconds; the demo was captured against a warm local build using the same Neon data and live certificate.
 7. A06/A07 share the Flint family; documented availability substitution. Gate still passes 7 families/2 vendors.
 8. `escrow.dissent-demo.testnet` is created but unused; funding/bounty logic lives in the registry contract. Documented in the deployment notes.
-9. Phase 10 live execution is demonstrated. The preview remains fail-closed (`EXECUTION_ENABLED=false`, `PROPRIETARY_LOOP_ENABLED=false`); a future live run needs a fresh quote, vault approvals and `PROPRIETARY_EXECUTION_AUDIT_ID`.
+9. Phase 10 live execution is demonstrated. The operator has now set `EXECUTION_ENABLED=true` and `PROPRIETARY_LOOP_ENABLED=true` on the Render preview and is monitoring the proprietary loop; no mainnet deployment or real-fund transfer is authorized by this build.
 10. The demo video predates the trading beat. Regeneration is intentionally deferred until the operator approves after reviewing the live `EXECUTED` certificate and Tidepool settlement.
-11. `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false` for the preview; the historical live run was an explicit operator action using `scripts/proprietary-live.ts`.
+11. `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` are operator-enabled on the preview; the historical live run was an explicit operator action using `scripts/proprietary-live.ts`.
 12. The preview is an explicit testnet staging deployment with a network-neutral UI. Production mainnet requires a fresh database and operator-owned registry, vault and payout accounts; no mainnet deployment is claimed.
 13. Mainnet execution would move real funds and is not authorized by this build. The mainnet vault source includes replay protection, quote-window recipient expiry and a multisig/timelock owner requirement, but has not been deployed.
 14. The ElevenLabs library voice remains blocked by `paid_plan_required`; the delivered demo uses the documented Piper/LJSpeech fallback and was not regenerated in Phase 11.
+15. Render `ADMIN_WALLET_ADDRESSES` currently targets the Nightly implicit account `b52f…b4be`, so the deployer-signed `dissent-demo.testnet` session is authenticated but not admin. The app correctly renders the “Wallet not allowlisted” gate; the admin-only preview E2E assertions still assume deployer admin access and therefore fail. The CSS/UI gutter test is unaffected.
 
 ## Authority boundaries
 
@@ -237,7 +239,7 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 - Music: Kevin MacLeod — “Floating Cities”, CC BY 4.0, attributed in README and production notes.
 - Captions: burned in, max two lines; sampled review at 5s/30s/55s/75s.
 - E2E: 3 Playwright tests pass against both local and deployed preview.
-- Preview deploy: `846846b` live at `https://dissent-web.onrender.com`; readiness reports testnet/Tidepool, the historical certificate verifies, the four E2E checks pass, and `[auth/verify]` diagnostics are visible in Render logs.
+- Preview deploy: `be5ac45` live at `https://dissent-web.onrender.com`; readiness reports testnet/Tidepool, the historical certificate verifies, the gutter E2E passes, and `[auth/verify]` diagnostics are visible in Render logs.
 
 ## Next task
 
