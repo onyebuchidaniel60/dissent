@@ -234,6 +234,15 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Loop shutdown: a second loop-originated audit `AUD-F3D9-57A1` (`71563af5-05d3-4bc0-aaa2-94bffd55c094`) was created during the shutdown tick. The first dispatch hit pg-boss's 900s expiry; the retry completed all eight runs after the idempotent-resume fix. Verdict `ABSTAIN`; certificate `b734b045-3f62-485a-b682-471ee1bc45e1`, hash `8fd8fea096646daee641531eaee4c99634b885abe9687fea4f59b50bcb0d4643`, anchor `8oCzZThL82UPKXTpHzDCLTAwqaEWZX7rnGgBovGrJEbY`. `src/lib/queue.ts` now calls `unschedule("proprietary.loop")` and `deleteQueuedJobs("proprietary.loop")` when the flag is false.
 - `pnpm typecheck`, `pnpm lint`, Vitest `16/16`, `pnpm build` and Playwright `7/7` pass after the queue cleanup. The Playwright draft-creation test left `AUD-53CA-0931` (`AWAITING_COMMITMENT`, zero commitments); it was deleted, leaving zero open drafts. The final preview deploy is `c860b17`; `/readyz` and `/api/x402/supported` are healthy and `pgboss.schedule` no longer contains `proprietary.loop`.
 
+## Phase 16.1 — wallet RPC and dispatch hotfix — 2026-11-14
+
+- Root-caused `Exceeded 1 providers to execute request` to `@near-js/providers` `FailoverRpcProvider`, not the AI SDK. The wallet selector had one RPC. `src/lib/near-wallet.ts` now passes `fallbackRpcUrls` (FastNear, drpc, near.org) and accepts `NEXT_PUBLIC_NEAR_RPC_URLS`.
+- Decoupled `funding/verify` from worker startup: no `startQueue()`, no AI import; it writes `FUNDED`, enqueues `audit.dispatch` and returns. `commitment/verify` never ran inference. `instrumentation.ts` owns worker startup.
+- Added x402 fallback in `src/lib/providers/openai-compatible.ts`: `X402PaymentError` and proxy/network failures log `[x402] Payment failed, falling back to direct API key` and retry with the provider key; proxy 402/5xx also falls back. Dead-proxy test returned `fallback-ok`.
+- Topped `x402-agent.testnet` from `9.972` to `10.000000` USDC (`73vrkBL7uhBhr6nHsBrVsZNpYqMpUvnjw9HziECsmMZD`); `relayerRpc` is healthy. Sent `1` testnet NEAR to the requested Nightly implicit account (`91NsknPEiKyUnpJcXTFEnfBu9HDF9o6ta2KQHFAkBSiy`; balance `0.05 → 1.05`).
+- Full endpoint test `AUD-14D9-3985`: commitment verify `1586 ms`, funding verify `1225 ms`, immediate `FUNDED`, then asynchronous `ATTACKING`; completed `ABSTAIN`, certificate `a1d76f68-cf60-4018-81f7-e22725c443fb`, hash `be889f5be5940bda533276065aa9876d968c9b9455c5e674a31d4dcfb85e97d2`, anchor `5mrf6AF69FE3roTY1jAfmCSvChTf38CG8R2efYdpYVTd`.
+- Typecheck, lint, Vitest `16/16`, build and Playwright `7/7` pass. Deployed `efcf38f`.
+
 ## Phase 11 UI correction — operator feedback
 
 - Reverted the display face from Russo One to **Orbitron** (the Phase 10 font).
