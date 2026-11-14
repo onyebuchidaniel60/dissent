@@ -95,11 +95,24 @@ type RawAccessKey = {
   permission?: "FullAccess" | { FunctionCall?: unknown } | string;
 };
 
+const ACCESS_KEY_CACHE_TTL_MS = 60_000;
+const accessKeyCache = new Map<string, { raw: RawAccessKey; expiresAt: number }>();
+
 async function viewAccessKeyRaw(
   rpcUrl: string,
   accountId: string,
   publicKey: string,
 ): Promise<{ ok: true; raw: RawAccessKey } | { ok: false }> {
+  const cacheKey = `${rpcUrl}|${accountId}|${publicKey}`;
+  const cached = accessKeyCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    console.log(
+      "[auth/verify] view_access_key_cached",
+      JSON.stringify({ rpcUrl, accountId, publicKey, response: cached.raw }),
+    );
+    return { ok: true, raw: cached.raw };
+  }
+
   const provider = new JsonRpcProvider({ url: rpcUrl });
   try {
     const raw = (await provider.sendJsonRpc("query", {
@@ -108,6 +121,7 @@ async function viewAccessKeyRaw(
       account_id: accountId,
       public_key: publicKey,
     })) as RawAccessKey;
+    accessKeyCache.set(cacheKey, { raw, expiresAt: Date.now() + ACCESS_KEY_CACHE_TTL_MS });
     console.log(
       "[auth/verify] view_access_key",
       JSON.stringify({ rpcUrl, accountId, publicKey, response: raw }),

@@ -84,6 +84,11 @@ test("wallet session sees live audits and can create a session-authenticated dra
     },
   ]);
   const page = await context.newPage();
+  const sessionResponse = await page.request.get(`${baseURL}/api/v1/auth/session`, {
+    headers: { cookie: `dissent_session=${cookie}` },
+  });
+  const session = await sessionResponse.json();
+  const isAdmin = Boolean(session.isAdmin);
 
   await page.goto("/app/audits", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: /every thesis/i })).toBeVisible();
@@ -101,26 +106,30 @@ test("wallet session sees live audits and can create a session-authenticated dra
   await expect(page.getByText("Public audit ID")).toBeVisible();
 
   await page.goto("/operator", { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("heading", { name: "Recent runs" })).toBeVisible();
-  await expect(page.getByText("Operator-only surface").first()).toBeVisible();
+  if (isAdmin) {
+    await expect(page.getByRole("heading", { name: "Recent runs" })).toBeVisible();
+    await expect(page.getByText("Operator-only surface").first()).toBeVisible();
 
-  for (const { width, height } of [
-    { width: 390, height: 844 },
-    { width: 1440, height: 900 },
-  ]) {
-    await page.setViewportSize({ width, height });
-    const response = await page.goto("/operator/proprietary", { waitUntil: "domcontentloaded" });
-    expect(response?.status()).toBe(200);
-    await expect(page.getByRole("heading", { name: /originate/i })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Venue precheck" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Execution path" })).toBeVisible();
-    await expect(page.getByText(/vault tx:/)).toBeVisible();
-    await expect(page.getByText("EXECUTED").first()).toBeVisible();
-    const metrics = await page.evaluate(() => ({
-      documentWidth: document.documentElement.scrollWidth,
-      viewportWidth: document.documentElement.clientWidth,
-    }));
-    expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
+    for (const { width, height } of [
+      { width: 390, height: 844 },
+      { width: 1440, height: 900 },
+    ]) {
+      await page.setViewportSize({ width, height });
+      const response = await page.goto("/operator/proprietary", { waitUntil: "domcontentloaded" });
+      expect(response?.status()).toBe(200);
+      await expect(page.getByRole("heading", { name: /originate/i })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Venue precheck" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Execution path" })).toBeVisible();
+      await expect(page.getByText(/vault tx:/)).toBeVisible();
+      await expect(page.getByText("EXECUTED").first()).toBeVisible();
+      const metrics = await page.evaluate(() => ({
+        documentWidth: document.documentElement.scrollWidth,
+        viewportWidth: document.documentElement.clientWidth,
+      }));
+      expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
+    }
+  } else {
+    await expect(page.getByRole("heading", { name: /wallet not allowlisted/i })).toBeVisible();
   }
 
   await context.close();

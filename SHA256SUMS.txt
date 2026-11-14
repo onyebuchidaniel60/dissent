@@ -146,7 +146,7 @@ d43ec556c04481947488c871d3bbb7f67ea75477e9c59185f7d4ef85abadc26e  ./src/lib/atta
 069a094f3a812d5def74de2d2726d44a921e7c3bbccf673a134c39e2282ad0db  ./src/lib/audit-principal.ts
 fb9bfd46c54bf91878ff9ee837fbe251b83ac2445d95ca5150c1c1dd6df6822b  ./src/lib/audit-read.ts
 4909f5b680a4ae4874c3ed82be0c9afd3b3bee70e40087ef08d9e14e3751f821  ./src/lib/audit-service.ts
-8674c37c510429a78b9d1a82b551141b42fce1ddfb7538df066a517fc4729d2e  ./src/lib/auth.ts
+09df5880177d4451e78a89b054d771b2dbdf46bac3af02316a3bc1acd5997a79  ./src/lib/auth.ts
 e6633ed737d8e3dd8b37bb60dbdeb339decf74d5f102eb6c74016495433246c8  ./src/lib/canonical.ts
 1cf444839be23c2105ee51479e2dc6ae21aee5fa5f03528c35677700275351aa  ./src/lib/certificates.ts
 7fdaa51055f227c5163f1e1ed3bfe3945f8da1a8edb534ea54abe2bd6bf023d6  ./src/lib/client-execution.ts
@@ -175,7 +175,7 @@ a1e5cf0a5362efdbb77634fce6922521b5c0f2a7ab991ff2e1d2ccf4e5a66533  ./src/lib/site
 1a4144be1b5813d3800de36c72c2aa1576f20431f6274cd06adc3d5aaf3d7bca  ./src/lib/validation/audit.ts
 18986aab1860f7d6eb2168972d4c6e9a1313d4fcc50ff4e46a7dbae2f3087d3f  ./src/lib/workspace.ts
 8bf3a54779e907b0165ff45523b12265c7632e2b00f87424666d87a03559cd36  ./tests/e2e/helpers.ts
-7bf71326724f1bdd8c8cb8f50af6c3e1fe42a67e2eed95fd468977d534bcea6e  ./tests/e2e/primary.spec.ts
+3efc3a2cbb9481d34cd333000d00972305aecf2f737a8cc248efa0dc68c30639  ./tests/e2e/primary.spec.ts
 e8b9931c92c1c77f8c6450d3301906a98708a3ac8f729a6f043c5b9d2ddb64d0  ./tests/fixtures/attacker-output-valid-example.json
 43f726cfd5da893522f80cd1dec05b08d7cb895d95b8fbdcddcd50ab5b5e4c2b  ./tests/unit/model-diversity.test.ts
 32f0a59b5e4ca1d51ffe5346573b4808e14d261d1c4e49382f8edd139f7bb6b2  ./tsconfig.json
