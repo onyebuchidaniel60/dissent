@@ -4,7 +4,7 @@
 **Current phase:** Phase 11 — mainnet readiness, production UI cleanup and typography; operator UI correction applied (Orbitron restored, wider gutters, animated hero phone). Code defaults to mainnet and the primary execution adapter is 1Click. `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false`. The preview is an explicit testnet staging deployment with testnet records hidden behind a network-neutral UI; no mainnet contract or real-fund transaction is claimed or authorized.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
-**Deployed app commit:** `e400b47` (`feat: mainnet readiness, production UI and Russo One typography`).
+**Deployed app commit:** `a8b24c3` (`fix: restore Orbitron typography and add animated hero phone`).
 **Production/mainnet authority:** **not granted**. No mainnet transaction, production release or external posting is authorized.
 
 ## Live testnet artifacts
@@ -30,7 +30,7 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 - Hero heading increased ~18%: `clamp(2.8rem, 7.3vw, 7.3rem)`; mobile retains the existing safe clamp and the phone is hidden.
 - Global gutter increased to `clamp(24px, 4.8vw, 88px)` — at least 24px mobile and 65–88px on desktop, rather than content touching the viewport edge.
 - Added a pure-CSS/SVG-free hero phone mockup with a dark bezel, tap ripple, sequential A01–A08 lighting, and a final `TRADE · Certificate anchored` badge. It loops every 9s, is decorative (`aria-hidden`, no interactive controls), supports `prefers-reduced-motion`, and is hidden at widths ≤1340px so mobile stacks the hero copy without the phone.
-- Verified visually at 1440×900, 1920×1080 and 390×844; no horizontal overflow. Vitest 13/13 and Playwright 3/3 at 390×844/1440×900 pass locally.
+- Verified visually at 1440×900, 1920×1080 and 390×844; no horizontal overflow. Vitest 13/13 and Playwright 3/3 at 390×844/1440×900 pass locally. Preview `a8b24c3` is live; preview Playwright 3/3 passes; the hero phone is `block` at 1440 and `none` at 390.
 
 ## Phase 11 — mainnet readiness and production polish
 
@@ -149,8 +149,8 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 | Live vault execution | `spend_ft_as` PASS; tx `DxvoRKhCnyYyKrmAopnVYPKZJB7g8ev5Er1wtW5JbSp`; `execution_readiness=EXECUTED` |
 | Tidepool settlement | `SUCCESS`; `0.035245 USDC` out; 3 swap txs recorded |
 | Local Playwright | 3/3 PASS at 390×844 and 1440×900, including the execution receipt |
-| Preview deploy | `e400b47` live; `/healthz`, `/readyz`, both verifier pages 200 |
-| Preview Playwright | 3/3 PASS at 390×844 and 1440×900 on `e400b47` |
+| Preview deploy | `a8b24c3` live; `/healthz`, `/readyz`, both verifier pages 200 |
+| Preview Playwright | 3/3 PASS at 390×844 and 1440×900 on `a8b24c3` |
 | Public verifier | `VERIFIED`; `execution_readiness=EXECUTED`; vault tx and venue swap hashes returned |
 | `/readyz` config check | PASS in staging (`network=testnet`, `venue=TIDEPOOL`); fail-closed in production if registry/vault/quote accounts are missing |
 | Typography | Orbitron display face; hero 2.8–7.3rem, section 1.6–2.8rem, page 1.8–3.1rem; animated hero phone; no overflow at 390×844/1440×900/1920×1080 |
@@ -200,7 +200,7 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 - Music: Kevin MacLeod — “Floating Cities”, CC BY 4.0, attributed in README and production notes.
 - Captions: burned in, max two lines; sampled review at 5s/30s/55s/75s.
 - E2E: 3 Playwright tests pass against both local and deployed preview.
-- Preview deploy: `e400b47` live at `https://dissent-web.onrender.com`; health/readiness and the three E2E checks pass.
+- Preview deploy: `a8b24c3` live at `https://dissent-web.onrender.com`; health/readiness and the three E2E checks pass.
 
 ## Next task
 
