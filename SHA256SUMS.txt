@@ -96,7 +96,7 @@ f49f207cd51e7f54c887b7f4b10a106aec61bb1f2f09eea328e2f4673cd4e7c9  ./src/app/api/
 2e47a75e32465955252b4bebf2d7510ae1657df8a524689e7124da9512f5c3d4  ./src/app/api/v1/auth/logout/route.ts
 cb1a0396125e64d759e78bbe1e31b5d1ad4f316a84082af30de9952b626bdbfe  ./src/app/api/v1/auth/nonce/route.ts
 3240c7815fc492aeb69bc2df0cffcbfb67628451831be04dd49aefb7570b93fe  ./src/app/api/v1/auth/session/route.ts
-9bd88ba7d7b5fc2042b28eec3263d4c24592d0feb201670d0718b913e846e293  ./src/app/api/v1/auth/verify/route.ts
+7420d7eea35e3272a68b2220b131e27493acd683f77bcb34f13974cc8007c7ac  ./src/app/api/v1/auth/verify/route.ts
 fc1077b8421eac784b8df8039ecdf51861b5d473ce1af83dc3b21d750c965c01  ./src/app/api/v1/certificates/[certificateId]/verify/route.ts
 4fe47e0e6380b3c24be409b9a49c49f7a9ac7c2d143030ea9964486cea07ab7f  ./src/app/api/v1/ui/audits/prepare/route.ts
 9b728e7d01de069a3a0d1515c8b74e4833eff2f76940d668d78b39737621c7f2  ./src/app/app/attackers/page.tsx

@@ -52,6 +52,15 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
+    console.warn(
+      "[auth/verify] failure",
+      JSON.stringify({
+        code,
+        accountId: parsed.data.accountId,
+        publicKey: parsed.data.publicKey,
+        recipient: parsed.data.recipient ?? null,
+      }),
+    );
     if (code === "NONCE_EXPIRED_OR_USED") {
       return apiError("UNAUTHENTICATED", "The sign-in challenge expired or was already used.", 401, undefined, id);
     }
