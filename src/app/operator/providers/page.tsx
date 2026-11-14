@@ -9,7 +9,7 @@ import {
   Wallet,
 } from "lucide-react";
 
-import { FixtureBadge, TeeWaiverNotice } from "@/components/fixture-badge";
+import { TeeWaiverNotice } from "@/components/tee-waiver-notice";
 import { PageHeader, Panel } from "@/components/ui";
 import { MODEL_ASSIGNMENTS, MODEL_POLICY, PROVIDER_CONFIG, TEE_POLICY } from "@/lib/model-assignments";
 
@@ -17,7 +17,7 @@ export default function OperatorProvidersPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Providers · preview"
+        eyebrow="Providers"
         title="Diversity is"
         accent="a hard gate."
         description="One OpenAI-compatible adapter serves both inference vendors. The TEE sub-clause is waived; the model-family, vendor and open-weight gates are not."
@@ -30,10 +30,9 @@ export default function OperatorProvidersPage() {
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <FixtureBadge />
-        <span className="tag tag--ok">keys verified</span>
-        <span className="tag tag--warn">TEE waived</span>
-        <span className="tag tag--muted">$0 new spend</span>
+        <span className="tag tag--ok">server-side keys</span>
+        <span className="tag tag--warn">TEE unavailable</span>
+        <span className="tag tag--muted">diversity gate enforced</span>
       </div>
 
       <TeeWaiverNotice />
@@ -76,7 +75,7 @@ export default function OperatorProvidersPage() {
             <p className="mt-3 text-[10px] leading-relaxed text-muted-2">
               {name === "groq"
                 ? "Groq TPD is the binding constraint for A02 — roughly two audits per day. The adapter token bucket prevents one audit from exhausting the daily quota."
-                : "OpenRouter primary. The per-audit ledger stops at $0.50; no paid fallback may silently replace a free slug."}
+                : "OpenRouter primary. The per-audit ledger stops at $0.50; no paid fallback may silently replace a configured model."}
             </p>
           </Panel>
         ))}

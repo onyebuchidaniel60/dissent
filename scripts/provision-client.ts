@@ -1,7 +1,7 @@
 import { createHmac, randomBytes } from "node:crypto";
 import { Pool } from "pg";
 
-const API_KEY_PREFIX = "ds_test_";
+const API_KEY_PREFIX = "ds_live_";
 const CLIENT_SCOPES = [
   "audit:create",
   "audit:read:own",
@@ -9,7 +9,8 @@ const CLIENT_SCOPES = [
   "audit:fund",
   "certificate:read:own",
 ];
-const CLIENT_ACCOUNT_ID = process.env.DEMO_CLIENT_ACCOUNT_ID ?? "demo-client.testnet";
+const CLIENT_ACCOUNT_ID =
+  process.env.CLIENT_ACCOUNT_ID?.trim() ?? process.env.DEMO_CLIENT_ACCOUNT_ID?.trim() ?? "";
 
 function hashKey(key: string): string {
   const secret = process.env.AUTH_SECRET;
@@ -21,8 +22,10 @@ async function main() {
   const connectionString = process.env.DATABASE_URL_DIRECT ?? process.env.DATABASE_URL;
   if (!connectionString) throw new Error("DATABASE_URL_DIRECT or DATABASE_URL is required");
 
-  const workspaceName = process.env.DEMO_WORKSPACE_NAME ?? "Demo Client";
-  const keyName = process.env.DEMO_KEY_NAME ?? "demo-agent";
+  if (!CLIENT_ACCOUNT_ID) throw new Error("CLIENT_ACCOUNT_ID is required");
+  const workspaceName =
+    process.env.CLIENT_WORKSPACE_NAME?.trim() ?? process.env.DEMO_WORKSPACE_NAME ?? "Client Workspace";
+  const keyName = process.env.CLIENT_KEY_NAME?.trim() ?? process.env.DEMO_KEY_NAME ?? "client-agent";
   const pool = new Pool({ connectionString, max: 2 });
 
   try {

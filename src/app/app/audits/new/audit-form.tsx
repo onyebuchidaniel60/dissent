@@ -86,16 +86,16 @@ async function sha256Hex(value: string): Promise<string> {
 }
 
 export function NewAuditForm() {
-  const [title, setTitle] = useState("NEAR / USDC liquidity provision");
-  const [asset, setAsset] = useState("NEAR / USDC");
-  const [action, setAction] = useState("ADD_LIQUIDITY");
-  const [venue, setVenue] = useState("Ref Finance");
-  const [amount, setAmount] = useState("100");
-  const [unit, setUnit] = useState("NEAR");
-  const [horizon, setHorizon] = useState("7");
+  const [title, setTitle] = useState("wNEAR / USDC execution thesis");
+  const [asset, setAsset] = useState("nep141:wrap.near");
+  const [action, setAction] = useState("SELL");
+  const [venue, setVenue] = useState("1Click");
+  const [amount, setAmount] = useState("0.01");
+  const [unit, setUnit] = useState("wNEAR");
+  const [horizon, setHorizon] = useState("1");
   const [horizonUnit, setHorizonUnit] = useState("DAY");
   const [rationale, setRationale] = useState(
-    "Provide two-sided liquidity while volatility remains contained and exit depth stays above the proposed notional.",
+    "Sell wNEAR for USDC on 1Click while the executable quote remains within the committed slippage bound, liquidity remains available and USDC stays near peg.",
   );
   const [conditions, setConditions] = useState<ConditionDraft[]>(DEFAULT_CONDITIONS);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -215,7 +215,7 @@ export function NewAuditForm() {
 
     setPreview({ thesisHash, conditionsHash, thesisPayload, conditionsPayload });
     setStatus(
-      "Local draft validated. These are browser preview hashes; server canonicalization and contract commitment arrive in Phase 3.",
+      "Local draft validated. These are browser preview hashes; server canonicalization and on-chain commitment follow after submission.",
     );
   }
 
@@ -238,7 +238,11 @@ export function NewAuditForm() {
         },
         body: JSON.stringify({
           thesis: {
-            asset: { chain: "near", asset_id: asset.trim(), symbol: unit === "NEAR" ? "NEAR" : null },
+            asset: {
+              chain: "near",
+              asset_id: asset.trim(),
+              symbol: unit === "NEAR" ? "NEAR" : unit === "wNEAR" ? "wNEAR" : null,
+            },
             action,
             direction: null,
             rationale: rationale.trim(),
@@ -276,16 +280,16 @@ export function NewAuditForm() {
   }
 
   function resetForm() {
-    setTitle("NEAR / USDC liquidity provision");
-    setAsset("NEAR / USDC");
-    setAction("ADD_LIQUIDITY");
-    setVenue("Ref Finance");
-    setAmount("100");
-    setUnit("NEAR");
-    setHorizon("7");
+    setTitle("wNEAR / USDC execution thesis");
+    setAsset("nep141:wrap.near");
+    setAction("SELL");
+    setVenue("1Click");
+    setAmount("0.01");
+    setUnit("wNEAR");
+    setHorizon("1");
     setHorizonUnit("DAY");
     setRationale(
-      "Provide two-sided liquidity while volatility remains contained and exit depth stays above the proposed notional.",
+      "Sell wNEAR for USDC on 1Click while the executable quote remains within the committed slippage bound, liquidity remains available and USDC stays near peg.",
     );
     setConditions(DEFAULT_CONDITIONS);
     setErrors({});
@@ -633,8 +637,8 @@ export function NewAuditForm() {
             <ol className="mt-4 grid gap-4">
               {[
                 ["Prepare", "Validate typed thesis and conditions. Canonicalize and hash."],
-                ["Commit", "Client signs commit_audit on NEAR testnet."],
-                ["Fund", "Client pays the fixed quote into testnet escrow."],
+                ["Commit", "Client signs commit_audit on NEAR."],
+                ["Fund", "Client pays the fixed quote into escrow."],
                 ["Dispatch", "Only then do the eight isolated attackers start."],
               ].map(([label, copy], index) => (
                 <li key={label} className="flex gap-3">
@@ -651,8 +655,8 @@ export function NewAuditForm() {
             <div className="mt-5 notice notice--warn">
               <LockKeyhole size={15} aria-hidden="true" />
               <span>
-                Validating previews hashes locally. Creating a draft calls the session-authenticated
-                console API, but does not sign a wallet transaction, commit conditions or move funds.
+                Validating hashes locally. Creating a draft calls the session-authenticated console API,
+                but does not sign a wallet transaction, commit conditions or move funds.
               </span>
             </div>
           </div>
@@ -707,7 +711,7 @@ export function NewAuditForm() {
               <div>
                 <h2 className="panel-title">Draft created</h2>
                 <p className="panel-subtitle">
-                  Stored in the demo workspace with canonical RFC 8785 hashes.
+                  Stored in your workspace with canonical RFC 8785 hashes.
                 </p>
               </div>
               <span className="tag tag--ok">{created.status}</span>
@@ -745,9 +749,9 @@ export function NewAuditForm() {
               <h2 className="panel-title">Client signing</h2>
             </div>
             <p className="mt-3 text-[11px] leading-relaxed text-muted">
-              The deterministic E2E path uses an agent-supplied signed transaction from{" "}
-              <span className="mono text-ink">demo-client.testnet</span>. Wallet-selector support is
-              present for manual use; the headless test does not automate a browser extension.
+              The deterministic E2E path uses an agent-supplied signed transaction from the
+              configured client account. Wallet-selector support is present for manual use; the
+              headless test does not automate a browser extension.
             </p>
             <Link href="/docs#wallet-auth" className="button button--ghost button--small mt-4">
               Read the auth design

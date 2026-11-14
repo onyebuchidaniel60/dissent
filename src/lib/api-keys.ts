@@ -6,7 +6,7 @@ import { createHmac, randomBytes } from "node:crypto";
 import { getDb } from "@/db";
 import { clientApiKeys, workspaces } from "@/db/schema";
 
-export const API_KEY_PREFIX = "ds_test_";
+export const API_KEY_PREFIX = "ds_";
 
 export const CLIENT_SCOPES = [
   "audit:create",
@@ -73,11 +73,15 @@ export async function authenticateApiKey(request: Request): Promise<ApiPrincipal
     .where(eq(clientApiKeys.id, row.keyId))
     .catch(() => undefined);
 
+  const clientAccountId =
+    row.clientAccountId ?? process.env.DEMO_CLIENT_ACCOUNT_ID?.trim() ?? "";
+  if (!clientAccountId) throw new Error("CLIENT_ACCOUNT_NOT_CONFIGURED");
+
   return {
     keyId: row.keyId,
     workspaceId: row.workspaceId,
     workspaceName: row.workspaceName,
-    clientAccountId: row.clientAccountId ?? process.env.DEMO_CLIENT_ACCOUNT_ID ?? "demo-client.testnet",
+    clientAccountId,
     scopes: row.scopes,
   };
 }

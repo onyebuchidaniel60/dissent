@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     keyId: `wallet:${session.sessionId}`,
     workspaceId: workspace.workspaceId,
     workspaceName: workspace.workspaceName,
-    clientAccountId: workspace.clientAccountId ?? "demo-client.testnet",
+    clientAccountId: workspace.clientAccountId ?? session.accountId,
     scopes: [...CLIENT_SCOPES],
   };
 

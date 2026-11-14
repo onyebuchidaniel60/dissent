@@ -2,14 +2,16 @@
  * Live Phase 10 proprietary run.
  *
  * This is an operator script, not a web route. It:
- *   1. originates a real Tidepool wNEAR/USDC quote;
+ *   1. originates a real configured-venue wNEAR/USDC quote;
  *   2. prepares the same eight-attacker audit used for client theses;
- *   3. commits and funds the audit on the testnet registry;
+ *   3. commits and funds the audit on the configured registry;
  *   4. approves the deterministic certificate and quote deposit address on the vault;
  *   5. dispatches the audit, adjudicates it, executes only on TRADE, and anchors the certificate.
  *
  * Required environment: DATABASE_URL, NEAR_DEPLOYER_KEY, DEMO_CLIENT_KEY,
- * NEAR_VAULT_AGENT_KEY, OPENROUTER_API_KEY, GROQ_API_KEY.
+ * NEAR_VAULT_AGENT_KEY, OPENROUTER_API_KEY, GROQ_API_KEY, NEAR_REGISTRY_ACCOUNT_ID,
+ * NEAR_VAULT_ACCOUNT_ID, PROPRIETARY_CLIENT_ACCOUNT_ID, PROPRIETARY_RECIPIENT,
+ * PROPRIETARY_REFUND_TO, EXECUTION_VENUE and PROPRIETARY_LIVE_ACK=YES.
  *
  * Run with:
  *   set -a; . ./.env.local; set +a
@@ -28,11 +30,22 @@ import { AUDIT_FEE_YOCTO, POLICY_HASH, QUOTE_EXPIRY_SECONDS } from "@/lib/policy
 import { runProprietaryLoop } from "@/lib/proprietary/loop";
 import { fetchTidepoolStatus } from "@/lib/proprietary/venue";
 
-const RPC_URL = process.env.NEAR_RPC_URL ?? "https://rpc.testnet.near.org";
-const REGISTRY = process.env.NEAR_REGISTRY_ACCOUNT_ID ?? "registry.dissent-demo.testnet";
-const VAULT = process.env.NEAR_VAULT_ACCOUNT_ID ?? "vault.dissent-demo.testnet";
-const WNEAR = process.env.TIDEPOOL_WNEAR_TOKEN_ID ?? "wnear.tidepool-sandbox.testnet";
-const USDC = "usdc.tidepool-sandbox.testnet";
+const RPC_URL =
+  process.env.NEAR_RPC_URL ??
+  (process.env.NEAR_NETWORK?.toLowerCase() === "testnet"
+    ? "https://rpc.testnet.near.org"
+    : "https://rpc.mainnet.near.org");
+const VENUE = process.env.EXECUTION_VENUE?.trim().toUpperCase() === "TIDEPOOL" ? "TIDEPOOL" : "ONECLICK";
+const REGISTRY = process.env.NEAR_REGISTRY_ACCOUNT_ID?.trim() ?? "";
+const VAULT = process.env.NEAR_VAULT_ACCOUNT_ID?.trim() ?? "";
+const WNEAR =
+  VENUE === "TIDEPOOL"
+    ? process.env.TIDEPOOL_WNEAR_TOKEN_ID ?? "wnear.tidepool-sandbox.testnet"
+    : process.env.ONECLICK_WNEAR_TOKEN_ID ?? "wrap.near";
+const USDC =
+  VENUE === "TIDEPOOL"
+    ? "usdc.tidepool-sandbox.testnet"
+    : "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1";
 const STORAGE_DEPOSIT = 1_250_000_000_000_000_000_000n;
 
 type NearAccount = InstanceType<typeof Account>;
@@ -53,11 +66,16 @@ function accountFor(accountId: string, key: string): NearAccount {
 }
 
 function deployer(): NearAccount {
-  return accountFor(process.env.NEAR_DEPLOYER_ACCOUNT_ID ?? "dissent-demo.testnet", required("NEAR_DEPLOYER_KEY"));
+  return accountFor(required("NEAR_DEPLOYER_ACCOUNT_ID"), required("NEAR_DEPLOYER_KEY"));
 }
 
 function demoClient(): NearAccount {
-  return accountFor(process.env.DEMO_CLIENT_ACCOUNT_ID ?? "demo-client.testnet", required("DEMO_CLIENT_KEY"));
+  return accountFor(
+    process.env.PROPRIETARY_CLIENT_ACCOUNT_ID?.trim() ??
+      process.env.DEMO_CLIENT_ACCOUNT_ID?.trim() ??
+      required("PROPRIETARY_CLIENT_ACCOUNT_ID"),
+    process.env.PROPRIETARY_CLIENT_KEY?.trim() || required("DEMO_CLIENT_KEY"),
+  );
 }
 
 async function send(
@@ -106,13 +124,21 @@ async function ensureStorage(token: string, accountId: string): Promise<string |
 }
 
 async function main() {
+  if (process.env.PROPRIETARY_LIVE_ACK !== "YES") {
+    throw new Error(
+      "PROPRIETARY_LIVE_ACK must be YES. This script funds and executes a live audit; it is an explicit operator action.",
+    );
+  }
+  if (!REGISTRY || !VAULT) throw new Error("REGISTRY_OR_VAULT_NOT_CONFIGURED");
+  if (!process.env.PROPRIETARY_RECIPIENT?.trim()) throw new Error("PROPRIETARY_RECIPIENT_NOT_CONFIGURED");
+  if (!process.env.PROPRIETARY_REFUND_TO?.trim()) throw new Error("PROPRIETARY_REFUND_TO_NOT_CONFIGURED");
+
   process.env.PROPRIETARY_LOOP_ENABLED = "true";
   process.env.EXECUTION_ENABLED = "true";
   process.env.VAULT_SUPPORTS_NEP141 = "true";
   process.env.PROPRIETARY_THESIS_AMOUNT_YOCTO = "10000000000000000000000";
   process.env.TIDEPOOL_WNEAR_TOKEN_ID = WNEAR;
-  process.env.PROPRIETARY_RECIPIENT =
-    process.env.PROPRIETARY_RECIPIENT ?? process.env.DEMO_CLIENT_ACCOUNT_ID ?? "demo-client.testnet";
+  process.env.PROPRIETARY_RECIPIENT = process.env.PROPRIETARY_RECIPIENT.trim();
 
   if (!process.env.DATABASE_URL) throw new Error("MISSING_ENV:DATABASE_URL");
   if (!process.env.NEAR_VAULT_AGENT_KEY) throw new Error("MISSING_ENV:NEAR_VAULT_AGENT_KEY");
@@ -121,7 +147,7 @@ async function main() {
   await db.connect();
 
   try {
-    console.log("[1/8] Originating a real Tidepool wNEAR/USDC quote and preparing the audit…");
+    console.log(`[1/8] Originating a real ${VENUE} wNEAR/USDC quote and preparing the audit…`);
     const loop = await runProprietaryLoop();
     if (loop.status !== "ORIGINATED") {
       throw new Error(`PROPRIETARY_LOOP_${loop.status}:${loop.status === "BLOCKED_VENUE" ? loop.reason : ""}`);
@@ -164,10 +190,7 @@ async function main() {
 
     console.log("[3/8] Registering token storage for the deposit address and USDC recipient…");
     const wnearStorageTx = await ensureStorage(WNEAR, depositAddress);
-    const usdcStorageTx = await ensureStorage(
-      USDC,
-      process.env.PROPRIETARY_RECIPIENT ?? "demo-client.testnet",
-    );
+    const usdcStorageTx = await ensureStorage(USDC, process.env.PROPRIETARY_RECIPIENT);
     console.log("wnear_storage_tx", wnearStorageTx ?? "already-registered");
     console.log("usdc_storage_tx", usdcStorageTx ?? "already-registered");
 

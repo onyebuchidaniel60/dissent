@@ -2,13 +2,13 @@
 
 **Adversarial audit protocol for AI trading agents.**
 
-Dissent challenges an AI trading agent's thesis before the agent acts. A client commits a thesis and machine-testable failure conditions on NEAR testnet, funds a fixed testnet audit fee, and receives eight isolated adversarial analyses. Evidence is re-fetched, attackers are reviewed for sycophancy, and a deterministic policy issues `TRADE`, `REFUSE` or `ABSTAIN`. The certificate preserves coverage, minority findings and disagreement instead of turning them into a majority vote.
+Dissent challenges an AI trading agent's thesis before the agent acts. A client commits a thesis and machine-testable failure conditions on NEAR, funds a fixed audit quote, and receives eight isolated adversarial analyses. Evidence is re-fetched, attackers are reviewed for sycophancy, and a deterministic policy issues `TRADE`, `REFUSE` or `ABSTAIN`. The certificate preserves coverage, minority findings and disagreement instead of turning them into a majority vote.
 
-> **Current checkpoint:** Phase 10 — live client audit and a live proprietary Tidepool testnet execution. The eight-attacker pipeline, evidence re-fetch, deterministic adjudication, NEAR anchoring, public verifier and capped testnet vault are implemented. The demo video predates the trading beat and is intentionally not regenerated until operator review.
+> **Current checkpoint:** Phase 11 — mainnet readiness and production polish. The eight-attacker pipeline, evidence re-fetch, deterministic adjudication, NEAR anchoring, public verifier and a capped NEP-141 vault are implemented. The primary execution adapter is mainnet 1Click and remains disabled by default. A historical staging execution is preserved in the handoff; the demo video predates the trading beat.
 
 ## Product boundaries
 
-Dissent is an audit and verification layer — not an exchange, broker, custodian, wallet, investment adviser or profit guarantee. The hackathon MVP does not execute mainnet trades or move mainnet funds. The Phase 10 proprietary arm executes only testnet trades through a capped vault after a `TRADE` certificate. Failure, missing coverage and unresolved critical evidence produce `ABSTAIN`, not an assumed pass.
+Dissent is an audit and verification layer — not an exchange, broker, custodian, wallet, investment adviser or profit guarantee. The production build does not execute mainnet trades or move mainnet funds unless execution is explicitly enabled, the audit matches the operator gate, and the vault, certificate and venue quote address are approved. The historical staging run used testnet only. Failure, missing coverage and unresolved critical evidence produce `ABSTAIN`, not an assumed pass.
 
 ## Stack
 
@@ -20,7 +20,7 @@ Dissent is an audit and verification layer — not an exchange, broker, custodia
   - Groq is secondary for A02 only (`GROQ_API_KEY`).
   - No OpenAI or Anthropic SDKs are installed.
 - **Trusted execution:** the TEE sub-clause is formally **waived** under the zero-new-spend constraint. No TEE badge is displayed and no confidential-inference claim is made. Model-family, vendor and open-weight diversity gates remain enforced.
-- **Chain:** Rust + `near-sdk` registry/escrow on **NEAR testnet only**.
+- **Chain:** Rust + `near-sdk` registry/escrow on **NEAR**; mainnet deployment requires operator-owned accounts and explicit authorization.
 - **Tests:** Vitest, Playwright, `near-workspaces`/sandbox for contracts.
 - **Deployment:** Render free web service + Neon free PostgreSQL.
 
@@ -53,7 +53,7 @@ Key variables:
 
 - `DATABASE_URL`, `DATABASE_URL_DIRECT`
 - `AUTH_SECRET`, `ADMIN_WALLET_ADDRESSES`
-- `NEAR_NETWORK=testnet`, `NEAR_RPC_URL`
+- `NEAR_NETWORK=mainnet`, `NEAR_RPC_URL`
 - `NEAR_DEPLOYER_ACCOUNT_ID`, `NEAR_DEPLOYER_KEY`
 - `NEAR_REGISTRY_ACCOUNT_ID`, `NEAR_ESCROW_ACCOUNT_ID`
 - `OPENROUTER_API_KEY`, `GROQ_API_KEY`
@@ -97,7 +97,7 @@ The pinned roster is recorded in [`config/model_assignments.json`](config/model_
 
 The frozen decision requires at least one open-weight model in a NEAR AI Cloud TEE with verified attestation and response signatures. The direct NEAR AI API is not authorized under the zero-new-spend constraint. OpenRouter's `near-ai` route is not an attested gateway, so the TEE sub-clause is recorded as `WAIVED_BUDGET_CONSTRAINT`. No TEE badge is rendered. The model-family, vendor and open-weight gates are still enforced. This deviation is recorded in [`ARCHITECTURE.md`](ARCHITECTURE.md), [`AI_HANDOFF.md`](AI_HANDOFF.md) and [`docs/BUILD_LOG.md`](docs/BUILD_LOG.md).
 
-## Live testnet record
+## Historical staging record
 
 A real testnet audit has been committed, funded, attacked by all eight specialists, reviewed and anchored:
 
@@ -147,7 +147,7 @@ The track is used as an ambient bed at approximately −20 dB under the narratio
 - Client agents use scoped API keys stored only as hashes.
 - Attackers receive no wallet, shell, arbitrary HTTP, SQL, filesystem or sibling output.
 - Evidence retrieval is limited to typed adapters and fixed hosts.
-- No mainnet transaction is authorized.
+- No mainnet deployment or real-fund transaction is authorized without a separate operator record.
 
 See [`docs/SECURITY_SPEC.md`](docs/SECURITY_SPEC.md) and the in-app [`/docs`](https://dissent-web.onrender.com/docs) page.
 
@@ -160,6 +160,7 @@ See [`docs/SECURITY_SPEC.md`](docs/SECURITY_SPEC.md) and the in-app [`/docs`](ht
 - [`docs/ADJUDICATION_SPEC.md`](docs/ADJUDICATION_SPEC.md) — verdict and bounty policy.
 - [`docs/SECURITY_SPEC.md`](docs/SECURITY_SPEC.md) — threat model.
 - [`docs/SMART_CONTRACT_SPEC.md`](docs/SMART_CONTRACT_SPEC.md) — contract interfaces.
+- [`docs/MAINNET_READINESS.md`](docs/MAINNET_READINESS.md) — mainnet audit, findings and deployment gates.
 - [`docs/API_SPEC.md`](docs/API_SPEC.md) — REST API.
 - [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) — schema and classifications.
 - [`OPERATOR_INTAKE.md`](OPERATOR_INTAKE.md) — completed intake and authorization boundary.
@@ -168,14 +169,23 @@ See [`docs/SECURITY_SPEC.md`](docs/SECURITY_SPEC.md) and the in-app [`/docs`](ht
 
 MIT. See [`LICENSE`](LICENSE).
 
-## Proprietary testnet arm
+## Proprietary execution arm (mainnet-ready)
 
-The proprietary arm originates Dissent-owned theses, runs them through the same eight-attacker audit, and can execute a **testnet-only** transfer through a capped vault after a `TRADE` certificate.
+The proprietary arm originates Dissent-owned theses, runs them through the same eight-attacker audit, and can execute a **capped NEP-141 transfer** through a vault after a `TRADE` certificate. The primary venue is 1Click on mainnet; the staging preview uses Tidepool. Execution is disabled by default.
 
-- Vault: `vault.dissent-demo.testnet` (0.5 NEAR per transaction / 1 NEAR daily; holds Tidepool test wNEAR).
-- Execution agent: `vault-agent.dissent-demo.testnet`, with a Function Call Key scoped to `vault.spend_as` and `vault.spend_ft_as`.
-- Adapter: `packages/execution` — Tidepool adapter; refuses non-TRADE, returns `REVERTED` with the vault reason, gated by `EXECUTION_ENABLED` (default `false`).
+- Vault: operator-owned mainnet account for production; the historical staging vault is `vault.dissent-demo.testnet` (0.5 NEAR per transaction / 1 NEAR daily).
+- Execution agent: a dedicated account with a Function Call Key scoped to `vault.spend_as` and `vault.spend_ft_as`; the owner key is a multisig/timelock.
+- Adapter: `packages/execution` — 1Click mainnet primary, Tidepool staging fallback; refuses non-TRADE, returns `REVERTED` with the vault reason, gated by `EXECUTION_ENABLED` (default `false`).
 - Loop: pg-boss scheduled task, gated by `PROPRIETARY_LOOP_ENABLED` (default `false`).
 - Operator view: `/operator/proprietary`.
 - **Live evidence:** a proprietary `0.01 wNEAR → USDC` quote was audited, returned `TRADE`, and executed through `vault.spend_ft_as` at tx `DxvoRKhCnyYyKrmAopnVYPKZJB7g8ev5Er1wtW5JbSp`. Certificate `0bf3728d-e457-4b2f-8fad-b53be9565498` records `execution_readiness=EXECUTED`, hash `d5f1b00d3702d9e5fcee194f601f9537f64c237ac176150a398a6a7d75b6584d`, anchored at `3WQ6aQnJzsQRcRVTHsVGKUbrx2k1ueMFUwvWDY85XS9o`. Tidepool settled `0.035245 USDC` with swap txs `AYoAmq…`, `67jpWF…`, `7XAHSg…`. Public verifier: [`/verify/0bf3728d-e457-4b2f-8fad-b53be9565498`](https://dissent-web.onrender.com/verify/0bf3728d-e457-4b2f-8fad-b53be9565498).
-- No mainnet execution. The live run was an explicit operator action with `PROPRIETARY_EXECUTION_AUDIT_ID` set; `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false` for the preview.
+- No mainnet execution is claimed by this build. The historical staging run was an explicit operator action with `PROPRIETARY_EXECUTION_AUDIT_ID` set; `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false` for the preview.
+
+### Mainnet deployment checklist
+
+1. Deploy a fresh `#[init]` registry and vault to operator-owned mainnet accounts. Use a multisig/timelock as the vault owner; never a single hot key.
+2. Register wNEAR storage on `wrap.near`, fund the vault, and set conservative per-transaction/day caps.
+3. Add a Function Call Key for the execution agent scoped only to `spend_as` and `spend_ft_as`.
+4. Configure `NEAR_NETWORK=mainnet`, `EXECUTION_VENUE=ONECLICK`, `ONECLICK_BASE_URL=https://1click.chaindefuser.com`, `ONECLICK_ORIGIN_ASSET=nep141:wrap.near` and the live USDC asset ID from `/v0/tokens`.
+5. Use `set_recipient_until` for each quote deposit address and approve the audit UUID as a certificate. The vault rejects expired recipients and reused certificates.
+6. Keep `EXECUTION_ENABLED=false` until an independent review and a fresh operator authorization record exist. Use a fresh mainnet database; do not carry staging/testnet records into production.

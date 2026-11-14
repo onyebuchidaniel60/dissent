@@ -5,11 +5,12 @@ import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { workspaces } from "@/db/schema";
 import { prepareAudit } from "@/lib/audit-service";
+import { executionVenue } from "@/lib/network";
 import {
-  checkTidepoolVenue,
-  fetchTidepoolLiveQuote,
+  checkExecutionVenue,
+  fetchExecutionVenueQuote,
   proprietaryLoopEnabled,
-  type TidepoolQuoteResponse,
+  type ExecutionVenueQuoteResponse,
 } from "@/lib/proprietary/venue";
 
 export type ProprietaryLoopResult =
@@ -19,18 +20,18 @@ export type ProprietaryLoopResult =
       status: "ORIGINATED";
       auditId: string;
       publicAuditId: string;
-      quote: TidepoolQuoteResponse;
+      quote: ExecutionVenueQuoteResponse;
     };
 
 /**
- * Phase 10 loop guard. A live thesis is only originated after the Ref Finance
- * testnet pool API passes the precheck. The current venue is unreachable, so
- * this returns BLOCKED_VENUE rather than fabricating a market observation.
+ * Proprietary loop guard. A live thesis is only originated after the configured
+ * execution venue passes the precheck. If the venue or quote accounts are
+ * unavailable, return BLOCKED_VENUE rather than fabricating a market observation.
  */
 export async function runProprietaryLoop(): Promise<ProprietaryLoopResult> {
   if (!proprietaryLoopEnabled()) return { status: "DISABLED" };
 
-  const venue = await checkTidepoolVenue();
+  const venue = await checkExecutionVenue();
   if (!venue.available) {
     return { status: "BLOCKED_VENUE", reason: venue.reason ?? "VENUE_UNAVAILABLE" };
   }
@@ -39,18 +40,34 @@ export async function runProprietaryLoop(): Promise<ProprietaryLoopResult> {
   const [workspace] = await db
     .select()
     .from(workspaces)
-    .where(eq(workspaces.clientAccountId, process.env.DEMO_CLIENT_ACCOUNT_ID ?? "demo-client.testnet"))
+    .where(
+      eq(
+        workspaces.clientAccountId,
+        process.env.PROPRIETARY_CLIENT_ACCOUNT_ID?.trim() ??
+          process.env.DEMO_CLIENT_ACCOUNT_ID?.trim() ??
+          "",
+      ),
+    )
     .limit(1);
 
-  if (!workspace) return { status: "BLOCKED_VENUE", reason: "DEMO_WORKSPACE_MISSING" };
+  if (!workspace) return { status: "BLOCKED_VENUE", reason: "CLIENT_WORKSPACE_MISSING" };
 
-  let quote: TidepoolQuoteResponse;
+  const clientAccountId =
+    workspace.clientAccountId ??
+    process.env.PROPRIETARY_CLIENT_ACCOUNT_ID?.trim() ??
+    process.env.DEMO_CLIENT_ACCOUNT_ID?.trim() ??
+    "";
+  if (!clientAccountId) {
+    return { status: "BLOCKED_VENUE", reason: "CLIENT_ACCOUNT_NOT_CONFIGURED" };
+  }
+
+  let quote: ExecutionVenueQuoteResponse;
   try {
-    quote = await fetchTidepoolLiveQuote();
+    quote = await fetchExecutionVenueQuote();
   } catch (error) {
     return {
       status: "BLOCKED_VENUE",
-      reason: error instanceof Error ? error.message : "TIDEPOOL_QUOTE_FAILED",
+      reason: error instanceof Error ? error.message : "VENUE_QUOTE_FAILED",
     };
   }
 
@@ -59,26 +76,29 @@ export async function runProprietaryLoop(): Promise<ProprietaryLoopResult> {
       keyId: "proprietary-loop",
       workspaceId: workspace.id,
       workspaceName: workspace.name,
-      clientAccountId: workspace.clientAccountId ?? "demo-client.testnet",
+      clientAccountId,
       scopes: ["audit:create", "audit:read:own"],
     },
     {
       thesis: {
         asset: {
           chain: "near",
-          asset_id: "nep141:wnear.tidepool-sandbox.testnet",
+          asset_id:
+            executionVenue() === "TIDEPOOL"
+              ? "nep141:wnear.tidepool-sandbox.testnet"
+              : process.env.ONECLICK_ORIGIN_ASSET ?? "nep141:wrap.near",
           symbol: "wNEAR",
         },
         action: "SELL",
         direction: "SHORT",
-        rationale: `Tidepool testnet quote at ${quote.timestamp}: ${quote.quote.amountInFormatted} wNEAR (${quote.quote.amountInUsd} USD) swaps to ${quote.quote.amountOutFormatted} USDC. The proprietary arm takes a small defensive wNEAR/USDC position and will execute only if the eight-attacker audit returns TRADE. The thesis is invalidated if NEAR spot rises above the committed ceiling or USDC depegs beyond the committed bound.`,
+        rationale: `${executionVenue() === "TIDEPOOL" ? "Tidepool staging" : "1Click mainnet"} quote at ${quote.timestamp}: ${quote.quote.amountInFormatted} wNEAR (${quote.quote.amountInUsd} USD) swaps to ${quote.quote.amountOutFormatted} USDC. The proprietary arm takes a small defensive wNEAR/USDC position and will execute only if the eight-attacker audit returns TRADE. The thesis is invalidated if NEAR spot rises above the committed ceiling or USDC depegs beyond the committed bound.`,
         position: {
           amount: quote.quote.amountInFormatted,
           unit: "wNEAR",
           notional_usd: quote.quote.amountInUsd,
         },
         time_horizon: { value: 1, unit: "DAY" },
-        execution_venue: "TIDEPOOL_TESTNET",
+        execution_venue: executionVenue(),
       },
       conditions: [
         {

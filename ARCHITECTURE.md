@@ -275,9 +275,11 @@ Pino JSON logs with `request_id`, `audit_id`, `run_id`, job ID, provider, model,
 
 - `spend_as(certificate_id, recipient_id, amount_yocto, memo)` — native-NEAR transfer.
 - `spend_ft_as(certificate_id, recipient_id, amount_yocto, memo)` — transfers the fixed NEP-141 token to `recipient_id` with the certificate ID in the transfer memo.
-- On-chain checks (both methods): predecessor is the configured agent ID; the vault is not paused; `amount_yocto` is within the per-transaction cap; the UTC-day spend remains within the daily cap; `recipient_id` is on the approved allowlist; `memo` contains the approved `certificate_id`; the certificate ID is approved by the owner; the token contract is fixed at initialization.
-- Reverts carry readable reasons (cap breach, allowlist miss, unknown certificate, bad memo, insufficient balance, token transfer failure).
-- Owner-only `approve_certificate`, `revoke_certificate`, `set_recipient`, `set_caps`, `set_paused`, `withdraw`. The `wrap` helper is only usable with a token that exposes `near_deposit`; Tidepool's test wNEAR does not, so the vault is funded by the Tidepool faucet and an `ft_transfer` from the demo client.
+- On-chain checks (both methods): predecessor is the configured agent ID; the vault is not paused; `amount_yocto` is within the per-transaction cap; the UTC-day spend remains within the daily cap; `recipient_id` is on the approved allowlist and has not expired; `memo` contains the approved `certificate_id`; the certificate ID is approved and has not already been used; the token contract and its 24 decimals are fixed at initialization.
+- Reverts carry readable reasons (cap breach, expired allowlist, certificate replay, unknown certificate, bad memo, insufficient balance, token transfer failure).
+- Owner-only `approve_certificate`, `revoke_certificate`, `set_recipient`, `set_recipient_until`, `set_caps`, `set_paused`, `withdraw`. `set_recipient_until` binds a per-quote deposit address to the quote window instead of leaving it allowlisted forever. The `wrap` helper is only usable with a token that exposes `near_deposit`; mainnet wNEAR does.
+- Mainnet source uses `#[init]` (not `ignore_state`), so a deployed vault cannot be reinitialized by an arbitrary caller. The staging testnet v2 vault used a one-off `ignore_state` upgrade and remains a historical artifact; it is not the mainnet deployment template.
+- A mainnet vault owner must be a multisig/timelock, not a single hot key. Caps and allowlists are still enforced on-chain, but owner-key compromise would be a governance failure.
 
 **Agent key:** a dedicated testnet account holds a **Function Call Key scoped to `vault.spend_as` and `vault.spend_ft_as`**, with a 1 NEAR allowance. The full-access vault key is not loaded into the execution runtime, an attacker prompt, or a model tool. `NEAR_VAULT_AGENT_KEY` stores the function-call key.
 

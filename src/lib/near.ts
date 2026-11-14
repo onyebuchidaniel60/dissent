@@ -3,11 +3,12 @@ import "server-only";
 import { Account, JsonRpcProvider, actions, type KeyPairString } from "near-api-js";
 import { createHash } from "node:crypto";
 
-export const NEAR_TESTNET_RPC = process.env.NEAR_RPC_URL ?? "https://rpc.testnet.near.org";
-export const NEAR_NETWORK = "testnet";
+import { NEAR_NETWORK, NEAR_RPC_URL } from "@/lib/network";
+
+export { NEAR_NETWORK, NEAR_RPC_URL };
 
 async function rpc<T>(method: string, params: unknown): Promise<T> {
-  const response = await fetch(NEAR_TESTNET_RPC, {
+  const response = await fetch(NEAR_RPC_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ jsonrpc: "2.0", id: "dissent", method, params }),
@@ -21,16 +22,22 @@ async function rpc<T>(method: string, params: unknown): Promise<T> {
   return data.result;
 }
 
-export function registryAccountId(): string {
-  return process.env.NEAR_REGISTRY_ACCOUNT_ID ?? "registry.dissent-demo.testnet";
+export function registryAccountId(): string | null {
+  return process.env.NEAR_REGISTRY_ACCOUNT_ID?.trim() || null;
 }
 
-export function escrowAccountId(): string {
-  return process.env.NEAR_ESCROW_ACCOUNT_ID ?? registryAccountId();
+export function escrowAccountId(): string | null {
+  return process.env.NEAR_ESCROW_ACCOUNT_ID?.trim() || registryAccountId();
 }
 
-export function payoutAccountId(): string {
-  return process.env.NEAR_PAYOUT_ACCOUNT_ID ?? "payout.dissent-demo.testnet";
+export function payoutAccountId(): string | null {
+  return process.env.NEAR_PAYOUT_ACCOUNT_ID?.trim() || null;
+}
+
+function requireRegistryAccountId(): string {
+  const accountId = registryAccountId();
+  if (!accountId) throw new Error("REGISTRY_NOT_CONFIGURED");
+  return accountId;
 }
 
 export function canonicalHashHex(value: unknown): string {
@@ -40,7 +47,7 @@ export function canonicalHashHex(value: unknown): string {
 }
 
 function provider(): JsonRpcProvider {
-  return new JsonRpcProvider({ url: NEAR_TESTNET_RPC });
+  return new JsonRpcProvider({ url: NEAR_RPC_URL });
 }
 
 function deployerAccount(): Account {
@@ -57,7 +64,7 @@ export async function viewRegistry<T>(method: string, args: Record<string, unkno
   }>("query", {
     request_type: "call_function",
     finality: "final",
-    account_id: registryAccountId(),
+    account_id: requireRegistryAccountId(),
     method_name: method,
     args_base64: argsBase64,
   });
@@ -73,7 +80,7 @@ export async function callRegistry(
 ): Promise<{ transactionHash: string; blockHash: string }> {
   const account = deployerAccount();
   const outcome = await account.signAndSendTransaction({
-    receiverId: registryAccountId(),
+    receiverId: requireRegistryAccountId(),
     actions: [
       actions.functionCall(
         method,
@@ -151,7 +158,7 @@ export async function verifyCommitmentTransaction(
   const tx = await fetchTransaction(txHash, expected.clientAccountId);
   if (tx.final_execution_status !== "FINAL") throw new Error("COMMITMENT_NOT_FINAL");
   if (tx.transaction?.signer_id !== expected.clientAccountId) throw new Error("WRONG_SIGNER");
-  if (tx.transaction?.receiver_id !== registryAccountId()) throw new Error("WRONG_CONTRACT");
+  if (tx.transaction?.receiver_id !== requireRegistryAccountId()) throw new Error("WRONG_CONTRACT");
   if (!tx.status || !("SuccessValue" in tx.status)) throw new Error("TRANSACTION_FAILED");
 
   const call = (tx.transaction.actions ?? []).map(decodeFunctionCall).find(Boolean);
@@ -208,7 +215,7 @@ export async function verifyFundingTransaction(
   const tx = await fetchTransaction(txHash, expected.clientAccountId);
   if (tx.final_execution_status !== "FINAL") throw new Error("FUNDING_NOT_FINAL");
   if (tx.transaction?.signer_id !== expected.clientAccountId) throw new Error("WRONG_SIGNER");
-  if (tx.transaction?.receiver_id !== registryAccountId()) throw new Error("WRONG_CONTRACT");
+  if (tx.transaction?.receiver_id !== requireRegistryAccountId()) throw new Error("WRONG_CONTRACT");
   if (!tx.status || !("SuccessValue" in tx.status)) throw new Error("TRANSACTION_FAILED");
 
   const call = (tx.transaction.actions ?? []).map(decodeFunctionCall).find(Boolean);

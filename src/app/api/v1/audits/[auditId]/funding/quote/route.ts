@@ -7,6 +7,7 @@ import { getOwnedAudit } from "@/lib/audit-service";
 import { canonicalJson, sha256Hex } from "@/lib/canonical";
 import { apiError, apiSuccess, requestId } from "@/lib/http";
 import { callRegistry, registryAccountId } from "@/lib/near";
+import { NEAR_NETWORK } from "@/lib/network";
 import { AUDIT_FEE_YOCTO, POLICY_HASH, QUOTE_EXPIRY_SECONDS } from "@/lib/policy";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +46,7 @@ export async function POST(
         quote_hash: open.quoteHash,
         amount_yocto: open.amountYocto,
         expires_at: open.expiresAt.toISOString(),
-        network: "testnet",
+        network: NEAR_NETWORK,
         contract_id: registryAccountId(),
         bounty_share_bps: 8000,
         reserve_share_bps: 2000,
@@ -107,7 +108,7 @@ export async function POST(
         quote_hash: quoteHash,
         amount_yocto: amount,
         expires_at: expiresAt.toISOString(),
-        network: "testnet",
+        network: NEAR_NETWORK,
         contract_id: registryAccountId(),
         bounty_share_bps: 8000,
         reserve_share_bps: 2000,

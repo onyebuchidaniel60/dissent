@@ -1,7 +1,7 @@
 # AI_HANDOFF.md — Dissent
 
-**Last updated:** 2026-11-13
-**Current phase:** Phase 10 — proprietary execution **demonstrated on Tidepool testnet**. A real quote was audited, returned `TRADE`, executed through the capped vault (`spend_ft_as`) and settled `SUCCESS` on Tidepool. Demo regeneration is intentionally deferred pending operator approval.
+**Last updated:** 2026-11-14
+**Current phase:** Phase 11 — mainnet readiness, production UI cleanup and typography. Code defaults to mainnet and the primary execution adapter is 1Click. `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false`. The preview is an explicit testnet staging deployment with testnet records hidden behind a network-neutral UI; no mainnet contract or real-fund transaction is claimed or authorized.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`
 **Deployed app commit:** `46bf788` (`feat: execute proprietary TRADE through NEP-141 Tidepool vault`).
@@ -23,6 +23,16 @@
 - **Public verify (proprietary):** `https://dissent-web.onrender.com/verify/0bf3728d-e457-4b2f-8fad-b53be9565498` (live; `VERIFIED`, `execution_readiness=EXECUTED`).
 
 An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-depth evidence was unavailable and a preimage-hash bug produced a false contradiction. The bug is fixed in `src/lib/evidence/service.ts`; the earlier anchored certificate is retained unchanged as an immutable test artifact.
+
+## Phase 11 — mainnet readiness and production polish
+
+- Network defaults: `NEAR_NETWORK=mainnet`, `NEXT_PUBLIC_NEAR_NETWORK=mainnet`, `NEAR_RPC_URL=https://rpc.mainnet.near.org`, `NEAR_EXPLORER_URL=https://explorer.near.org`. Registry, vault, payout and deployer accounts have no testnet defaults; missing configuration fails closed.
+- Execution: `EXECUTION_VENUE=ONECLICK` is the primary adapter. Base URL `https://1click.chaindefuser.com`; wNEAR `nep141:wrap.near`; USDC `nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1` from the live `/v0/tokens` catalogue. A read-only mainnet precheck on 2026-11-14 returned 231 tokens and a dry `0.01 wNEAR → 0.034224 USDC` quote with no deposit address and no transaction. No mainnet execution or account approval was performed. Tidepool remains available only when `EXECUTION_VENUE=TIDEPOOL` for staging.
+- Contract audit fixes in the mainnet source: `#[init]` instead of `ignore_state`; certificate replay protection; quote-window recipient expiry (`set_recipient_until`); 24-decimal wNEAR assertion. Source wasm SHA-256 `f8475b3998114e9970e51a6473c6acccdb14517986267f4ef058df747f43f582`; 12/12 vault tests pass. The deployed `vault.dissent-demo.testnet` remains the staging v2 artifact and is not the mainnet template. See `docs/SMART_CONTRACT_SPEC.md`.
+- UI cleanup: removed `NEAR TESTNET`, `DEMO FIXTURE`, demo-client/testnet account labels and fixture-only pages from customer-facing routes. The app overview, audit ledger, audit detail, operator, providers, reputation, attackers, settings, docs and verifier now use live data or honest empty states. The historical staging execution receipt remains in the operator page with a network-neutral label.
+- Typography: added Russo One as the display face (Google Fonts, OFL), retained Orbitron as fallback. Hero, section and page titles use the display face with reduced clamps: hero `clamp(2.4rem, 6.2vw, 6.2rem)`, section `clamp(1.6rem, 3.1vw, 2.8rem)`, page `clamp(1.8rem, 3.4vw, 3.1rem)`. Verified at 1440×900 and 390×844 with no horizontal overflow.
+- Preview remains staging: Render env explicitly sets `NEAR_NETWORK=testnet`, `NEXT_PUBLIC_NEAR_NETWORK=testnet`, `EXECUTION_VENUE=TIDEPOOL`, testnet registry/vault accounts and `DEMO_MODE=false`. The UI does not display a testnet label. Production must use a fresh mainnet database and the mainnet `.env.example`; do not carry staging records into mainnet.
+- No mainnet deployment, mainnet transaction or real-fund transfer was performed. No new spend. Demo regeneration remains deferred.
 
 ## Phase 10 — proprietary trading arm
 
@@ -123,16 +133,19 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 | Public verify API | PASS (`VERIFIED` hash + registry match) |
 | Bounty allocations | 8 recorded, `0.03625 NEAR` |
 | Reference responsive sweep | PASS at 360/390/768/1024/1440 |
-| Vault v2 unit tests | 8/8 PASS |
-| Execution adapter tests | 11/11 PASS |
-| Full Vitest | 11/11 PASS |
+| Vault v2 unit tests (staging) | 8/8 PASS |
+| Mainnet-source vault tests | 12/12 PASS |
+| Execution adapter tests | 13/13 PASS |
+| Full Vitest | 13/13 PASS |
 | Live proprietary audit | 8/8 attackers; both conditions `EVALUABLE`/`NOT_HIT`; 8 gates pass; divergence `0`; verdict `TRADE` |
 | Live vault execution | `spend_ft_as` PASS; tx `DxvoRKhCnyYyKrmAopnVYPKZJB7g8ev5Er1wtW5JbSp`; `execution_readiness=EXECUTED` |
 | Tidepool settlement | `SUCCESS`; `0.035245 USDC` out; 3 swap txs recorded |
-| Local Playwright | 3/3 PASS, including the execution receipt at 390/1440 |
+| Local Playwright | 3/3 PASS at 390×844 and 1440×900, including the execution receipt |
 | Preview deploy | `46bf788` live; `/healthz`, `/readyz`, both verifier pages 200 |
-| Preview Playwright | 3/3 PASS, including the execution receipt at 390/1440 |
-| Public verifier | `VERIFIED`; `execution_readiness=EXECUTED`; vault tx and Tidepool swap hashes returned |
+| Preview Playwright | 3/3 PASS at 390×844 and 1440×900 after the Phase 11 deploy |
+| Public verifier | `VERIFIED`; `execution_readiness=EXECUTED`; vault tx and venue swap hashes returned |
+| `/readyz` config check | PASS in staging (`network=testnet`, `venue=TIDEPOOL`); fail-closed in production if registry/vault/quote accounts are missing |
+| Typography | Russo One display face; hero 2.4–6.2rem, section 1.6–2.8rem, page 1.8–3.1rem; no overflow at 390×844/1440×900 |
 
 ## Budget consumed
 
@@ -155,7 +168,10 @@ An earlier development audit (`08939501…`) ended `ABSTAIN` when execution-dept
 8. `escrow.dissent-demo.testnet` is created but unused; funding/bounty logic lives in the registry contract. Documented in the deployment notes.
 9. Phase 10 live execution is demonstrated. The preview remains fail-closed (`EXECUTION_ENABLED=false`, `PROPRIETARY_LOOP_ENABLED=false`); a future live run needs a fresh quote, vault approvals and `PROPRIETARY_EXECUTION_AUDIT_ID`.
 10. The demo video predates the trading beat. Regeneration is intentionally deferred until the operator approves after reviewing the live `EXECUTED` certificate and Tidepool settlement.
-11. `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false` for the preview; the live run was an explicit operator action using `scripts/proprietary-live.ts`.
+11. `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` remain `false` for the preview; the historical live run was an explicit operator action using `scripts/proprietary-live.ts`.
+12. The preview is an explicit testnet staging deployment with a network-neutral UI. Production mainnet requires a fresh database and operator-owned registry, vault and payout accounts; no mainnet deployment is claimed.
+13. Mainnet execution would move real funds and is not authorized by this build. The mainnet vault source includes replay protection, quote-window recipient expiry and a multisig/timelock owner requirement, but has not been deployed.
+14. The ElevenLabs library voice remains blocked by `paid_plan_required`; the delivered demo uses the documented Piper/LJSpeech fallback and was not regenerated in Phase 11.
 
 ## Authority boundaries
 

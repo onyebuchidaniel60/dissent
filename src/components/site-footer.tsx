@@ -16,7 +16,7 @@ export function SiteFooter() {
             <p className="footer-copy mt-4">
               Dissent is an evidence-backed adversarial audit protocol for AI trading agents. It
               is an audit and verification layer — not an exchange, custodian, wallet or investment
-              adviser. No live trade execution is enabled in this build.
+              adviser. Execution is disabled by default and requires explicit operator enablement.
             </p>
           </div>
 
@@ -25,15 +25,15 @@ export function SiteFooter() {
             <Link href={SITE.repoUrl} rel="noreferrer" target="_blank">
               GitHub
             </Link>
-            <Link href={SITE.verifyDemoPath}>Public verify</Link>
+            <Link href={SITE.verifyPath}>Public verify</Link>
             <Link href="/operator">Operator console</Link>
             <Link href="/docs#security">Security model</Link>
           </nav>
         </div>
 
         <div className="footer-bottom">
-          <span>Preview build · synthetic demo data only</span>
-          <span>{SITE.network} · TEE attestation waived</span>
+          <span>Production build</span>
+          <span>{SITE.network} · TEE attestation unavailable</span>
           <span>© 2026 Dissent</span>
         </div>
       </div>

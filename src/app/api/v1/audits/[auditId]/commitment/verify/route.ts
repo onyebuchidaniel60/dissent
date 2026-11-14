@@ -6,6 +6,7 @@ import { authenticateApiKey, hasScope } from "@/lib/api-keys";
 import { getOwnedAudit } from "@/lib/audit-service";
 import { apiError, apiSuccess, requestId, zodDetails } from "@/lib/http";
 import { verifyCommitmentTransaction } from "@/lib/near";
+import { NEAR_NETWORK } from "@/lib/network";
 import { POLICY_HASH } from "@/lib/policy";
 import { z } from "zod";
 
@@ -89,8 +90,8 @@ export async function POST(
     await db.transaction(async (tx) => {
       await tx.insert(commitments).values({
         auditId: audit.id,
-        networkId: "testnet",
-        contractAccountId: process.env.NEAR_REGISTRY_ACCOUNT_ID ?? "registry.dissent-demo.testnet",
+        networkId: NEAR_NETWORK,
+        contractAccountId: process.env.NEAR_REGISTRY_ACCOUNT_ID ?? "",
         clientAccountId: audit.clientAccountId,
         transactionHash: parsed.data.transaction_hash,
         blockHeight: verified.blockHeight,

@@ -12,7 +12,7 @@ export default function NotFound() {
           <p className="small-caps text-primary">404 · route not found</p>
           <h1 className="empty-title">This audit trail does not exist.</h1>
           <p className="empty-copy">
-            The page may have moved, or the identifier may not belong to this preview. No audit
+            The page may have moved, or the identifier may not belong to this deployment. No audit
             data was changed.
           </p>
           <div className="flex flex-wrap justify-center gap-2">

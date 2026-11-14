@@ -11,11 +11,10 @@ import {
   Users,
 } from "lucide-react";
 
-import { FixtureBadge, TeeWaiverNotice } from "@/components/fixture-badge";
+import { TeeWaiverNotice } from "@/components/tee-waiver-notice";
 import { KpiCard, PageHeader, Panel } from "@/components/ui";
 import { StatusPill } from "@/components/status-pill";
 import { getAdminRecentAudits } from "@/lib/audit-read";
-import { DEMO_AUDITS } from "@/lib/demo-data";
 import { getAdminAllowlist } from "@/lib/env";
 import { MODEL_ASSIGNMENTS, PROVIDER_CONFIG } from "@/lib/model-assignments";
 
@@ -23,15 +22,15 @@ export const dynamic = "force-dynamic";
 
 export default async function OperatorPage() {
   const allowlist = getAdminAllowlist();
-  const liveAudits = await getAdminRecentAudits(5);
+  const liveAudits = await getAdminRecentAudits(20);
 
   return (
     <>
       <PageHeader
-        eyebrow="Operations · preview"
+        eyebrow="Operations"
         title="The control plane"
         accent="is explicit."
-        description="Operator surfaces expose configuration and bounded recovery — never a hidden verdict override or a wallet key. Counts below are preview state."
+        description="Operator surfaces expose configuration and bounded recovery — never a hidden verdict override or a wallet key."
         actions={
           <Link href="/operator/proprietary" className="button button--primary">
             Proprietary arm
@@ -41,9 +40,8 @@ export default async function OperatorPage() {
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <FixtureBadge />
-        <span className="tag tag--muted">{allowlist.length} allowlisted operator</span>
-        <span className="tag tag--warn">Gate enforced Phase 2</span>
+        <span className="tag tag--ok">{allowlist.length} allowlisted operators</span>
+        <span className="tag tag--muted">Wallet gate enforced</span>
       </div>
 
       <div className="stat-grid">
@@ -62,13 +60,13 @@ export default async function OperatorPage() {
         <KpiCard
           label="Runner"
           value="1"
-          detail="In-process pg-boss on Render free"
+          detail="In-process pg-boss"
           icon={<Server size={14} aria-hidden="true" />}
         />
         <KpiCard
-          label="Live audits"
-          value="0"
-          detail="No production or mainnet authority"
+          label="Audits"
+          value={String(liveAudits.length)}
+          detail="Workspace records"
           icon={<Database size={14} aria-hidden="true" />}
         />
       </div>
@@ -76,7 +74,7 @@ export default async function OperatorPage() {
       <div className="dashboard-grid">
         <div className="dashboard-stack">
           <Panel
-            title="Live testnet runs"
+            title="Recent runs"
             subtitle="Real workspace audits. Only the operator allowlist reaches this panel."
             action={<span className="tag tag--ok">{liveAudits.length} records</span>}
             bodyClassName=""
@@ -84,7 +82,7 @@ export default async function OperatorPage() {
             {liveAudits.length > 0 ? (
               <div className="table-wrap">
                 <table className="data-table">
-                  <caption className="sr-only">Live testnet audits</caption>
+                  <caption className="sr-only">Recent workspace audits</caption>
                   <thead>
                     <tr>
                       <th scope="col">Audit</th>
@@ -106,7 +104,11 @@ export default async function OperatorPage() {
                           <StatusPill status={audit.status} />
                         </td>
                         <td data-label="Verdict">
-                          {audit.verdict ? <StatusPill status={audit.verdict} /> : <span className="mono text-[10px] text-muted-2">Pending</span>}
+                          {audit.verdict ? (
+                            <StatusPill status={audit.verdict} />
+                          ) : (
+                            <span className="mono text-[10px] text-muted-2">Pending</span>
+                          )}
                         </td>
                         <td data-label="Created">
                           <span className="mono text-[10px] text-muted-2">
@@ -114,7 +116,10 @@ export default async function OperatorPage() {
                           </span>
                         </td>
                         <td data-label="Inspect">
-                          <Link href={`/operator/audits/${audit.id}`} className="text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
+                          <Link
+                            href={`/operator/audits/${audit.id}`}
+                            className="text-[10px] font-bold uppercase tracking-[0.1em] text-primary"
+                          >
                             Open
                           </Link>
                         </td>
@@ -126,66 +131,15 @@ export default async function OperatorPage() {
             ) : (
               <div className="empty-state">
                 <Database size={20} aria-hidden="true" />
-                <p className="empty-title">No live audits yet.</p>
-                <p className="empty-copy">The fixture preview below remains available until a real audit is dispatched.</p>
+                <p className="empty-title">No audits yet.</p>
+                <p className="empty-copy">
+                  New theses will appear here after a client prepares and funds an audit.
+                </p>
               </div>
             )}
           </Panel>
 
-          <Panel
-            title="Audit operations"
-            subtitle="Redacted inspection and bounded recovery only."
-            action={
-              <Link href="/operator/audits/demo-audit-001" className="button button--ghost button--small">
-                Inspect run
-                <ArrowRight size={12} aria-hidden="true" />
-              </Link>
-            }
-            bodyClassName=""
-          >
-            <div className="table-wrap">
-              <table className="data-table">
-                <caption className="sr-only">Audits available to the operator preview</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Audit</th>
-                    <th scope="col">State</th>
-                    <th scope="col">Runs</th>
-                    <th scope="col">Cost ceiling</th>
-                    <th scope="col">Last event</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {DEMO_AUDITS.map((audit) => (
-                    <tr key={audit.id}>
-                      <td data-label="Audit">
-                        <div className="table-primary">
-                          <Link href={`/operator/audits/${audit.id}`}>{audit.publicId}</Link>
-                          <span>{audit.title}</span>
-                        </div>
-                      </td>
-                      <td data-label="State">
-                        <StatusPill status={audit.status} />
-                      </td>
-                      <td data-label="Runs">
-                        <span className="mono text-[10px]">{audit.progress}</span>
-                      </td>
-                      <td data-label="Cost ceiling">
-                        <span className="mono text-[10px]">$0.50 / audit</span>
-                      </td>
-                      <td data-label="Last event">
-                        <span className="mono text-[10px] text-muted-2">
-                          {audit.updatedAt.replace("T", " ").replace("Z", " UTC")}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Panel>
-
-          <Panel title="Provider posture" subtitle="Keys verified at intake; values never displayed.">
+          <Panel title="Provider posture" subtitle="Keys are server-side; values are never displayed.">
             <div className="grid gap-3 sm:grid-cols-2">
               {Object.entries(PROVIDER_CONFIG).map(([name, provider]) => (
                 <div key={name} className="rounded-2xl border border-line bg-white/[0.02] p-4">
@@ -193,7 +147,7 @@ export default async function OperatorPage() {
                     <span className="font-display text-sm font-bold uppercase tracking-tight">
                       {name}
                     </span>
-                    <span className="tag tag--ok">key verified</span>
+                    <span className="tag tag--ok">configured</span>
                   </div>
                   <p className="mono mt-2 break-all text-[9px] text-muted-2">{provider.base_url}</p>
                   <div className="mt-3 grid gap-1 text-[10px] text-muted">
@@ -208,8 +162,8 @@ export default async function OperatorPage() {
             <div className="mt-4 notice notice--info">
               <CheckCircle2 size={15} aria-hidden="true" />
               <span>
-                Per-audit ceiling is $0.50 of pre-purchased OpenRouter credit. No paid top-up, card or
-                auto-billing trial is enabled.
+                Per-audit inference ceiling is enforced server-side. Provider keys are not exposed to
+                attackers or browser clients.
               </span>
             </div>
           </Panel>
@@ -239,24 +193,24 @@ export default async function OperatorPage() {
             <div className="rail-row">
               <span className="flex items-center gap-2">
                 <Clock3 size={13} aria-hidden="true" />
-                Free-tier cold start
+                Cold start
               </span>
               <strong>~50s</strong>
             </div>
           </Panel>
 
-          <Panel title="Admin boundary" subtitle="Allowlist, not a role in a request body.">
+          <Panel title="Admin boundary" subtitle="Server-side allowlist.">
             <div className="flex items-start gap-3">
               <ShieldOff size={17} className="mt-0.5 shrink-0 text-warn" aria-hidden="true" />
               <p className="text-[11px] leading-relaxed text-muted">
-                Operator access will be derived from the verified wallet session and checked
-                server-side against <span className="mono">ADMIN_WALLET_ADDRESSES</span>. A
-                client-supplied wallet address is never trusted.
+                Operator access is derived from the verified wallet session and checked server-side
+                against <span className="mono">ADMIN_WALLET_ADDRESSES</span>. A client-supplied wallet
+                address is never trusted.
               </p>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="tag tag--muted">{allowlist.length} allowlisted</span>
-              <span className="tag tag--warn">enforcement pending</span>
+              <span className="tag tag--ok">enforced</span>
             </div>
           </Panel>
 

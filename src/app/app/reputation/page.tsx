@@ -1,17 +1,16 @@
 import Link from "next/link";
 import { ArrowRight, BarChart3, CircleAlert, Scale, ShieldCheck, Users } from "lucide-react";
 
-import { FixtureBadge } from "@/components/fixture-badge";
 import { KpiCard, PageHeader, Panel } from "@/components/ui";
 
 export default function ReputationPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Reputation ledger · preview"
+        eyebrow="Reputation ledger"
         title="Quality is derived,"
         accent="not claimed."
-        description="Reputation events are written once from finalized accepted and rejected finding records. The preview has no finalized live audits, so the ledger is intentionally empty."
+        description="Reputation events are written from finalized accepted and rejected findings. The ledger remains empty until a finalized audit exists."
         actions={
           <Link href="/docs#reputation" className="button button--ghost">
             Read the reputation rules
@@ -21,8 +20,7 @@ export default function ReputationPage() {
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <FixtureBadge />
-        <span className="tag tag--muted">No finalized live audits</span>
+        <span className="tag tag--muted">Awaiting first finalized audit</span>
       </div>
 
       <div className="stat-grid">
@@ -55,7 +53,7 @@ export default function ReputationPage() {
       <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <Panel
           title="Attacker quality ledger"
-          subtitle="Rates are only shown after finalization; the preview does not invent precision."
+          subtitle="Rates are only shown after finalization; no precision is invented."
           bodyClassName=""
         >
           <div className="table-wrap">
@@ -97,8 +95,8 @@ export default function ReputationPage() {
             <div className="notice notice--info">
               <BarChart3 size={15} aria-hidden="true" />
               <span>
-                A dash is not zero performance. It means no finalized event exists. The ledger will
-                be populated by the idempotent reputation service in Phase 5.
+                A dash is not zero performance. It means no finalized event exists. The ledger is populated
+                by the idempotent reputation service after certificate finalization.
               </span>
             </div>
           </div>
@@ -126,11 +124,10 @@ export default function ReputationPage() {
             </ol>
           </Panel>
 
-          <Panel title="Why the ledger is empty" subtitle="Honest state, not a fake chart.">
+          <Panel title="Empty until finalization" subtitle="Honest state, not a synthetic score.">
             <p className="text-[12px] leading-relaxed text-muted">
-              The preview contains deterministic fixtures for layout review. Fixture outcomes are
-              not written to the reputation ledger, and no fixture is presented as a live model
-              result.
+              No audit has been finalized in this workspace, so the ledger is empty. The service
+              never writes a reputation event from an unfinished run or a fixture.
             </p>
           </Panel>
         </div>

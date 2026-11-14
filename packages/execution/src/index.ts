@@ -1,6 +1,7 @@
 import { Account, JsonRpcProvider, actions, type KeyPairString } from "near-api-js";
 
 export type Verdict = "TRADE" | "REFUSE" | "ABSTAIN";
+export type ExecutionVenue = "ONECLICK" | "TIDEPOOL";
 
 export type ExecutionStatus = "EXECUTED" | "REFUSED" | "REVERTED" | "NOT_CONFIGURED";
 
@@ -28,6 +29,7 @@ export interface VaultClient {
 
 export type ExecutionConfig = {
   enabled: boolean;
+  venue: ExecutionVenue;
   vaultAccountId: string | null;
   agentAccountId: string | null;
   agentKey: string | null;
@@ -38,14 +40,24 @@ export type ExecutionConfig = {
 };
 
 export function executionConfigFromEnv(): ExecutionConfig {
+  const venue: ExecutionVenue =
+    process.env.EXECUTION_VENUE?.trim().toUpperCase() === "TIDEPOOL" ? "TIDEPOOL" : "ONECLICK";
   return {
     enabled: process.env.EXECUTION_ENABLED === "true",
-    vaultAccountId: process.env.NEAR_VAULT_ACCOUNT_ID ?? null,
-    agentAccountId: process.env.NEAR_VAULT_AGENT_ACCOUNT_ID ?? null,
+    venue,
+    vaultAccountId: process.env.NEAR_VAULT_ACCOUNT_ID?.trim() || null,
+    agentAccountId: process.env.NEAR_VAULT_AGENT_ACCOUNT_ID?.trim() || null,
     agentKey: process.env.NEAR_VAULT_AGENT_KEY ?? null,
-    recipientId: process.env.TIDEPOOL_DEPOSIT_ADDRESS ?? null,
-    amountYocto: process.env.PROPRIETARY_THESIS_AMOUNT_YOCTO ?? null,
-    ftTokenId: process.env.TIDEPOOL_WNEAR_TOKEN_ID ?? "wnear.tidepool-sandbox.testnet",
+    recipientId:
+      (venue === "TIDEPOOL"
+        ? process.env.TIDEPOOL_DEPOSIT_ADDRESS
+        : process.env.ONECLICK_DEPOSIT_ADDRESS
+      )?.trim() || null,
+    amountYocto: process.env.PROPRIETARY_THESIS_AMOUNT_YOCTO?.trim() || null,
+    ftTokenId:
+      venue === "TIDEPOOL"
+        ? process.env.TIDEPOOL_WNEAR_TOKEN_ID ?? "wnear.tidepool-sandbox.testnet"
+        : process.env.ONECLICK_WNEAR_TOKEN_ID ?? "wrap.near",
     vaultSupportsNep141: process.env.VAULT_SUPPORTS_NEP141 === "true",
   };
 }
@@ -68,7 +80,10 @@ export function executionReadiness(input: {
     return { status: "NOT_CONFIGURED", reason: "VAULT_OR_VENUE_MISSING" };
   }
   if (input.venueAvailable === false) {
-    return { status: "NOT_CONFIGURED", reason: "TIDEPOOL_UNAVAILABLE" };
+    return {
+      status: "NOT_CONFIGURED",
+      reason: input.config.venue === "TIDEPOOL" ? "TIDEPOOL_UNAVAILABLE" : "ONECLICK_UNAVAILABLE",
+    };
   }
   if (!input.config.vaultSupportsNep141) {
     return { status: "NOT_CONFIGURED", reason: "VAULT_NATIVE_NEAR_ONLY" };
@@ -76,9 +91,10 @@ export function executionReadiness(input: {
   return { status: "READY" };
 }
 
-export class TidepoolExecutionAdapter {
-  private readonly vault: VaultClient;
-  private readonly config: ExecutionConfig;
+abstract class Nep141VaultExecutionAdapter {
+  protected readonly vault: VaultClient;
+  protected readonly config: ExecutionConfig;
+  protected abstract readonly venue: ExecutionVenue;
 
   constructor(input: { vault: VaultClient; config: ExecutionConfig }) {
     this.vault = input.vault;
@@ -91,6 +107,9 @@ export class TidepoolExecutionAdapter {
     }
     if (verdict !== "TRADE") {
       return { status: "REFUSED", reason: "VERDICT_NOT_TRADE" };
+    }
+    if (this.config.venue !== this.venue) {
+      return { status: "NOT_CONFIGURED", reason: "VENUE_MISMATCH" };
     }
     if (!this.config.vaultSupportsNep141) {
       return { status: "NOT_CONFIGURED", reason: "VAULT_NATIVE_NEAR_ONLY" };
@@ -121,6 +140,16 @@ export class TidepoolExecutionAdapter {
       };
     }
   }
+}
+
+/** Mainnet 1Click execution path. The vault spends wNEAR to the 1Click deposit address. */
+export class OneClickExecutionAdapter extends Nep141VaultExecutionAdapter {
+  protected readonly venue: ExecutionVenue = "ONECLICK";
+}
+
+/** Testnet staging path retained for the preview environment. */
+export class TidepoolExecutionAdapter extends Nep141VaultExecutionAdapter {
+  protected readonly venue: ExecutionVenue = "TIDEPOOL";
 }
 
 export class NearVaultClient implements VaultClient {
@@ -173,13 +202,19 @@ export class NearVaultClient implements VaultClient {
   }
 }
 
-export function createExecutionAdapter(): TidepoolExecutionAdapter {
+export function createExecutionAdapter(): OneClickExecutionAdapter | TidepoolExecutionAdapter {
   const config = executionConfigFromEnv();
   const vault = new NearVaultClient({
-    vaultAccountId: config.vaultAccountId ?? "vault.dissent-demo.testnet",
-    agentAccountId: config.agentAccountId ?? "vault-agent.dissent-demo.testnet",
+    vaultAccountId: config.vaultAccountId ?? "",
+    agentAccountId: config.agentAccountId ?? "",
     agentKey: config.agentKey ?? "",
-    rpcUrl: process.env.NEAR_RPC_URL ?? "https://rpc.testnet.near.org",
+    rpcUrl:
+      process.env.NEAR_RPC_URL ??
+      (process.env.NEAR_NETWORK?.toLowerCase() === "testnet"
+        ? "https://rpc.testnet.near.org"
+        : "https://rpc.mainnet.near.org"),
   });
-  return new TidepoolExecutionAdapter({ vault, config });
+  return config.venue === "TIDEPOOL"
+    ? new TidepoolExecutionAdapter({ vault, config })
+    : new OneClickExecutionAdapter({ vault, config });
 }

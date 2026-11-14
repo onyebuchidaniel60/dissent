@@ -1,7 +1,7 @@
 # Dissent — Security Specification and Threat Model
 
 **Version:** 1.0
-**Scope:** Hackathon MVP (testnet-only proprietary execution via a capped vault; no mainnet funds)
+**Scope:** Production-readiness release (mainnet-ready application and contracts; execution disabled by default; no mainnet funds move without separate authorization)
 **Security posture:** Fail closed for any financial or verdict-critical uncertainty
 
 ## 1. Assets and trust boundaries
@@ -13,7 +13,7 @@
 - Attacker prompts, tool grants, model outputs and run provenance.
 - Evidence raw payloads and retrieval locators.
 - Adjudication policy, certificate preimages and audit event log.
-- NEAR deployer/owner signing credentials and testnet escrow balances.
+- NEAR deployer/owner signing credentials and escrow balances. The preview remains a testnet staging environment; mainnet custody requires a multisig/timelock owner and separate authorization.
 
 ### Trust boundaries
 1. Browser/client to API.
@@ -86,7 +86,7 @@ At minimum, separate context and tool grant by attacker run. Prefer isolated wor
 
 ## 5. NEAR wallet and contract security
 
-- Hackathon MVP targets NEAR testnet only.
+- The application is mainnet-ready. The preview/staging environment remains on testnet. Mainnet contract deployment and real-fund execution require a separate explicit authorization record.
 - Client conditions commitment is signed by the client identity/wallet, and backend verifies signer, contract account, method, audit ID, hashes and finality.
 - Dissent does not request a client's Full Access key.
 - No signing key is sent to models or worker prompts.
@@ -94,7 +94,7 @@ At minimum, separate context and tool grant by attacker run. Prefer isolated wor
 - `DissentRegistry` owner can configure trusted relayer/controller accounts and policy hash but cannot mutate a finalized commitment/certificate.
 - Escrow only accepts exact quote-bound deposits; refunds follow explicit state rules.
 - Settlement records are one-time and idempotent; use pull-based payout claim if implemented.
-- Contract code is locally unit-tested and sandbox-tested before testnet deployment.
+- Contract code is locally unit-tested and sandbox-tested before staging deployment. A mainnet deployment uses the `#[init]` source, a fresh account and an independently reviewed owner/multisig.
 - No mainnet deployment or transfer without separate explicit authorization.
 
 ## 6. NEAR AI Cloud TEE verification
@@ -129,4 +129,4 @@ For the designated open-weight attacker:
 
 ## 9. Release security gate
 
-No unresolved critical/high finding in application security review; no exposed secrets; all tenant authorization and replay/duplicate tests pass; contract tests pass; preview and production credentials are separated; mainnet disabled; admin/worker permissions minimized; dependency and container scan completed; backup/restore and rollback instructions documented.
+No unresolved critical/high finding in application security review; no exposed secrets; all tenant authorization and replay/duplicate tests pass; contract tests pass; preview and production credentials are separated; mainnet execution disabled by default and no mainnet deployment without authorization; admin/worker permissions minimized; dependency and container scan completed; backup/restore and rollback instructions documented.

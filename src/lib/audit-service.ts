@@ -18,6 +18,7 @@ import {
   normalizeCondition,
   normalizeThesis,
 } from "@/lib/canonical";
+import { NEAR_NETWORK } from "@/lib/network";
 import { POLICY_HASH, POLICY_VERSION } from "@/lib/policy";
 import type { PrepareAuditInput } from "@/lib/validation/audit";
 
@@ -167,7 +168,7 @@ function toPrepared(audit: Audit, conditionCount: number): PreparedAudit {
     policyHash: POLICY_HASH,
     status: audit.status,
     commitment: {
-      network: "testnet",
+      network: NEAR_NETWORK,
       contractId: process.env.NEAR_REGISTRY_ACCOUNT_ID ?? null,
       method: "commit_audit",
       args: {

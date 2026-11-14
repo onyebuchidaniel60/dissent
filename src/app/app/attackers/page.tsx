@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, LockKeyhole, Network, ShieldOff, Users } from "lucide-react";
 
-import { FixtureBadge, TeeWaiverNotice } from "@/components/fixture-badge";
+import { TeeWaiverNotice } from "@/components/tee-waiver-notice";
 import { KpiCard, PageHeader, Panel } from "@/components/ui";
 import { MODEL_ASSIGNMENTS } from "@/lib/model-assignments";
 
@@ -33,7 +33,7 @@ export default function AttackersPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Attacker roster · preview"
+        eyebrow="Attacker roster"
         title="Eight methods."
         accent="One output contract."
         description="Each attacker has a specialist method, a separate run context and a typed tool grant. They share the committed input, not each other's work."
@@ -46,9 +46,8 @@ export default function AttackersPage() {
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <FixtureBadge />
-        <span className="tag tag--ok">Diversity gate passes</span>
-        <span className="tag tag--warn">TEE waived</span>
+        <span className="tag tag--ok">Diversity gate enforced</span>
+        <span className="tag tag--warn">TEE unavailable</span>
       </div>
 
       <div className="stat-grid">

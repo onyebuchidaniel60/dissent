@@ -7,10 +7,19 @@ export const SITE = {
   repoLabel: "GitHub",
   docsPath: "/docs",
   appPath: "/app",
-  verifyDemoPath: "/verify/DEMO-CERT-001",
+  verifyPath: "/docs#certificates",
   pronunciation: "dih-SENT",
-  network: "NEAR testnet",
+  network: "NEAR",
 } as const;
+
+export function displayVenue(value: string | null | undefined): string {
+  if (!value) return "—";
+  const upper = value.toUpperCase();
+  if (upper.includes("ONECLICK")) return "1Click";
+  if (upper.includes("TIDEPOOL")) return "Tidepool";
+  if (upper.includes("REF_FINANCE") || upper.includes("REF FINANCE")) return "Ref Finance";
+  return value.replaceAll("_", " ");
+}
 
 export const NAV_ITEMS = [
   { href: "/app", label: "Overview" },

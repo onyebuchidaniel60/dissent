@@ -7,14 +7,17 @@ import { AlertTriangle, LogOut, WalletCards, X } from "lucide-react";
 import type { WalletSelector } from "@near-wallet-selector/core";
 import type { WalletSelectorModal } from "@near-wallet-selector/modal-ui";
 
+const NEAR_WALLET_NETWORK = process.env.NEXT_PUBLIC_NEAR_NETWORK === "testnet" ? "testnet" : "mainnet";
+
 type Session = {
   accountId: string;
   isAdmin: boolean;
 };
 
 function shortAccount(accountId: string) {
-  if (accountId.length <= 18) return accountId;
-  return `${accountId.slice(0, 8)}…${accountId.slice(-6)}`;
+  const local = accountId.split(".")[0] || accountId;
+  if (local.length <= 16) return local;
+  return `${local.slice(0, 8)}…${local.slice(-4)}`;
 }
 
 export function WalletConnectButton({
@@ -112,12 +115,12 @@ export function WalletConnectButton({
     const { setupNightly } = await import("@near-wallet-selector/nightly");
 
     const selector = await setupWalletSelector({
-      network: "testnet",
+      network: NEAR_WALLET_NETWORK,
       modules: [setupMyNearWallet(), setupNightly()],
     });
 
     const modal = setupModal(selector, {
-      description: "Connect a NEAR testnet wallet to sign the Dissent session challenge.",
+      description: "Connect a NEAR wallet to sign the Dissent session challenge.",
     });
 
     selector.on("signedIn", (event) => {
@@ -168,7 +171,7 @@ export function WalletConnectButton({
   if (session) {
     return (
       <div className="flex items-center gap-2">
-        <span className="tag tag--ok" title={session.accountId}>
+        <span className="tag tag--ok" title={shortAccount(session.accountId)}>
           {session.isAdmin ? "Operator · " : ""}
           {shortAccount(session.accountId)}
         </span>

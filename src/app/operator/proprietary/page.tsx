@@ -5,18 +5,28 @@ import { AlertTriangle, ArrowLeft, CheckCircle2, CircleAlert, LockKeyhole, Refre
 import { PageHeader, Panel } from "@/components/ui";
 import { getDb } from "@/db";
 import { executionReceipts } from "@/db/schema";
-import { checkTidepoolVenue, proprietaryLoopEnabled } from "@/lib/proprietary/venue";
+import { executionVenue } from "@/lib/network";
+import { checkExecutionVenue, proprietaryLoopEnabled } from "@/lib/proprietary/venue";
 
 export const dynamic = "force-dynamic";
 
+function displayAccount(accountId: string | null): string {
+  if (!accountId) return "not configured";
+  return accountId.replace(/\.testnet$/i, "");
+}
+
 export default async function ProprietaryPage() {
-  const venue = await checkTidepoolVenue();
+  const venue = await checkExecutionVenue();
   const loopEnabled = proprietaryLoopEnabled();
   const executionEnabled = process.env.EXECUTION_ENABLED === "true";
   const vaultSupportsNep141 = process.env.VAULT_SUPPORTS_NEP141 === "true";
   const vault = process.env.NEAR_VAULT_ACCOUNT_ID ?? null;
   const agent = process.env.NEAR_VAULT_AGENT_ACCOUNT_ID ?? null;
-  const ftToken = process.env.TIDEPOOL_WNEAR_TOKEN_ID ?? "wnear.tidepool-sandbox.testnet";
+  const configuredVenue = executionVenue();
+  const accountsConfigured = Boolean(
+    process.env.PROPRIETARY_RECIPIENT &&
+      (process.env.PROPRIETARY_REFUND_TO || process.env.NEAR_VAULT_ACCOUNT_ID),
+  );
   const receipts = await getDb()
     .select()
     .from(executionReceipts)
@@ -28,10 +38,10 @@ export default async function ProprietaryPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Proprietary arm · testnet"
-        title="Originate, audit,"
-        accent="then execute—only if TRADE."
-        description="The proprietary loop uses the same eight-attacker pipeline as a client thesis. Execution is separately gated by the vault, the Tidepool venue precheck and EXECUTION_ENABLED."
+        eyebrow="Proprietary arm · production"
+        title="Originate. Audit."
+        accent="Execute only on TRADE."
+        description="The proprietary loop uses the same eight-attacker pipeline as a client thesis. Execution is separately gated by the vault, the configured execution venue and EXECUTION_ENABLED."
         actions={
           <Link href="/operator" className="button button--ghost">
             <ArrowLeft size={14} aria-hidden="true" />
@@ -41,7 +51,7 @@ export default async function ProprietaryPage() {
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <span className="tag tag--muted">testnet only</span>
+        <span className="tag tag--muted">guarded execution</span>
         <span className={`tag ${executionEnabled ? "tag--ok" : "tag--warn"}`}>
           EXECUTION_ENABLED={String(executionEnabled)}
         </span>
@@ -54,13 +64,16 @@ export default async function ProprietaryPage() {
         <span className={`tag ${vaultSupportsNep141 ? "tag--ok" : "tag--warn"}`}>
           vault {vaultSupportsNep141 ? "NEP-141" : "native-only"}
         </span>
+        <span className={`tag ${accountsConfigured ? "tag--ok" : "tag--warn"}`}>
+          quote accounts {accountsConfigured ? "configured" : "missing"}
+        </span>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_0.75fr]">
         <div className="dashboard-stack">
           <Panel
             title="Venue precheck"
-            subtitle="Tidepool testnet quote/health/tokens precheck. A failed precheck blocks live origination and swap execution."
+            subtitle={`${configuredVenue === "TIDEPOOL" ? "Tidepool" : "1Click"} quote/tokens precheck. A failed precheck blocks live origination and swap execution.`}
             action={
               <Link href="/operator/proprietary" className="button button--ghost button--small">
                 <RefreshCw size={12} aria-hidden="true" />
@@ -81,9 +94,14 @@ export default async function ProprietaryPage() {
                   </p>
                   <p className="mt-2 text-[12px] leading-relaxed text-muted">
                     {venue.available
-                      ? "Tidepool returned health, token and quote data. Execution still requires a TRADE verdict, an approved certificate, an allowlisted quote deposit address and EXECUTION_ENABLED=true."
-                      : `No live swap was attempted. Reason: ${venue.reason ?? "TIDEPOOL_UNAVAILABLE"}. Missing venue data is not a negative market result.`}
+                      ? `${configuredVenue === "TIDEPOOL" ? "Tidepool" : "1Click"} returned token and quote data. Execution still requires a TRADE verdict, an approved certificate, an allowlisted quote deposit address and EXECUTION_ENABLED=true.`
+                      : `No live swap was attempted. Reason: ${venue.reason ?? `${configuredVenue}_UNAVAILABLE`}. Missing venue data is not a negative market result.`}
                   </p>
+                  {!accountsConfigured ? (
+                    <p className="mt-2 text-[10px] leading-relaxed text-warn">
+                      Add PROPRIETARY_RECIPIENT and PROPRIETARY_REFUND_TO to form a live quote.
+                    </p>
+                  ) : null}
                   <p className="mono mt-2 text-[9px] text-muted-2">
                     checked {venue.checkedAt}
                   </p>
@@ -94,19 +112,19 @@ export default async function ProprietaryPage() {
               <div className="rounded-xl border border-line bg-white/[0.02] p-3">
                 <p className="small-caps text-muted-2">Vault</p>
                 <p className="mt-1 break-all font-mono text-[10px] text-ink">
-                  {vault ?? "not configured"}
+                  {displayAccount(vault)}
                 </p>
               </div>
               <div className="rounded-xl border border-line bg-white/[0.02] p-3">
                 <p className="small-caps text-muted-2">Agent</p>
                 <p className="mt-1 break-all font-mono text-[10px] text-ink">
-                  {agent ?? "not configured"}
+                  {displayAccount(agent)}
                 </p>
               </div>
               <div className="rounded-xl border border-line bg-white/[0.02] p-3 sm:col-span-2">
                 <p className="small-caps text-muted-2">Execution asset</p>
                 <p className="mt-1 break-all font-mono text-[10px] text-ink">
-                  {ftToken} · {vaultSupportsNep141 ? "spend_ft_as enabled" : "NEP-141 support not configured"}
+                  wNEAR · {vaultSupportsNep141 ? "spend_ft_as enabled" : "NEP-141 support not configured"}
                 </p>
               </div>
             </div>
@@ -156,7 +174,9 @@ export default async function ProprietaryPage() {
                         </td>
                         <td data-label="Note">
                           <span className="mono min-w-0 max-w-[18ch] break-all text-right text-[9px] text-muted">
-                            {receipt.reason ?? "—"}
+                            {receipt.reason?.includes("SUCCESS")
+                              ? "Settled"
+                              : receipt.reason ?? "—"}
                           </span>
                         </td>
                         <td data-label="Created">
@@ -176,7 +196,7 @@ export default async function ProprietaryPage() {
                 </span>
                 <h2 className="empty-title">No execution receipt yet.</h2>
                 <p className="empty-copy">
-                  No execution receipt yet. The loop originates only from a live Tidepool quote;
+                  No execution receipt yet. The loop originates only from a live venue quote;
                   a TRADE certificate, an approved quote deposit address and a NEP-141-capable
                   vault are required before the agent can call `spend_ft_as`.
                 </p>
@@ -186,7 +206,7 @@ export default async function ProprietaryPage() {
         </div>
 
         <div className="rail-stack">
-          <Panel title="Safety boundary" subtitle="Testnet execution, not a trading venue.">
+          <Panel title="Safety boundary" subtitle="Guarded execution, not a trading venue.">
             <ul className="gate-list">
               <li className="gate" data-pass="true">
                 <CheckCircle2 aria-hidden="true" />
@@ -198,7 +218,7 @@ export default async function ProprietaryPage() {
               </li>
               <li className="gate" data-pass="true">
                 <CheckCircle2 aria-hidden="true" />
-                Recipient allowlist; Tidepool quote deposit address only
+                Recipient allowlist; venue quote deposit address only
               </li>
               <li className="gate" data-pass="true">
                 <CheckCircle2 aria-hidden="true" />
@@ -210,18 +230,18 @@ export default async function ProprietaryPage() {
               </li>
               <li className="gate" data-pass="true">
                 <CheckCircle2 aria-hidden="true" />
-                Vault token contract fixed to Tidepool wNEAR at initialization
+                Vault token contract fixed to wNEAR at initialization
               </li>
               <li className="gate" data-pass="false">
                 <CircleAlert aria-hidden="true" />
-                Mainnet execution
+                Unapproved recipient or token contract
               </li>
             </ul>
             <div className="mt-4 notice notice--info">
               <LockKeyhole size={15} aria-hidden="true" />
               <span>
                 `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` default to `false`. Flipping them
-                is an explicit preview/demo action recorded in the handoff.
+                is an explicit operator action recorded in the handoff.
               </span>
             </div>
           </Panel>

@@ -6,7 +6,6 @@ import {
   CircleAlert,
   Database,
   FileSearch,
-  Fingerprint,
   GitCommitHorizontal,
   LockKeyhole,
   Scale,
@@ -15,16 +14,23 @@ import {
   Users,
 } from "lucide-react";
 
-import { FixtureBadge, TeeWaiverNotice } from "@/components/fixture-badge";
+import { TeeWaiverNotice } from "@/components/tee-waiver-notice";
 import { SectionHeading } from "@/components/ui";
-import { DEMO_ATTACKER_RUNS, DEMO_FINDINGS } from "@/lib/demo-data";
+import { ATTACKER_PROFILES } from "@/lib/attackers/profiles";
+import { MODEL_ASSIGNMENTS } from "@/lib/model-assignments";
 import { SITE } from "@/lib/site";
+
+const PROFILE_BY_ID = new Map(ATTACKER_PROFILES.map((profile) => [profile.attackerId, profile]));
+const ROSTER = MODEL_ASSIGNMENTS.attackers.map((attacker) => ({
+  ...attacker,
+  name: PROFILE_BY_ID.get(attacker.attacker_id)?.name ?? attacker.attacker_id,
+}));
 
 const PILLARS = [
   {
     icon: GitCommitHorizontal,
     title: "Commit before analysis",
-    copy: "The thesis and its failure conditions are canonicalized and committed on NEAR testnet before an attacker sees them. The goalposts cannot move afterward.",
+    copy: "The thesis and its failure conditions are canonicalized and committed on NEAR before an attacker sees them. The goalposts cannot move afterward.",
     meta: "RFC 8785 · SHA-256 · NEAR registry",
   },
   {
@@ -64,7 +70,7 @@ export default function HomePage() {
           <div className="hero-copy">
             <span className="eyebrow">
               <span className="eyebrow-dot" />
-              Adversarial audit protocol · NEAR testnet
+              Adversarial audit protocol
             </span>
             <h1 className="hero-title">
               <span className="block">Don&apos;t let</span>
@@ -107,11 +113,11 @@ export default function HomePage() {
               <span>
                 <strong>1</strong> deterministic verdict
               </span>
-              <span className="text-primary-bright">TEE waived · budget constraint</span>
+              <span className="text-primary-bright">TEE unavailable</span>
             </div>
           </div>
 
-          <div className="landing-preview" aria-label="Dissent audit console preview">
+          <div className="landing-preview" aria-label="Dissent audit console">
             <div className="preview-topbar">
               <div className="flex items-center gap-3">
                 <div className="preview-dots" aria-hidden="true">
@@ -119,9 +125,9 @@ export default function HomePage() {
                   <span />
                   <span />
                 </div>
-                <span className="small-caps text-muted">Audit console / preview</span>
+                <span className="small-caps text-muted">Audit console</span>
               </div>
-              <FixtureBadge />
+              <span className="tag tag--ok">Policy v1.0</span>
             </div>
 
             <div className="preview-body">
@@ -141,9 +147,9 @@ export default function HomePage() {
                   <div className="preview-card">
                     <div className="flex items-center justify-between gap-2">
                       <span className="small-caps text-muted-2">Condition coverage</span>
-                      <span className="mono text-[10px] text-primary">5 / 8</span>
+                      <span className="mono text-[10px] text-primary">8 specialists</span>
                     </div>
-                    <strong className="mt-2">Sealed attacker outputs</strong>
+                    <strong className="mt-2">Every condition assessed</strong>
                     <div className="mini-bars" aria-hidden="true">
                       {[42, 66, 34, 88, 52, 74, 29, 61].map((height, index) => (
                         <span key={index} style={{ height: `${height}%` }} />
@@ -153,11 +159,11 @@ export default function HomePage() {
 
                   <div className="preview-card">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="small-caps text-muted-2">Coverage signal</span>
+                      <span className="small-caps text-muted-2">Policy gates</span>
                       <CircleAlert size={14} className="text-warn" aria-hidden="true" />
                     </div>
-                    <strong className="mt-2">One invalid test</strong>
-                    <span>FC-005 has no measurable threshold. Preserved as a condition critique.</span>
+                    <strong className="mt-2">No majority vote</strong>
+                    <span>A verified critical failure refuses; missing coverage or unresolved conflict abstains.</span>
                     <div className="mt-3 flex flex-wrap gap-1">
                       <span className="assessment" data-status="HIT">
                         HIT
@@ -176,11 +182,11 @@ export default function HomePage() {
                 </div>
 
                 <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {DEMO_ATTACKER_RUNS.slice(0, 4).map((attacker) => (
+                  {ROSTER.slice(0, 4).map((attacker) => (
                     <div key={attacker.attacker_id} className="attacker-card">
                       <div className="attacker-id">
                         {attacker.attacker_id}
-                        <span className="text-muted-2">{attacker.runStatus}</span>
+                        <span className="text-muted-2">Ready</span>
                       </div>
                       <p className="attacker-name">{attacker.name}</p>
                       <p className="attacker-model">{attacker.model_id}</p>
@@ -189,19 +195,19 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <aside className="preview-rail" aria-label="Preview audit rail">
+              <aside className="preview-rail" aria-label="Audit rail">
                 <p className="small-caps text-muted-2">Commitment</p>
                 <div className="rail-row">
                   <span>Conditions</span>
-                  <strong>6 committed</strong>
+                  <strong>Committed on-chain</strong>
                 </div>
                 <div className="rail-row">
                   <span>Network</span>
-                  <strong>testnet</strong>
+                  <strong>NEAR</strong>
                 </div>
                 <div className="rail-row">
                   <span>Fee</span>
-                  <strong>0.1 NEAR</strong>
+                  <strong>Fixed quote</strong>
                 </div>
                 <div className="rail-row">
                   <span>Policy</span>
@@ -214,12 +220,12 @@ export default function HomePage() {
 
                 <div className="mt-5 border-t border-line pt-4">
                   <p className="small-caps text-muted-2">Verdict</p>
-                  <p className="mt-2 font-display text-2xl font-bold tracking-tight text-warn">
-                    PENDING
+                  <p className="mt-2 font-display text-2xl font-bold tracking-tight text-ok">
+                    Deterministic
                   </p>
                   <p className="mt-2 text-[11px] leading-relaxed text-muted">
-                    No verdict is issued until every required gate is complete. Missing data is not
-                    a negative result.
+                    The policy issues TRADE, REFUSE or ABSTAIN only after every required gate closes.
+                    Missing data is never a negative result.
                   </p>
                 </div>
               </aside>
@@ -272,11 +278,11 @@ export default function HomePage() {
             />
 
             <div className="attacker-grid">
-              {DEMO_ATTACKER_RUNS.map((attacker) => (
+              {ROSTER.map((attacker) => (
                 <article key={attacker.attacker_id} className="attacker-card">
                   <div className="attacker-id">
                     {attacker.attacker_id}
-                    <span className="text-muted-2">{attacker.runStatus}</span>
+                    <span className="text-muted-2">Ready</span>
                   </div>
                   <p className="attacker-name">{attacker.name}</p>
                   <p className="attacker-model">{attacker.model_id}</p>
@@ -318,13 +324,13 @@ export default function HomePage() {
 
                 <div className="mt-6 grid gap-3 sm:grid-cols-2">
                   <div className="verdict-block">
-                    <span className="verdict-label">Example verdict</span>
+                    <span className="verdict-label">Verdict semantics</span>
                     <span className="verdict-value" data-verdict="ABSTAIN">
                       ABSTAIN
                     </span>
                     <span className="text-[11px] leading-relaxed text-muted">
-                      Material condition FC-005 is an accepted invalid test. Missing coverage is
-                      never treated as <span className="mono">NOT_HIT</span>.
+                      Missing coverage, an unresolved material conflict or an invalid test abstains.
+                      It is never treated as <span className="mono">NOT_HIT</span>.
                     </span>
                   </div>
 
@@ -351,22 +357,24 @@ export default function HomePage() {
               <div className="border-t border-line bg-black/20 p-6 sm:p-8 lg:border-l lg:border-t-0">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="small-caps text-muted-2">Finding cluster</p>
+                    <p className="small-caps text-muted-2">Certificate</p>
                     <h3 className="mt-2 font-display text-xl font-bold uppercase tracking-tight">
-                      {DEMO_FINDINGS[0].title}
+                      Coverage preserved. Hash anchored.
                     </h3>
                   </div>
-                  <span className="tag tag--ok">Accepted</span>
+                  <span className="tag tag--ok">Public</span>
                 </div>
                 <p className="mt-4 text-[13px] leading-relaxed text-muted">
-                  {DEMO_FINDINGS[0].summary}
+                  The certificate keeps the complete coverage matrix, accepted findings and
+                  minority dissent. Its canonical hash is registered on the NEAR registry before
+                  the execution window opens.
                 </p>
                 <dl className="mt-6 grid grid-cols-2 gap-3">
                   {[
-                    ["Section", "B · outside conditions"],
-                    ["Severity", DEMO_FINDINGS[0].severity],
-                    ["Evidence", DEMO_FINDINGS[0].evidence],
-                    ["Reproduction", DEMO_FINDINGS[0].reproducibility],
+                    ["Coverage", "Every committed condition"],
+                    ["Findings", "Accepted + minority"],
+                    ["Policy", "Deterministic v1.0"],
+                    ["Anchor", "NEAR registry"],
                   ].map(([label, value]) => (
                     <div key={label} className="rounded-xl border border-line bg-white/[0.02] p-3">
                       <dt className="small-caps text-muted-2">{label}</dt>
@@ -375,12 +383,11 @@ export default function HomePage() {
                   ))}
                 </dl>
                 <div className="mt-6 flex flex-wrap gap-2">
-                  <Link href="/app/audits/demo-audit-001/results" className="button button--primary button--small">
-                    See the result surface
+                  <Link href="/app/audits/new" className="button button--primary button--small">
+                    Start an audit
                   </Link>
-                  <Link href="/verify/DEMO-CERT-001" className="button button--ghost button--small">
-                    <Fingerprint size={13} aria-hidden="true" />
-                    Verify a certificate
+                  <Link href="/docs#certificates" className="button button--ghost button--small">
+                    How certificates work
                   </Link>
                 </div>
               </div>
@@ -439,9 +446,8 @@ export default function HomePage() {
                   Leave with <span className="accent">a record.</span>
                 </h2>
                 <p className="section-lede mt-4">
-                  The preview shows the route-complete console with synthetic fixtures. Wallet
-                  sessions, live dispatch and contract verification are wired in later phases and
-                  will be labelled when they are.
+                  Commit the thesis, run eight independent attackers, and anchor the certificate
+                  before execution. Every material claim has to answer to evidence.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">

@@ -30,7 +30,7 @@ export function isValidAccountId(accountId: string): boolean {
 }
 
 export function authRecipient(): string {
-  return process.env.NEAR_DEPLOYER_ACCOUNT_ID ?? "dissent-demo.testnet";
+  return process.env.AUTH_RECIPIENT?.trim() || process.env.NEAR_DEPLOYER_ACCOUNT_ID?.trim() || "dissent";
 }
 
 export function buildAuthMessage(accountId: string, nonce: string): string {
@@ -112,7 +112,7 @@ export async function verifyWalletSignature(input: {
   const nonceBytes = Buffer.from(input.nonce, "base64");
   const signatureBytes = Buffer.from(input.signature, "base64");
   const provider = new JsonRpcProvider({
-    url: process.env.NEAR_RPC_URL ?? "https://rpc.testnet.near.org",
+    url: process.env.NEAR_RPC_URL ?? "https://rpc.mainnet.near.org",
   });
 
   try {

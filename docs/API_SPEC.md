@@ -41,7 +41,7 @@ Request:
     "rationale": "...",
     "position": {"amount": "100", "unit": "NEAR", "notional_usd": "250"},
     "time_horizon": {"value": 7, "unit": "DAY"},
-    "execution_venue": "TIDEPOOL_TESTNET"
+    "execution_venue": "ONECLICK"
   },
   "conditions": [
     {
@@ -65,20 +65,20 @@ Success: `201` with `audit_id`, normalized thesis/condition echo, `thesis_hash`,
 Side effects: insert audit + thesis + conditions + event in one DB transaction. No attacker job is enqueued.
 
 ### `POST /audits/{audit_id}/commitment/verify`
-Purpose: accept a submitted NEAR testnet transaction hash and verify the client's commitment.
+Purpose: accept a submitted NEAR transaction hash and verify the client's commitment on the configured network.
 
 Auth: `audit:commit` and owner workspace match.
 
 Request: `{ "transaction_hash": "..." }`.
 
-Validation: strict transaction hash format; chain must be testnet; expected contract, method, predecessor, audit ID and hashes must match prepared record; finality status must meet configured commitment finality policy.
+Validation: strict transaction hash format; chain must match the configured network; expected contract, method, predecessor, audit ID and hashes must match the prepared record; finality status must meet the configured commitment finality policy.
 
 Success: `200` status `COMMITTED` or `202` `COMMITMENT_PENDING` if finality not yet established. The handler is idempotent.
 
 Side effects: store chain tx and commitment receipt. Never create attacker work before verified commitment.
 
 ### `POST /audits/{audit_id}/funding/quote`
-Purpose: issue fixed, quote-bound testnet audit fee/bounty quote.
+Purpose: issue a fixed, quote-bound audit fee/bounty quote.
 
 Auth: owner + `audit:fund`.
 
@@ -87,7 +87,7 @@ Request: `{}`.
 Success: quote ID, quote hash, exact amount in yoctoNEAR string, network, contract ID, expiry, fee/bounty split and policy version. Quote amount is configured by Dissent operator, not model output.
 
 ### `POST /audits/{audit_id}/funding/verify`
-Purpose: verify the client's exact testnet deposit transaction.
+Purpose: verify the client's exact deposit transaction on the configured network.
 
 Auth: owner + `audit:fund`.
 

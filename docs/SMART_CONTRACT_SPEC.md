@@ -257,3 +257,21 @@ Use NEAR Sandbox/near-workspaces for local development and automated tests. Depl
 - `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` default to `false`; the live run was an explicit operator action with `PROPRIETARY_EXECUTION_AUDIT_ID` set to the audit above. The preview remains disabled.
 - Old Ref Finance recipient `ref-finance-101.testnet` was revoked in the v1 vault (tx `CsvM84SVVPEdHEVTgESSVHgxfGqqPZNv24FtHFDMzTg`); the v2 vault starts with an empty allowlist. Ref Finance is not supported.
 - No mainnet deployment or mainnet execution is authorized.
+
+### Mainnet readiness audit (source v3)
+
+The mainnet-ready source is a **fresh deployment contract**, not an in-place upgrade of the staging vault. Source wasm: `contracts/dissent-vault/target/wasm32-unknown-unknown/release/dissent_vault.wasm`; SHA-256 `f8475b3998114e9970e51a6473c6acccdb14517986267f4ef058df747f43f582`.
+
+**Findings and fixes:**
+
+1. **Reinitialization risk.** The staging v2 contract used `#[init(ignore_state)]` for a one-off testnet upgrade. A mainnet deployment must not expose that path: a later caller could reset owner and state. The mainnet source uses `#[init]` only. Upgrades require a new audited contract or a separately reviewed migration.
+2. **Certificate replay.** The staging vault allowed the same approved certificate to be spent repeatedly until the daily cap. The mainnet source records `used_certificates` and rejects a second spend with `certificate already used`.
+3. **Permanent quote allowlist.** A per-quote deposit address previously stayed allowlisted forever. The mainnet source adds `set_recipient_until(recipient_id, expires_at_ns)`; `spend_*` rejects an expired recipient with `recipient allowlist has expired`. The owner must use the quote's `timeWhenInactive` (or an earlier bound) for mainnet execution.
+4. **Cap unit.** Caps are yoctoNEAR-equivalent. The mainnet source requires `ft_token_decimals == 24` at initialization, matching wNEAR. A 6-decimal USDC vault is rejected rather than silently applying a misleading cap.
+5. **Owner authority.** `set_caps`, `withdraw`, certificate approval and recipient allowlisting remain owner-only. A mainnet owner must be a multisig/timelock; a single hot key is not acceptable for real funds.
+
+**Mainnet deployment boundary:** no mainnet vault, registry or payout contract is deployed by this repository. The staging vault `vault.dissent-demo.testnet` and its historical execution certificate remain testnet artifacts. A mainnet deployment requires operator-owned accounts, a funded multisig/timelock owner, a fresh `#[init]` deployment, a new Function Call Key scoped to `spend_as`/`spend_ft_as`, independent review of the registry fee/bounty path, and explicit release authorization.
+
+**1Click adapter:** base URL `https://1click.chaindefuser.com`; origin asset `nep141:wrap.near`; destination asset `nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1` (USDC from the live `/v0/tokens` catalogue, not `usdc.near`). The adapter asks for a live `ORIGIN_CHAIN` quote, the owner allowlists the returned implicit deposit address for the quote window, and the vault performs `spend_ft_as`. The adapter is disabled unless `EXECUTION_ENABLED=true` and the audit is named by `PROPRIETARY_EXECUTION_AUDIT_ID`.
+
+**Staging exception:** the preview environment explicitly sets `NEAR_NETWORK=testnet`, `EXECUTION_VENUE=TIDEPOOL`, and the testnet vault/registry accounts so the historical testnet certificate and Playwright wallet session remain verifiable. The customer-facing UI does not display a testnet label. Production must use a fresh mainnet database and the mainnet configuration in `.env.example`.

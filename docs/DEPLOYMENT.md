@@ -3,8 +3,8 @@
 ## Environments
 
 1. **Local:** synthetic data, local PostgreSQL or a dedicated Neon branch, NEAR Sandbox/local contract tests, provider calls only when a budget is recorded.
-2. **Preview/staging:** Render free Web Service + Neon free PostgreSQL. Publicly reachable for judges, synthetic data only, testnet only, no production secrets or live financial execution. No preview password.
-3. **Production:** explicitly out of MVP. Requires separate operator authorization captured in intake, privacy/legal readiness, security pass, secrets and rollback plan.
+2. **Preview/staging:** Render free Web Service + Neon free PostgreSQL. Publicly reachable for judges, testnet staging only, no production secrets or live financial execution. The UI is network-neutral and does not display a testnet label.
+3. **Production:** mainnet-ready code, not deployed by this repository. Requires separate operator authorization captured in intake, operator-owned mainnet accounts, a fresh database, privacy/legal readiness, security pass, secrets and rollback plan.
 
 ## Default target
 
@@ -31,11 +31,20 @@ Set these on the Render service. Values come from the shell/secret store and mus
 | `DATABASE_URL_DIRECT` | Yes | Neon direct connection; used by pg-boss |
 | `AUTH_SECRET` | Yes | Session signing secret |
 | `ADMIN_WALLET_ADDRESSES` | Yes | Comma-separated operator allowlist |
-| `NEAR_NETWORK` | Yes | Must be `testnet` |
-| `NEAR_RPC_URL` | Yes | `https://rpc.testnet.near.org` |
-| `NEAR_DEPLOYER_ACCOUNT_ID` | Yes | `dissent-demo.testnet` |
-| `NEAR_REGISTRY_ACCOUNT_ID` | Phase 3 | `registry.dissent-demo.testnet` |
-| `NEAR_ESCROW_ACCOUNT_ID` | Phase 3 | `registry.dissent-demo.testnet`; escrow logic is a module in the registry contract. `escrow.dissent-demo.testnet` is reserved but unused. |
+| `NEAR_NETWORK` | Yes | `mainnet` in production; explicit `testnet` only for the staging preview |
+| `NEXT_PUBLIC_NEAR_NETWORK` | Yes | Must match `NEAR_NETWORK` for the wallet selector |
+| `NEAR_RPC_URL` | Yes | `https://rpc.mainnet.near.org` in production |
+| `NEAR_EXPLORER_URL` | Optional | `https://explorer.near.org` in production |
+| `AUTH_RECIPIENT` | Optional | NEP-413 session recipient; defaults to the deployer account |
+| `NEAR_DEPLOYER_ACCOUNT_ID` | Yes | Operator-owned mainnet identity |
+| `NEAR_REGISTRY_ACCOUNT_ID` | Yes | Operator-owned mainnet registry; no testnet fallback |
+| `NEAR_ESCROW_ACCOUNT_ID` | Optional | Registry account; escrow logic is a module in the registry contract |
+| `NEAR_VAULT_ACCOUNT_ID` | For execution | Capped mainnet vault |
+| `NEAR_VAULT_AGENT_ACCOUNT_ID` | For execution | Execution agent identity |
+| `NEAR_VAULT_AGENT_KEY` | For execution | Function Call Key scoped to `spend_as` and `spend_ft_as` |
+| `EXECUTION_VENUE` | Yes | `ONECLICK` in production; `TIDEPOOL` only for staging |
+| `EXECUTION_ENABLED` | Yes | `false` by default; explicit operator action required |
+| `PROPRIETARY_LOOP_ENABLED` | Yes | `false` by default |
 | `OPENROUTER_API_KEY` | Yes | Primary inference provider |
 | `GROQ_API_KEY` | Yes | A02 only |
 | `ELEVENLABS_API_KEY` | Demo | Voiceover only; not used by the app runtime |
@@ -69,17 +78,22 @@ Render free spins down after ~15 minutes idle. Create a cron-job.org job pinging
 - [ ] `/healthz` and `/readyz` pass on the deployed preview.
 - [ ] Provider keys are Render secret env vars, never in the repo.
 - [ ] Cost ceilings are enforced and visible in operator health.
-- [ ] Preview uses synthetic/testnet data only.
-- [ ] `NEAR_NETWORK=testnet`; no mainnet signer is present.
-- [ ] Contract account ID and code hash/commit recorded (Phase 3).
+- [ ] Preview uses testnet staging data only and displays no testnet label.
+- [ ] Preview sets `NEAR_NETWORK=testnet`, `NEXT_PUBLIC_NEAR_NETWORK=testnet`, `EXECUTION_VENUE=TIDEPOOL`; no mainnet signer is present.
+- [ ] Production uses `NEAR_NETWORK=mainnet`, a fresh database, operator-owned registry/vault accounts and a multisig/timelock vault owner.
+- [ ] Mainnet vault is a fresh `#[init]` deployment with replay protection and quote-window recipient expiry.
+- [ ] Contract account ID and code hash/commit recorded; source wasm hash matches the release.
 - [ ] Security tests pass; no unresolved critical/high issue.
 - [ ] Rollback instructions tested/documented.
-- [ ] Production deployment is not performed without a new explicit authorization.
+- [ ] Production deployment and real-fund execution are not performed without a new explicit authorization.
 
 ## Current preview record
 
 - URL: `https://dissent-web.onrender.com`
 - Render service: `srv-dbrgdr3bc2fs73d0oi5g`
-- Registry contract: `registry.dissent-demo.testnet`
-- Clean live audit certificate: `https://dissent-web.onrender.com/verify/96426c09-87ec-4641-94ed-4edf0b7b34f1`
+- Network: testnet staging (`NEAR_NETWORK=testnet`), with a network-neutral UI.
+- Registry contract: `registry.dissent-demo.testnet` (staging only).
+- Historical live audit certificate: `https://dissent-web.onrender.com/verify/96426c09-87ec-4641-94ed-4edf0b7b34f1`
+- Historical proprietary certificate: `https://dissent-web.onrender.com/verify/0bf3728d-e457-4b2f-8fad-b53be9565498`
+- Production mainnet accounts are not deployed by this repository.
 - Keep-alive: `.github/workflows/keepalive.yml` (10-minute `/healthz` ping). `cron-job.org` remains an optional external fallback because no account credential was supplied.

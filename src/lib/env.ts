@@ -13,8 +13,9 @@ export function isAdminAccount(accountId: string | null | undefined): boolean {
 }
 
 export function maskAccount(accountId: string): string {
-  if (accountId.length <= 10) return accountId;
-  return `${accountId.slice(0, 6)}…${accountId.slice(-4)}`;
+  const local = accountId.split(".")[0] || accountId;
+  if (local.length <= 12) return local;
+  return `${local.slice(0, 6)}…${local.slice(-4)}`;
 }
 
 export function getAppBaseUrl(): string {
@@ -30,5 +31,5 @@ export function teeStatus(): string {
 }
 
 export function isDemoMode(): boolean {
-  return process.env.DEMO_MODE !== "false";
+  return process.env.DEMO_MODE === "true";
 }

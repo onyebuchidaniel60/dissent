@@ -10,7 +10,6 @@ import {
   ShieldOff,
 } from "lucide-react";
 
-import { FixtureBadge } from "@/components/fixture-badge";
 import { PageHeader, Panel } from "@/components/ui";
 import { SITE } from "@/lib/site";
 
@@ -25,13 +24,13 @@ const SECTIONS = [
   ["adjudication", "Adjudication"],
   ["evidence", "Evidence"],
   ["certificates", "Certificates"],
+  ["execution", "Execution"],
   ["security", "Security"],
   ["wallet-auth", "Wallet auth"],
   ["api-keys", "API keys"],
   ["reputation", "Reputation"],
   ["deployment", "Deployment"],
-  ["demo", "Demo"],
-  ["limitations", "Current limitations"],
+  ["limitations", "Boundaries"],
 ] as const;
 
 function DocLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -51,10 +50,10 @@ export default function DocsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Documentation · preview"
+        eyebrow="Documentation"
         title="The protocol,"
         accent="without the pitch."
-        description="Implementation notes, trust boundaries and the current limitations of the preview. The detailed normative specifications remain in the repository docs."
+        description="Implementation notes, trust boundaries and operational requirements. The detailed normative specifications remain in the repository docs."
         actions={
           <a href={SITE.repoUrl} className="button button--ghost" target="_blank" rel="noreferrer">
             Open repository
@@ -64,9 +63,9 @@ export default function DocsPage() {
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <FixtureBadge />
-        <span className="tag tag--muted">Phase 1 checkpoint</span>
-        <span className="tag tag--warn">TEE waived</span>
+        <span className="tag tag--ok">Policy v1.0</span>
+        <span className="tag tag--muted">RFC 8785</span>
+        <span className="tag tag--warn">TEE unavailable</span>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start">
@@ -78,7 +77,7 @@ export default function DocsPage() {
                 <li key={id}>
                   <a
                     href={`#${id}`}
-                    className="text-[11px] text-muted transition-colors hover:text-ink"
+                    className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted transition hover:text-ink"
                   >
                     {label}
                   </a>
@@ -94,15 +93,14 @@ export default function DocsPage() {
             <div className="space-y-3 text-[13px] leading-relaxed text-muted">
               <p>
                 Dissent is an evidence-backed adversarial audit protocol for AI trading agents. A
-                client submits a thesis and a set of machine-testable failure conditions, commits
-                their canonical hashes on NEAR testnet, funds a fixed testnet audit fee, and receives
-                eight isolated attack analyses followed by evidence review, sycophancy review,
-                reproducibility checks and a deterministic verdict.
+                client submits a thesis and machine-testable failure conditions, commits their
+                canonical hashes on NEAR, funds a fixed audit quote, and receives eight isolated
+                attack analyses followed by evidence review, sycophancy review, reproducibility
+                checks and a deterministic verdict.
               </p>
               <p>
-                It is not a trading venue, broker, custodian, wallet or investment adviser. The MVP
-                does not execute live trades or move mainnet funds. A failed, incomplete or
-                unverifiable audit never becomes a positive result.
+                It is not a trading venue, broker, custodian, wallet or investment adviser. A failed,
+                incomplete or unverifiable audit never becomes a positive result.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Link href="/app" className="button button--primary button--small">
@@ -122,7 +120,7 @@ export default function DocsPage() {
             </div>
           </Panel>
 
-          <Panel title="Quickstart" subtitle="Local development for this checkpoint.">
+          <Panel title="Quickstart" subtitle="Local development and deployment checks.">
             <div id="quickstart" className="scroll-mt-24" />
             <pre className="doc-code">
               <code>{`pnpm install
@@ -136,9 +134,9 @@ curl -i http://localhost:3000/healthz
 curl -i http://localhost:3000/readyz`}</code>
             </pre>
             <p className="mt-3 text-[12px] leading-relaxed text-muted">
-              The preview needs a PostgreSQL URL for <span className="mono">/readyz</span> and the
-              in-process queue. <span className="mono">/healthz</span> never touches the database.
-              See <DocLink href={`${REPO_DOCS}/docs/SETUP.md`}>docs/SETUP.md</DocLink> and{" "}
+              <span className="mono">/readyz</span> needs a PostgreSQL URL for the in-process queue.{" "}
+              <span className="mono">/healthz</span> never touches the database. See{" "}
+              <DocLink href={`${REPO_DOCS}/docs/SETUP.md`}>docs/SETUP.md</DocLink> and{" "}
               <DocLink href={`${REPO_DOCS}/docs/CONFIGURATION.md`}>docs/CONFIGURATION.md</DocLink>.
             </p>
           </Panel>
@@ -149,10 +147,10 @@ curl -i http://localhost:3000/readyz`}</code>
               {[
                 ["Web + API", "Next.js App Router, React and TypeScript route handlers."],
                 ["Database", "PostgreSQL 16+ on Neon, Drizzle ORM and explicit migrations."],
-                ["Queue", "pg-boss inside the web process; no separate Render worker."],
-                ["Contracts", "Rust + near-sdk on NEAR testnet only."],
+                ["Queue", "pg-boss inside the web process; no separate worker service."],
+                ["Contracts", "Rust + near-sdk on NEAR."],
                 ["Models", "One OpenAI-compatible adapter; OpenRouter primary, Groq secondary."],
-                ["Tests", "Vitest, Playwright and near-workspaces contract tests."],
+                ["Execution", "Capped NEP-141 vault; 1Click is the primary venue adapter."],
               ].map(([title, copy]) => (
                 <div key={title} className="rounded-xl border border-line bg-white/[0.02] p-3">
                   <p className="text-[12px] font-extrabold text-ink">{title}</p>
@@ -161,9 +159,8 @@ curl -i http://localhost:3000/readyz`}</code>
               ))}
             </div>
             <p className="mt-3 text-[12px] leading-relaxed text-muted">
-              Render free web services have no background worker, so the durable queue is started
-              in-process with a small connection pool. Concurrency is capped at one audit and three
-              parallel attackers for the 512 MB instance. See{" "}
+              The durable queue runs in-process with a small connection pool. Concurrency is capped
+              at one audit and three parallel attackers for a 512 MB instance. See{" "}
               <DocLink href={`${REPO_DOCS}/ARCHITECTURE.md`}>ARCHITECTURE.md</DocLink>.
             </p>
           </Panel>
@@ -174,91 +171,65 @@ curl -i http://localhost:3000/readyz`}</code>
               <p>
                 Thesis and condition preimages are normalized, serialized with versioned RFC 8785
                 canonical JSON and hashed with SHA-256. The client signs{" "}
-                <span className="mono text-ink">commit_audit</span> on NEAR testnet. The backend
-                verifies the contract, method, predecessor, audit ID, hashes and finality before the
-                preimage is revealed to attackers.
+                <span className="mono text-ink">commit_audit</span> on NEAR. The backend verifies the
+                contract, method, predecessor, audit ID, hashes and finality before the preimage is
+                revealed to attackers.
               </p>
               <p>
-                A fixed testnet fee quote is issued only after commitment. The client funds the
-                exact quote; attacker dispatch happens only after both the commitment and funding
-                are verified. A committed audit is immutable. Changing conditions requires a new
-                audit.
+                A fixed fee quote is issued only after commitment. The client funds the exact quote;
+                attacker dispatch happens only after both commitment and funding are verified. A
+                committed audit is immutable. Changing conditions requires a new audit.
               </p>
               <div className="notice notice--warn">
                 <LockKeyhole size={15} aria-hidden="true" />
                 <span>
                   No model receives a wallet or signing capability. The client signer is separate
-                  from the deployer and the backend relayer.
+                  from the adjudicator and the execution agent.
                 </span>
               </div>
             </div>
           </Panel>
 
-          <Panel title="Attackers" subtitle="Eight specialists, one schema.">
+          <Panel title="Attackers" subtitle="Eight methods, one output contract.">
             <div id="attackers" className="scroll-mt-24" />
             <div className="space-y-3 text-[13px] leading-relaxed text-muted">
               <p>
-                The frozen roster is A01 Liquidity / Execution, A02 Asset Safety, A03 Logic /
-                Coherence, A04 Correlation / Portfolio, A05 Thesis Inversion, A06 Data Provenance,
-                A07 Timing / MEV and A08 Base Rate. Every attacker must assess every committed
-                condition exactly once in Section A and conduct a justified search outside the
-                conditions in Section B.
+                A01–A08 cover liquidity, asset safety, logic, correlation, inversion, provenance,
+                timing and base rates. Each run has a separate context, a pinned provider/model and a
+                typed evidence grant. Attackers see the committed thesis and conditions; they never
+                see sibling outputs, adjudicator state or prior verdicts.
               </p>
               <p>
-                Attackers see the thesis and committed conditions, their own method instructions and
-                typed read-only evidence tools. They never see sibling outputs, adjudicator state or
-                prior verdicts. The common envelope is validated against{" "}
-                <DocLink href={`${REPO_DOCS}/schemas/attacker-output-v1.schema.json`}>
-                  attacker-output-v1.schema.json
-                </DocLink>
-                .
+                Every output contains an assessment for every committed condition exactly once, plus
+                a justified Section B search beyond the conditions. Section B cannot be omitted
+                without a recorded reason.
               </p>
-              <div className="notice notice--info">
-                <ShieldOff size={15} aria-hidden="true" />
-                <span>
-                  TEE attestation is waived under the zero-new-spend constraint. The UI does not show
-                  a TEE badge. The model-family, vendor and open-weight gates remain enforced.
-                </span>
-              </div>
             </div>
           </Panel>
 
-          <Panel title="Adjudication" subtitle="No majority vote, no confidence weighting.">
+          <Panel title="Adjudication" subtitle="No majority vote. No model-issued verdict.">
             <div id="adjudication" className="scroll-mt-24" />
             <div className="space-y-3 text-[13px] leading-relaxed text-muted">
               <p>
-                Verdict precedence is fixed: a verified accepted disqualifier produces{" "}
-                <span className="mono text-danger">REFUSE</span>; a failed coverage, diversity,
-                evidence, review or unresolved-conflict gate produces{" "}
-                <span className="mono text-warn">ABSTAIN</span>;{" "}
-                <span className="mono text-ok">TRADE</span> only when every positive gate passes.
+                The evidence re-fetch and sycophancy review happen before deterministic adjudication.
+                Missing coverage, a material invalid test or unresolved conflict produces{" "}
+                <span className="mono">ABSTAIN</span>, never <span className="mono">NOT_HIT</span>. A
+                verified critical failure produces <span className="mono">REFUSE</span>.{" "}
+                <span className="mono">TRADE</span> requires every positive gate to pass.
               </p>
               <p>
-                Severity weights and finding scores rank findings for display and bounty arithmetic.
-                They do not decide the verdict by summation. The divergence index measures verified
-                disagreement at the same snapshot and forces abstention at or above 0.25 unless the
-                Evidence Auditor resolves the conflict.
+                The policy version and hash are part of the certificate. A later policy change cannot
+                rewrite an earlier verdict.
               </p>
-              <div className="flex flex-wrap gap-2">
-                <span className="tag tag--muted">policy v1.0</span>
-                <span className="tag tag--muted">versioned</span>
-                <span className="tag tag--muted">deterministic</span>
-              </div>
             </div>
           </Panel>
 
-          <Panel title="Evidence" subtitle="A source outage is not proof of absence.">
+          <Panel title="Evidence" subtitle="Typed adapters, server-calculated hashes.">
             <div id="evidence" className="scroll-mt-24" />
             <div className="space-y-3 text-[13px] leading-relaxed text-muted">
               <p>
-                Evidence records are created by trusted adapters, not authored freely by a model.
-                Each record stores the source adapter, resource ID, typed locator, observation and
-                retrieval times, block identity where relevant, normalized value, server-computed
-                payload hash, freshness result and limitations.
-              </p>
-              <p>
-                Re-fetch uses the stored typed locator, never a model-supplied URL. Unavailable
-                sources are <span className="mono">UNVERIFIABLE</span>; a changed live value is not
+                Re-fetch uses a stored typed locator, never a model-supplied URL. Unavailable sources
+                are <span className="mono">UNVERIFIABLE</span>; a changed live value is not
                 automatically a contradiction of an older observation. The Evidence Auditor and
                 Sycophancy Auditor records are append-only.
               </p>
@@ -271,17 +242,35 @@ curl -i http://localhost:3000/readyz`}</code>
               <p>
                 The certificate is canonical JSON containing the verdict, policy version, coverage
                 matrix, accepted and minority findings, evidence outcomes and the decision trace. Its
-                SHA-256 hash is registered on the NEAR testnet registry. The public verifier
-                recomputes the hash and compares it with the chain record; it never exposes the
-                thesis preimage, positions or private evidence.
+                SHA-256 hash is registered on the NEAR registry. The public verifier recomputes the
+                hash and compares it with the chain record; it never exposes the thesis preimage,
+                positions or private evidence.
               </p>
               <div className="flex flex-wrap gap-2">
-                <Link href="/verify/DEMO-CERT-001" className="button button--ghost button--small">
+                <Link href="/app" className="button button--ghost button--small">
                   <Fingerprint size={12} aria-hidden="true" />
-                  Preview verifier
+                  Browse certificates
                 </Link>
-                <span className="tag tag--warn">anchor pending</span>
+                <span className="tag tag--ok">on-chain anchor</span>
+                <span className="tag tag--muted">public hash</span>
               </div>
+            </div>
+          </Panel>
+
+          <Panel title="Execution" subtitle="Separate, capped and disabled by default.">
+            <div id="execution" className="scroll-mt-24" />
+            <div className="space-y-3 text-[13px] leading-relaxed text-muted">
+              <p>
+                The proprietary arm runs the same eight-attacker pipeline. A `TRADE` certificate can
+                reach a capped NEP-141 vault only when execution is explicitly enabled. The vault
+                holds wNEAR, enforces per-transaction and daily caps, and can transfer only to an
+                owner-approved venue quote address with a certificate-bound memo.
+              </p>
+              <p>
+                The primary adapter is NEAR Intents 1Click on mainnet. The agent holds a Function Call
+                Key scoped to the vault; the full-access owner key is not in the execution runtime.
+                `EXECUTION_ENABLED` and `PROPRIETARY_LOOP_ENABLED` default to `false`.
+              </p>
             </div>
           </Panel>
 
@@ -289,41 +278,28 @@ curl -i http://localhost:3000/readyz`}</code>
             <div id="security" className="scroll-mt-24" />
             <div className="space-y-3 text-[13px] leading-relaxed text-muted">
               <p>
-                Client API keys are high-entropy opaque tokens stored as hashes. Every object query
-                is scoped by the authenticated workspace at the service layer. Cookie-authenticated
-                mutations use CSRF protection; API-key clients use an Authorization header. Attackers
-                have no shell, arbitrary HTTP, filesystem, SQL, wallet or model-to-model access.
+                Authorization is enforced server-side for every object read and write. Secrets stay
+                server-side; API keys are hashed at rest. External data and model output are treated
+                as untrusted. There is no arbitrary URL fetch tool, no shell/filesystem access and no
+                wallet signing inside an attacker run.
               </p>
               <p>
-                External data and model output are untrusted. Evidence retrieval is limited to typed
-                adapters with fixed hosts; private IPs, redirects to private networks, non-HTTPS
-                schemes and credential forwarding are blocked. Logs redact authorization headers,
-                cookies, keys and connection strings. See{" "}
-                <DocLink href={`${REPO_DOCS}/docs/SECURITY_SPEC.md`}>docs/SECURITY_SPEC.md</DocLink>.
+                The TEE sub-clause is currently unavailable. No confidential-inference claim is made,
+                and no TEE badge is displayed. The model-family, vendor and open-weight gates remain
+                enforced. See <DocLink href={`${REPO_DOCS}/docs/SECURITY_SPEC.md`}>docs/SECURITY_SPEC.md</DocLink>.
               </p>
             </div>
           </Panel>
 
-          <Panel title="Wallet authentication" subtitle="No email or password.">
+          <Panel title="Wallet auth" subtitle="Wallet connect is the only human auth path.">
             <div id="wallet-auth" className="scroll-mt-24" />
             <div className="space-y-3 text-[13px] leading-relaxed text-muted">
               <p>
-                Human sessions use the official NEAR wallet-selector SDK. The user connects a
-                wallet, requests a server-issued nonce, signs the message, and the server verifies
-                the signature against the account access key through NEAR RPC. The server then sets
-                an HttpOnly, SameSite=Lax, Secure session cookie with an eight-hour expiry.
+                Connect → sign a server-issued nonce → verify the access key through NEAR RPC → set
+                an HttpOnly SameSite=Lax session cookie. Nonces are single-use and expire in five
+                minutes. The operator allowlist is checked server-side; a client-supplied wallet
+                address is never trusted.
               </p>
-              <p>
-                Nonces are single-use and expire within five minutes. Logout clears the cookie and
-                invalidates the server-side session. Operator routes require the verified account to
-                be in <span className="mono">ADMIN_WALLET_ADDRESSES</span>; the check is server-side.
-                A wallet address in a request body is never trusted.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <span className="tag tag--muted">NEAR Wallet Selector</span>
-                <span className="tag tag--muted">signed nonce</span>
-                <span className="tag tag--muted">HttpOnly cookie</span>
-              </div>
             </div>
           </Panel>
 
@@ -331,16 +307,16 @@ curl -i http://localhost:3000/readyz`}</code>
             <div id="api-keys" className="scroll-mt-24" />
             <div className="space-y-3 text-[13px] leading-relaxed text-muted">
               <p>
-                Client agents use <span className="mono">Authorization: Bearer ds_...</span> keys
-                with the scopes <span className="mono">audit:create</span>,{" "}
-                <span className="mono">audit:read:own</span> and{" "}
+                Client agents use <span className="mono">Authorization: Bearer ds_...</span> keys with
+                the scopes <span className="mono">audit:create</span>,{" "}
+                <span className="mono">audit:read:own</span>, <span className="mono">audit:commit</span>,{" "}
+                <span className="mono">audit:fund</span> and{" "}
                 <span className="mono">certificate:read:own</span>. A key is displayed once at
                 issuance and stored only as a salted hash. Rotation and revocation are supported.
               </p>
               <p>
                 Keys cannot list clients, read another workspace or sign a wallet transaction.
-                Authorization is enforced server-side for every object read and write. The demo key
-                is provisioned by the operator CLI and never written to a repository file.
+                Authorization is enforced server-side for every object read and write.
               </p>
             </div>
           </Panel>
@@ -350,21 +326,20 @@ curl -i http://localhost:3000/readyz`}</code>
             <div className="space-y-3 text-[13px] leading-relaxed text-muted">
               <p>
                 Reputation events are append-only and keyed by attacker, audit, event type and
-                finding. They are written once from finalized accepted or rejected finding records.
-                Replaying the finalization cannot double-count. Fixtures do not enter the ledger.
+                finding. They are written once from finalized accepted or rejected findings. Replaying
+                finalization cannot double-count, and unfinished runs never enter the ledger.
               </p>
             </div>
           </Panel>
 
-          <Panel title="Deployment" subtitle="Render free web + Neon free Postgres.">
+          <Panel title="Deployment" subtitle="Preview and production boundaries.">
             <div id="deployment" className="scroll-mt-24" />
             <div className="space-y-3 text-[13px] leading-relaxed text-muted">
               <p>
-                The public preview runs as a Render free web service with a Neon PostgreSQL
-                database. The service has no separate background worker; pg-boss runs in-process.
-                Render free instances spin down after idle, so the first request can take around 50
-                seconds. <span className="mono">/healthz</span> is kept warm by an external ping;
-                <span className="mono"> /readyz</span> checks the database.
+                The hosted service runs as a Render web service with a Neon PostgreSQL database. The service
+                has no separate background worker; pg-boss runs in-process. Production deployment
+                requires operator-owned mainnet registry, vault and payout accounts plus explicit
+                release authorization.
               </p>
               <pre className="doc-code">
                 <code>{`Build: pnpm install && pnpm build
@@ -379,67 +354,43 @@ Readiness: /readyz`}</code>
             </div>
           </Panel>
 
-          <Panel title="Demo" subtitle="Deterministic capture, disclosed fixtures.">
-            <div id="demo" className="scroll-mt-24" />
-            <div className="space-y-3 text-[13px] leading-relaxed text-muted">
-              <p>
-                The final demo is captured with Playwright at 1280×720, uses deterministic demo data,
-                and is narrated with the operator-supplied ElevenLabs voice. Royalty-free background
-                music is credited in the production notes. Any fixture-driven beat is labelled on
-                screen and in the narration.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <span className="tag tag--muted">≤ 180 seconds</span>
-                <span className="tag tag--muted">H.264 + AAC</span>
-                <span className="tag tag--muted">burned-in captions</span>
-              </div>
-            </div>
-          </Panel>
-
-          <Panel title="Current limitations" subtitle="What this checkpoint does not do.">
+          <Panel title="Boundaries" subtitle="What this build does not claim.">
             <div id="limitations" className="scroll-mt-24" />
             <ul className="gate-list">
               <li className="gate" data-pass="true">
                 <CheckCircle2 aria-hidden="true" />
-                Wallet-selector connect, signed nonce and server session are live.
-              </li>
-              <li className="gate" data-pass="false">
-                <CircleAlert aria-hidden="true" />
-                The audit form validates locally but does not yet submit to the API or chain.
-              </li>
-              <li className="gate" data-pass="false">
-                <CircleAlert aria-hidden="true" />
-                Attacker dispatch, provider calls and the evidence pipeline are preview fixtures.
-              </li>
-              <li className="gate" data-pass="false">
-                <CircleAlert aria-hidden="true" />
-                The registry and escrow contracts are not deployed in this checkpoint.
-              </li>
-              <li className="gate" data-pass="false">
-                <ShieldOff aria-hidden="true" />
-                TEE attestation is waived by the zero-new-spend constraint.
+                Wallet session, scoped API keys and server-side authorization are live.
               </li>
               <li className="gate" data-pass="true">
                 <CheckCircle2 aria-hidden="true" />
-                Route shell, health checks, in-process queue bootstrap and responsive layout exist.
+                Eight-attacker dispatch, evidence re-fetch and deterministic adjudication are implemented.
+              </li>
+              <li className="gate" data-pass="true">
+                <CheckCircle2 aria-hidden="true" />
+                Certificate hashing and public verification are implemented.
+              </li>
+              <li className="gate" data-pass="false">
+                <CircleAlert aria-hidden="true" />
+                Mainnet contract deployment requires operator accounts and explicit release authority.
+              </li>
+              <li className="gate" data-pass="false">
+                <ShieldOff aria-hidden="true" />
+                TEE attestation is currently unavailable.
               </li>
             </ul>
             <p className="mt-4 text-[10px] leading-relaxed text-muted-2">
-              This page is intentionally explicit about the difference between a fixture and a live
-              audit. No synthetic result is presented as production evidence.
+              No synthetic result is presented as production evidence. Execution is disabled by
+              default and is not reachable by an attacker model.
             </p>
           </Panel>
 
           <div className="panel panel--glow">
             <div className="panel-body flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="eyebrow">
-                  <span className="eyebrow-dot" />
-                  Source documents
-                </p>
-                <p className="mt-2 max-w-xl text-[12px] leading-relaxed text-muted">
-                  The normative specs are in the public repository: product, architecture,
-                  adjudication, security, contract, API, data model and the attacker schema.
+                <p className="small-caps text-muted-2">Repository</p>
+                <p className="mt-2 text-[13px] text-muted">
+                  Normative specifications, migrations and deployment notes live in the public
+                  repository.
                 </p>
               </div>
               <a href={SITE.repoUrl} className="button button--primary" target="_blank" rel="noreferrer">

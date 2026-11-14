@@ -36,6 +36,7 @@ import {
   rawBountyYocto,
 } from "@/lib/policy";
 import { MODEL_ASSIGNMENTS } from "@/lib/model-assignments";
+import { NEAR_NETWORK } from "@/lib/network";
 import {
   currentExecutionReadiness,
   fetchTidepoolStatus,
@@ -528,7 +529,7 @@ export async function reviewAndAdjudicate(auditId: string): Promise<{
   const executionRecord = isProprietaryExecution
     ? {
         status: executionResult?.status ?? "NOT_ATTEMPTED",
-        venue: "TIDEPOOL_TESTNET",
+        venue: execConfig.venue,
         certificate_id: certificateId,
         tx_hash: executionResult?.tx_hash ?? null,
         token_id: execConfig.ftTokenId,
@@ -549,7 +550,7 @@ export async function reviewAndAdjudicate(auditId: string): Promise<{
     policy_hash: POLICY_HASH,
     thesis_hash: audit.thesisHash,
     conditions_hash: audit.conditionsHash,
-    network: "testnet",
+    network: NEAR_NETWORK,
     issued_at: new Date().toISOString(),
     tee_waiver: "WAIVED_BUDGET_CONSTRAINT",
     execution_readiness: executionReadiness,
@@ -590,7 +591,7 @@ export async function reviewAndAdjudicate(auditId: string): Promise<{
     verdict,
     policy_version: POLICY_VERSION,
     issued_at: certificateBody.issued_at,
-    network: "testnet",
+    network: NEAR_NETWORK,
     execution_readiness: executionReadinessStatus,
     execution: executionRecord,
     coverage_summary: {
@@ -675,36 +676,39 @@ export async function reviewAndAdjudicate(auditId: string): Promise<{
     recipient_id: string;
     amount_yocto: string;
   }> = [];
-  for (const finding of accepted) {
-    const raw = rawBountyYocto({
-      severity: finding.severity,
-      reproducibility: finding.reproducibilityStatus ?? "NOT_ATTEMPTED",
-      section: "B",
-    });
-    const perFinding = BigInt("10000000000000000000000");
-    const perAttacker = BigInt("20000000000000000000000");
-    const amount = raw < perFinding ? raw : perFinding;
-    const capped = amount < perAttacker ? amount : perAttacker;
-    const finalAmount = capped < remainingPool ? capped : remainingPool;
-    if (finalAmount <= 0n) continue;
-    remainingPool -= finalAmount;
-    const settlementId = randomUUID();
-    await db.insert(bountyAllocations).values({
-      auditId,
-      findingId: finding.id,
-      attackerId: runById.get(finding.attackerRunId)?.attackerId ?? "UNKNOWN",
-      settlementId,
-      recipientAccountId: payoutAccountId(),
-      amountYocto: finalAmount.toString(),
-      policyVersion: POLICY_VERSION,
-      status: "RECORDED",
-    });
-    allocations.push({
-      settlement_id: settlementId,
-      finding_id: finding.id,
-      recipient_id: payoutAccountId(),
-      amount_yocto: finalAmount.toString(),
-    });
+  const payout = payoutAccountId();
+  if (payout) {
+    for (const finding of accepted) {
+      const raw = rawBountyYocto({
+        severity: finding.severity,
+        reproducibility: finding.reproducibilityStatus ?? "NOT_ATTEMPTED",
+        section: "B",
+      });
+      const perFinding = BigInt("10000000000000000000000");
+      const perAttacker = BigInt("20000000000000000000000");
+      const amount = raw < perFinding ? raw : perFinding;
+      const capped = amount < perAttacker ? amount : perAttacker;
+      const finalAmount = capped < remainingPool ? capped : remainingPool;
+      if (finalAmount <= 0n) continue;
+      remainingPool -= finalAmount;
+      const settlementId = randomUUID();
+      await db.insert(bountyAllocations).values({
+        auditId,
+        findingId: finding.id,
+        attackerId: runById.get(finding.attackerRunId)?.attackerId ?? "UNKNOWN",
+        settlementId,
+        recipientAccountId: payout,
+        amountYocto: finalAmount.toString(),
+        policyVersion: POLICY_VERSION,
+        status: "RECORDED",
+      });
+      allocations.push({
+        settlement_id: settlementId,
+        finding_id: finding.id,
+        recipient_id: payout,
+        amount_yocto: finalAmount.toString(),
+      });
+    }
   }
 
   if (allocations.length > 0 && anchorStatus === "ANCHORED") {

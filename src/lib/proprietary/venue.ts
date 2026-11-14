@@ -1,5 +1,11 @@
 import "server-only";
 
+import {
+  ONECLICK_BASE_URL,
+  ONECLICK_DESTINATION_ASSET,
+  ONECLICK_ORIGIN_ASSET,
+  executionVenue,
+} from "@/lib/network";
 import { executionConfigFromEnv, executionReadiness } from "../../../packages/execution/src/index";
 
 export type VenueStatus = {
@@ -7,16 +13,37 @@ export type VenueStatus = {
   checkedAt: string;
   reason?: string;
   sample?: unknown;
+  venue: "ONECLICK" | "TIDEPOOL";
 };
 
-const BASE = process.env.TIDEPOOL_BASE_URL ?? "https://www.usetidepool.tech";
+const VENUE = executionVenue();
+const IS_TIDEPOOL = VENUE === "TIDEPOOL";
+
+const BASE = IS_TIDEPOOL
+  ? process.env.TIDEPOOL_BASE_URL ?? "https://www.usetidepool.tech"
+  : ONECLICK_BASE_URL;
 const HEALTH_URL = `${BASE}/v0/health`;
 const TOKENS_URL = `${BASE}/v0/tokens`;
 const QUOTE_URL = `${BASE}/v0/quote`;
 const STATUS_URL = `${BASE}/v0/status`;
-const API_KEY = "dissent-demo";
+const API_KEY = process.env.ONECLICK_API_KEY ?? (IS_TIDEPOOL ? "dissent-demo" : "");
 
-export type TidepoolQuoteResponse = {
+const ORIGIN_ASSET = IS_TIDEPOOL
+  ? process.env.TIDEPOOL_ORIGIN_ASSET ?? "nep141:wnear.tidepool-sandbox.testnet"
+  : ONECLICK_ORIGIN_ASSET;
+const DESTINATION_ASSET = IS_TIDEPOOL
+  ? process.env.TIDEPOOL_DESTINATION_ASSET ?? "nep141:usdc.tidepool-sandbox.testnet"
+  : ONECLICK_DESTINATION_ASSET;
+const RECIPIENT = (
+  process.env.PROPRIETARY_RECIPIENT ??
+  (IS_TIDEPOOL ? process.env.DEMO_CLIENT_ACCOUNT_ID : "")
+)?.trim() || "";
+const REFUND_TO = (
+  process.env.PROPRIETARY_REFUND_TO ??
+  process.env.NEAR_VAULT_ACCOUNT_ID
+)?.trim() || "";
+
+export type ExecutionVenueQuoteResponse = {
   correlationId: string;
   timestamp: string;
   quoteRequest: {
@@ -42,7 +69,10 @@ export type TidepoolQuoteResponse = {
   signature: string;
 };
 
-export type TidepoolStatus = {
+/** Backwards-compatible alias for the testnet staging code. */
+export type TidepoolQuoteResponse = ExecutionVenueQuoteResponse;
+
+export type ExecutionVenueStatus = {
   status:
     | "KNOWN_DEPOSIT_TX"
     | "PENDING_DEPOSIT"
@@ -62,36 +92,43 @@ export type TidepoolStatus = {
   };
 };
 
-export async function fetchTidepoolLiveQuote(input?: {
+export type TidepoolStatus = ExecutionVenueStatus;
+
+function venueHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  return {
+    Accept: "application/json",
+    "User-Agent": `Dissent/1.0 (${VENUE === "TIDEPOOL" ? "Tidepool staging" : "1Click mainnet"} venue)`,
+    ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
+    ...extra,
+  };
+}
+
+export async function fetchExecutionVenueQuote(input?: {
   amountYocto?: string;
   recipient?: string;
   refundTo?: string;
   deadlineMinutes?: number;
-}): Promise<TidepoolQuoteResponse> {
-  const amountYocto = input?.amountYocto ?? process.env.PROPRIETARY_THESIS_AMOUNT_YOCTO ?? "10000000000000000000000";
-  const recipient =
-    input?.recipient ?? process.env.PROPRIETARY_RECIPIENT ?? process.env.DEMO_CLIENT_ACCOUNT_ID ?? "dissent-demo.testnet";
-  const refundTo = input?.refundTo ?? process.env.NEAR_VAULT_ACCOUNT_ID ?? "vault.dissent-demo.testnet";
+}): Promise<ExecutionVenueQuoteResponse> {
+  const amountYocto =
+    input?.amountYocto ?? process.env.PROPRIETARY_THESIS_AMOUNT_YOCTO ?? "10000000000000000000000";
+  const recipient = input?.recipient ?? RECIPIENT;
+  const refundTo = input?.refundTo ?? REFUND_TO;
+  if (!recipient || !refundTo) throw new Error("VENUE_ACCOUNT_NOT_CONFIGURED");
   const deadline = new Date(Date.now() + (input?.deadlineMinutes ?? 120) * 60_000).toISOString();
 
   const response = await fetch(QUOTE_URL, {
     method: "POST",
     redirect: "error",
     signal: AbortSignal.timeout(30_000),
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      "X-API-Key": API_KEY,
-      "User-Agent": "Dissent/1.0 (Tidepool proprietary loop)",
-    },
+    headers: venueHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({
       dry: false,
       swapType: "EXACT_INPUT",
       slippageTolerance: 100,
-      originAsset: "nep141:wnear.tidepool-sandbox.testnet",
+      originAsset: ORIGIN_ASSET,
       depositType: "ORIGIN_CHAIN",
       depositMode: "SIMPLE",
-      destinationAsset: "nep141:usdc.tidepool-sandbox.testnet",
+      destinationAsset: DESTINATION_ASSET,
       amount: amountYocto,
       refundTo,
       refundType: "ORIGIN_CHAIN",
@@ -100,48 +137,45 @@ export async function fetchTidepoolLiveQuote(input?: {
       deadline,
     }),
   });
-  if (!response.ok) {
-    throw new Error(`TIDEPOOL_QUOTE_HTTP_${response.status}`);
-  }
-  const data = (await response.json()) as TidepoolQuoteResponse;
+  if (!response.ok) throw new Error(`VENUE_QUOTE_HTTP_${response.status}`);
+  const data = (await response.json()) as ExecutionVenueQuoteResponse;
   if (!data.quote?.depositAddress || !/^[0-9a-f]{64}$/i.test(data.quote.depositAddress)) {
-    throw new Error("TIDEPOOL_QUOTE_MISSING_DEPOSIT_ADDRESS");
+    throw new Error("VENUE_QUOTE_MISSING_DEPOSIT_ADDRESS");
   }
-  if (data.quote.amountIn !== amountYocto) {
-    throw new Error("TIDEPOOL_QUOTE_AMOUNT_MISMATCH");
-  }
-  if (new Date(data.quote.deadline).getTime() <= Date.now()) {
-    throw new Error("TIDEPOOL_QUOTE_EXPIRED");
-  }
+  if (data.quote.amountIn !== amountYocto) throw new Error("VENUE_QUOTE_AMOUNT_MISMATCH");
+  if (new Date(data.quote.deadline).getTime() <= Date.now()) throw new Error("VENUE_QUOTE_EXPIRED");
   return data;
 }
 
-export async function fetchTidepoolStatus(depositAddress: string): Promise<TidepoolStatus | null> {
+/** Backwards-compatible alias for the testnet staging code. */
+export const fetchTidepoolLiveQuote = fetchExecutionVenueQuote;
+
+export async function fetchExecutionVenueStatus(
+  depositAddress: string,
+): Promise<ExecutionVenueStatus | null> {
   const response = await fetch(`${STATUS_URL}?depositAddress=${encodeURIComponent(depositAddress)}`, {
     redirect: "error",
     signal: AbortSignal.timeout(20_000),
-    headers: {
-      Accept: "application/json",
-      "X-API-Key": API_KEY,
-      "User-Agent": "Dissent/1.0 (Tidepool status)",
-    },
+    headers: venueHeaders(),
   });
   if (response.status === 404) return null;
-  if (!response.ok) throw new Error(`TIDEPOOL_STATUS_HTTP_${response.status}`);
-  return (await response.json()) as TidepoolStatus;
+  if (!response.ok) throw new Error(`VENUE_STATUS_HTTP_${response.status}`);
+  return (await response.json()) as ExecutionVenueStatus;
 }
 
-async function probeJson(url: string, init?: RequestInit): Promise<{ ok: boolean; sample?: unknown; reason?: string }> {
+/** Backwards-compatible alias for the testnet staging code. */
+export const fetchTidepoolStatus = fetchExecutionVenueStatus;
+
+async function probeJson(
+  url: string,
+  init?: RequestInit,
+): Promise<{ ok: boolean; sample?: unknown; reason?: string }> {
   try {
     const response = await fetch(url, {
       ...init,
       redirect: "error",
       signal: AbortSignal.timeout(15_000),
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "Dissent/1.0 (Tidepool venue precheck)",
-        ...(init?.headers ?? {}),
-      },
+      headers: venueHeaders(init?.headers as Record<string, string> | undefined),
     });
     if (!response.ok) return { ok: false, reason: `HTTP_${response.status}` };
     const data = (await response.json()) as unknown;
@@ -155,46 +189,59 @@ async function probeJson(url: string, init?: RequestInit): Promise<{ ok: boolean
   }
 }
 
-export async function checkTidepoolVenue(): Promise<VenueStatus> {
-  const quote = await probeJson(QUOTE_URL, {
-    method: "POST",
-    headers: { "content-type": "application/json", "X-API-Key": API_KEY },
-    body: JSON.stringify({
-      dry: true,
-      swapType: "EXACT_INPUT",
-      slippageTolerance: 100,
-      originAsset: "nep141:wnear.tidepool-sandbox.testnet",
-      depositType: "ORIGIN_CHAIN",
-      depositMode: "SIMPLE",
-      destinationAsset: "nep141:usdc.tidepool-sandbox.testnet",
-      amount: "10000000000000000000000",
-      refundTo: "demo-client.testnet",
-      refundType: "ORIGIN_CHAIN",
-      recipient: "demo-client.testnet",
-      recipientType: "DESTINATION_CHAIN",
-      deadline: "2030-01-01T00:00:00.000Z",
-    }),
-  });
-  const health = await probeJson(HEALTH_URL);
+export async function checkExecutionVenue(): Promise<VenueStatus> {
   const tokens = await probeJson(TOKENS_URL);
-  const available = quote.ok && health.ok && tokens.ok;
+  const health = IS_TIDEPOOL ? await probeJson(HEALTH_URL) : { ok: true as const };
+
+  let quote: { ok: boolean; sample?: unknown; reason?: string } = {
+    ok: true,
+    reason: "QUOTE_SKIPPED_ACCOUNT_NOT_CONFIGURED",
+  };
+  if (RECIPIENT && REFUND_TO) {
+    quote = await probeJson(QUOTE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        dry: true,
+        swapType: "EXACT_INPUT",
+        slippageTolerance: 100,
+        originAsset: ORIGIN_ASSET,
+        depositType: "ORIGIN_CHAIN",
+        depositMode: "SIMPLE",
+        destinationAsset: DESTINATION_ASSET,
+        amount: process.env.PROPRIETARY_THESIS_AMOUNT_YOCTO ?? "10000000000000000000000",
+        refundTo: REFUND_TO,
+        refundType: "ORIGIN_CHAIN",
+        recipient: RECIPIENT,
+        recipientType: "DESTINATION_CHAIN",
+        deadline: new Date(Date.now() + 5 * 60_000).toISOString(),
+      }),
+    });
+  }
+
+  const available = tokens.ok && health.ok && quote.ok;
   return {
     available,
     checkedAt: new Date().toISOString(),
     reason: available
-      ? undefined
-      : `quote:${quote.reason ?? "UNKNOWN"}; health:${health.reason ?? "UNKNOWN"}; tokens:${tokens.reason ?? "UNKNOWN"}`,
-    sample: available ? quote.sample : undefined,
+      ? quote.reason
+      : `${VENUE}_UNAVAILABLE: quote:${quote.reason ?? "UNKNOWN"}; health:${health.ok ? "ok" : health.reason ?? "UNKNOWN"}; tokens:${tokens.reason ?? "UNKNOWN"}`,
+    sample: quote.sample ?? tokens.sample,
+    venue: VENUE,
   };
 }
 
+/** Backwards-compatible alias for the testnet staging code. */
+export const checkTidepoolVenue = checkExecutionVenue;
+
 export async function currentExecutionReadiness(verdict: "TRADE" | "REFUSE" | "ABSTAIN") {
-  const venue = await checkTidepoolVenue();
+  const venue = await checkExecutionVenue();
   const config = executionConfigFromEnv();
   const readiness = executionReadiness({ verdict, config, venueAvailable: venue.available });
   return {
     ...readiness,
     venue,
+    venue_name: VENUE,
     vault_configured: Boolean(
       config.vaultAccountId && config.agentAccountId && config.agentKey && config.recipientId,
     ),

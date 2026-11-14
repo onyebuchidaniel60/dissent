@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, KeyRound, LockKeyhole, ShieldCheck, WalletCards } from "lucide-react";
 
-import { FixtureBadge } from "@/components/fixture-badge";
 import { PageHeader, Panel } from "@/components/ui";
 import { WalletConnectButton } from "@/components/wallet-connect-button";
 
@@ -9,7 +8,7 @@ export default function ApiKeysPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Workspace settings · preview"
+        eyebrow="Workspace settings"
         title="Scoped keys."
         accent="No shared secrets."
         description="Programmatic clients authenticate with opaque, scoped API keys. Human operators authenticate with a NEAR wallet session; there is no email/password path anywhere."
@@ -17,7 +16,6 @@ export default function ApiKeysPage() {
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <FixtureBadge />
         <span className="tag tag--ok">Wallet gate active</span>
         <span className="tag tag--muted">No key is displayed here</span>
       </div>
@@ -31,9 +29,9 @@ export default function ApiKeysPage() {
             <span className="empty-icon">
               <KeyRound size={20} aria-hidden="true" />
             </span>
-            <h2 className="empty-title">No credential is active in this preview.</h2>
+            <h2 className="empty-title">No credential is active in this workspace.</h2>
             <p className="empty-copy">
-              The demo key is provisioned once by the operator CLI, printed once, and stored only as
+              A scoped key is provisioned once by the operator CLI, printed once, and stored only as
               a hash. This page will never display an existing secret again.
             </p>
             <div className="flex flex-wrap justify-center gap-2">
@@ -48,22 +46,22 @@ export default function ApiKeysPage() {
             <div className="notice notice--info">
               <ShieldCheck size={15} aria-hidden="true" />
               <span>
-                The browser preview has no wallet extension connected and cannot create a key. It
-                does not simulate a successful issuance.
+                Key issuance is an explicit operator action. This page never simulates a successful
+                issuance and never reveals an existing secret.
               </span>
             </div>
           </div>
         </Panel>
 
         <div className="rail-stack">
-          <Panel title="Demo client" subtitle="Deterministic E2E path.">
+          <Panel title="Client access" subtitle="Scoped integration path.">
             <div className="rail-row">
               <span>Workspace</span>
-              <strong>demo-client</strong>
+              <strong>owner-scoped</strong>
             </div>
             <div className="rail-row">
-              <span>Testnet account</span>
-              <strong>demo-client.testnet</strong>
+              <span>Account</span>
+              <strong>NEAR wallet</strong>
             </div>
             <div className="rail-row">
               <span>Signing mode</span>
@@ -79,6 +77,8 @@ export default function ApiKeysPage() {
             <div className="flex flex-wrap gap-2">
               <span className="tag tag--muted">audit:create</span>
               <span className="tag tag--muted">audit:read:own</span>
+              <span className="tag tag--muted">audit:commit</span>
+              <span className="tag tag--muted">audit:fund</span>
               <span className="tag tag--muted">certificate:read:own</span>
             </div>
             <div className="mt-4 flex items-start gap-3">

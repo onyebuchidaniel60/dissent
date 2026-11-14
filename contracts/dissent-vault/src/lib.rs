@@ -16,6 +16,7 @@ pub struct VaultConfig {
     pub daily_cap_yocto: U128,
     pub paused: bool,
     pub ft_token_id: AccountId,
+    pub ft_token_decimals: u8,
 }
 
 #[near(contract_state)]
@@ -30,13 +31,16 @@ pub struct DissentVault {
     day_bucket: u64,
     paused: bool,
     recipients: LookupMap<AccountId, bool>,
+    recipient_expiry: LookupMap<AccountId, u64>,
     certificates: LookupMap<String, bool>,
+    used_certificates: LookupMap<String, bool>,
     ft_token_id: AccountId,
+    ft_token_decimals: u8,
 }
 
 #[near]
 impl DissentVault {
-    #[init(ignore_state)]
+    #[init]
     pub fn new(
         owner_id: AccountId,
         agent_id: AccountId,
@@ -44,12 +48,17 @@ impl DissentVault {
         per_tx_cap_yocto: U128,
         daily_cap_yocto: U128,
         ft_token_id: AccountId,
+        ft_token_decimals: u8,
     ) -> Self {
         assert!(per_tx_cap_yocto.0 > 0, "per-transaction cap must be positive");
         assert!(daily_cap_yocto.0 > 0, "daily cap must be positive");
         assert!(
             per_tx_cap_yocto.0 <= daily_cap_yocto.0,
             "per-transaction cap cannot exceed daily cap"
+        );
+        assert_eq!(
+            ft_token_decimals, 24,
+            "vault requires a 24-decimal wNEAR token"
         );
         Self {
             owner_id,
@@ -61,8 +70,11 @@ impl DissentVault {
             day_bucket: 0,
             paused: false,
             recipients: LookupMap::new(b"r"),
+            recipient_expiry: LookupMap::new(b"e"),
             certificates: LookupMap::new(b"c"),
+            used_certificates: LookupMap::new(b"u"),
             ft_token_id,
+            ft_token_decimals,
         }
     }
 
@@ -103,9 +115,35 @@ impl DissentVault {
     pub fn set_recipient(&mut self, recipient_id: AccountId, allowed: bool) {
         self.assert_owner();
         self.recipients.insert(recipient_id.clone(), allowed);
+        self.recipient_expiry.insert(recipient_id.clone(), 0);
         emit_event(
             "dissent_vault_recipient_updated",
             serde_json::json!({ "recipient_id": recipient_id, "allowed": allowed }),
+        );
+    }
+
+    /// Allow a quote-specific recipient until an absolute nanosecond timestamp.
+    /// This bounds a per-quote deposit address to the quote window instead of
+    /// leaving it allowlisted forever.
+    pub fn set_recipient_until(
+        &mut self,
+        recipient_id: AccountId,
+        expires_at_ns: u64,
+    ) {
+        self.assert_owner();
+        assert!(
+            expires_at_ns > env::block_timestamp(),
+            "recipient expiry must be in the future"
+        );
+        self.recipients.insert(recipient_id.clone(), true);
+        self.recipient_expiry.insert(recipient_id.clone(), expires_at_ns);
+        emit_event(
+            "dissent_vault_recipient_updated",
+            serde_json::json!({
+                "recipient_id": recipient_id,
+                "allowed": true,
+                "expires_at_ns": expires_at_ns
+            }),
         );
     }
 
@@ -145,7 +183,7 @@ impl DissentVault {
         memo: String,
     ) -> Promise {
         self.assert_spend_allowed(&certificate_id, &recipient_id, amount_yocto.0, &memo);
-        self.record_spend(amount_yocto.0);
+        self.record_spend(&certificate_id, amount_yocto.0);
         emit_event(
             "dissent_vault_spend",
             serde_json::json!({
@@ -171,7 +209,7 @@ impl DissentVault {
         memo: String,
     ) -> Promise {
         self.assert_spend_allowed(&certificate_id, &recipient_id, amount_yocto.0, &memo);
-        self.record_spend(amount_yocto.0);
+        self.record_spend(&certificate_id, amount_yocto.0);
         emit_event(
             "dissent_vault_spend",
             serde_json::json!({
@@ -224,6 +262,7 @@ impl DissentVault {
             daily_cap_yocto: U128(self.daily_cap_yocto),
             paused: self.paused,
             ft_token_id: self.ft_token_id.clone(),
+            ft_token_decimals: self.ft_token_decimals,
         }
     }
 
@@ -281,6 +320,19 @@ impl DissentVault {
             self.recipients.get(recipient_id).copied().unwrap_or(false),
             "recipient is not allowlisted"
         );
+        let expiry = self.recipient_expiry.get(recipient_id).copied().unwrap_or(0);
+        assert!(
+            expiry == 0 || env::block_timestamp() <= expiry,
+            "recipient allowlist has expired"
+        );
+        assert!(
+            !self
+                .used_certificates
+                .get(certificate_id)
+                .copied()
+                .unwrap_or(false),
+            "certificate already used"
+        );
         assert!(
             memo.contains(certificate_id),
             "memo must contain the approved certificate_id"
@@ -290,20 +342,27 @@ impl DissentVault {
             amount_yocto <= self.per_tx_cap_yocto,
             "amount exceeds per-transaction cap"
         );
+        let day = env::block_timestamp() / DAY_NS;
+        let spent_today = if day == self.day_bucket {
+            self.spent_today_yocto
+        } else {
+            0
+        };
         assert!(
-            self.spent_today_yocto + amount_yocto <= self.daily_cap_yocto
-                || self.day_bucket != env::block_timestamp() / DAY_NS,
+            spent_today + amount_yocto <= self.daily_cap_yocto,
             "amount exceeds daily cap"
         );
     }
 
-    fn record_spend(&mut self, amount_yocto: u128) {
+    fn record_spend(&mut self, certificate_id: &str, amount_yocto: u128) {
         let day = env::block_timestamp() / DAY_NS;
         if day != self.day_bucket {
             self.day_bucket = day;
             self.spent_today_yocto = 0;
         }
         self.spent_today_yocto += amount_yocto;
+        self.used_certificates
+            .insert(certificate_id.to_string(), true);
     }
 }
 
@@ -339,6 +398,7 @@ mod tests {
             U128(500_000_000_000_000_000_000_000),
             U128(1_000_000_000_000_000_000_000_000),
             accounts(3),
+            24,
         )
     }
 
@@ -471,6 +531,91 @@ mod tests {
             accounts(3),
             U128(1),
             "cert-unknown".to_string(),
+        );
+    }
+
+    #[test]
+    fn recipient_can_be_bounded_to_a_quote_window() {
+        let mut vault = setup();
+        let mut context = VMContextBuilder::new();
+        context
+            .current_account_id(accounts(0))
+            .predecessor_account_id(accounts(0))
+            .block_timestamp(1_000);
+        testing_env!(context.build());
+        vault.set_recipient_until(accounts(4), 2_000);
+        assert!(vault.is_recipient(accounts(4)));
+    }
+
+    #[test]
+    #[should_panic(expected = "recipient allowlist has expired")]
+    fn rejects_expired_quote_recipient() {
+        let mut vault = setup();
+        vault.approve_certificate("cert-1".to_string());
+        let mut context = VMContextBuilder::new();
+        context
+            .current_account_id(accounts(0))
+            .predecessor_account_id(accounts(0))
+            .block_timestamp(1_000);
+        testing_env!(context.build());
+        vault.set_recipient_until(accounts(4), 2_000);
+        context
+            .current_account_id(accounts(0))
+            .predecessor_account_id(accounts(1))
+            .block_timestamp(3_000)
+            .account_balance(NearToken::from_near(10));
+        testing_env!(context.build());
+        vault.spend_ft_as(
+            "cert-1".to_string(),
+            accounts(4),
+            U128(10),
+            "cert-1".to_string(),
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "certificate already used")]
+    fn rejects_replayed_certificate() {
+        let mut vault = setup();
+        vault.approve_certificate("cert-1".to_string());
+        vault.set_recipient(accounts(4), true);
+        let mut context = VMContextBuilder::new();
+        context
+            .current_account_id(accounts(0))
+            .predecessor_account_id(accounts(1))
+            .account_balance(NearToken::from_near(10));
+        testing_env!(context.build());
+        vault.spend_ft_as(
+            "cert-1".to_string(),
+            accounts(4),
+            U128(10),
+            "cert-1".to_string(),
+        );
+        vault.spend_ft_as(
+            "cert-1".to_string(),
+            accounts(4),
+            U128(10),
+            "cert-1".to_string(),
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "vault requires a 24-decimal wNEAR token")]
+    fn rejects_wrong_token_decimals() {
+        let mut context = VMContextBuilder::new();
+        context
+            .current_account_id(accounts(0))
+            .predecessor_account_id(accounts(0))
+            .account_balance(NearToken::from_near(10));
+        testing_env!(context.build());
+        DissentVault::new(
+            accounts(0),
+            accounts(1),
+            accounts(2),
+            U128(500_000_000_000_000_000_000_000),
+            U128(1_000_000_000_000_000_000_000_000),
+            accounts(3),
+            6,
         );
     }
 }

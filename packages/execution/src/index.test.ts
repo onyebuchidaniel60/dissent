@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  OneClickExecutionAdapter,
   TidepoolExecutionAdapter,
+  executionConfigFromEnv,
   executionReadiness,
   type ExecutionConfig,
   type VaultClient,
@@ -9,12 +11,13 @@ import {
 
 const config: ExecutionConfig = {
   enabled: true,
-  vaultAccountId: "vault.testnet",
-  agentAccountId: "agent.testnet",
+  venue: "ONECLICK",
+  vaultAccountId: "vault.near",
+  agentAccountId: "agent.near",
   agentKey: "ed25519:test",
-  recipientId: "tidepool-deposit.testnet",
+  recipientId: "1click-deposit.near",
   amountYocto: "500000000000000000000000",
-  ftTokenId: "wnear.tidepool-sandbox.testnet",
+  ftTokenId: "wrap.near",
   vaultSupportsNep141: true,
 };
 
@@ -29,7 +32,7 @@ function vault(overrides?: Partial<VaultClient>): VaultClient {
 describe("execution adapter", () => {
   it("refuses non-TRADE verdicts without calling the vault", async () => {
     const client = vault();
-    const adapter = new TidepoolExecutionAdapter({ vault: client, config });
+    const adapter = new OneClickExecutionAdapter({ vault: client, config });
     const result = await adapter.execute("cert-1", "REFUSE");
     expect(result).toEqual({ status: "REFUSED", reason: "VERDICT_NOT_TRADE" });
     expect(client.spendFtAs).not.toHaveBeenCalled();
@@ -38,15 +41,15 @@ describe("execution adapter", () => {
 
   it("executes a TRADE with the certificate-bound memo", async () => {
     const client = vault();
-    const adapter = new TidepoolExecutionAdapter({ vault: client, config });
+    const adapter = new OneClickExecutionAdapter({ vault: client, config });
     const result = await adapter.execute("cert-1", "TRADE");
     expect(result).toEqual({ status: "EXECUTED", tx_hash: "tx-123" });
     expect(client.spendFtAs).toHaveBeenCalledWith({
       certificateId: "cert-1",
-      recipientId: "tidepool-deposit.testnet",
+      recipientId: "1click-deposit.near",
       amountYocto: "500000000000000000000000",
       memo: "Dissent certificate_id=cert-1",
-      tokenId: "wnear.tidepool-sandbox.testnet",
+      tokenId: "wrap.near",
     });
     expect(client.spendAs).not.toHaveBeenCalled();
   });
@@ -57,7 +60,7 @@ describe("execution adapter", () => {
         throw new Error("amount exceeds per-transaction cap");
       }),
     });
-    const adapter = new TidepoolExecutionAdapter({ vault: client, config });
+    const adapter = new OneClickExecutionAdapter({ vault: client, config });
     const result = await adapter.execute("cert-1", "TRADE");
     expect(result.status).toBe("REVERTED");
     expect(result.reason).toContain("per-transaction cap");
@@ -83,8 +86,27 @@ describe("execution adapter", () => {
   it("reports NOT_CONFIGURED when the venue is unavailable", () => {
     expect(executionReadiness({ verdict: "TRADE", config, venueAvailable: false })).toEqual({
       status: "NOT_CONFIGURED",
-      reason: "TIDEPOOL_UNAVAILABLE",
+      reason: "ONECLICK_UNAVAILABLE",
     });
+  });
+
+  it("runs the testnet Tidepool adapter only when the venue is TIDEPOOL", async () => {
+    const client = vault();
+    const tidepool = new TidepoolExecutionAdapter({
+      vault: client,
+      config: { ...config, venue: "TIDEPOOL", recipientId: "tidepool-deposit.testnet", ftTokenId: "wnear.tidepool-sandbox.testnet" },
+    });
+    const result = await tidepool.execute("cert-1", "TRADE");
+    expect(result).toEqual({ status: "EXECUTED", tx_hash: "tx-123" });
+  });
+
+  it("reads the mainnet 1Click configuration by default", () => {
+    const previousVenue = process.env.EXECUTION_VENUE;
+    delete process.env.EXECUTION_VENUE;
+    const parsed = executionConfigFromEnv();
+    expect(parsed.venue).toBe("ONECLICK");
+    expect(parsed.ftTokenId).toBe("wrap.near");
+    if (previousVenue !== undefined) process.env.EXECUTION_VENUE = previousVenue;
   });
 
   it("reports NOT_CONFIGURED when the vault cannot spend NEP-141", () => {

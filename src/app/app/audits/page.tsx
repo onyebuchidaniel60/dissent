@@ -1,21 +1,25 @@
 import Link from "next/link";
-import { ArrowRight, Filter, Plus, Search, X } from "lucide-react";
+import { ArrowRight, Filter, Plus, Search, WalletCards, X } from "lucide-react";
 
-import { FixtureBadge } from "@/components/fixture-badge";
 import { PageHeader, Panel } from "@/components/ui";
 import { StatusPill } from "@/components/status-pill";
 import { getWalletSession } from "@/lib/auth";
 import { listWorkspaceAudits } from "@/lib/audit-service";
-import { DEMO_AUDITS, type AuditStatus } from "@/lib/demo-data";
 import { getWorkspaceForAccount } from "@/lib/workspace";
+import { displayVenue } from "@/lib/site";
 
-const STATUS_OPTIONS: Array<{ value: "ALL" | AuditStatus; label: string }> = [
-  { value: "ALL", label: "All statuses" },
-  { value: "ATTACKING", label: "Attacking" },
-  { value: "AWAITING_COMMITMENT", label: "Awaiting commitment" },
-  { value: "AWAITING_FUNDING", label: "Awaiting funding" },
-  { value: "COMPLETED", label: "Completed" },
-];
+const STATUS_OPTIONS = [
+  "ALL",
+  "AWAITING_COMMITMENT",
+  "COMMITTED",
+  "FUNDED",
+  "QUEUED",
+  "ATTACKING",
+  "EVIDENCE_REVIEW",
+  "CERTIFICATE_PENDING",
+  "COMPLETED",
+  "ABSTAIN",
+] as const;
 
 export const dynamic = "force-dynamic";
 
@@ -26,20 +30,24 @@ export default async function AuditsPage({
 }) {
   const session = await getWalletSession();
   const workspace = session ? await getWorkspaceForAccount(session.accountId) : null;
-  const liveAudits = workspace ? await listWorkspaceAudits(workspace.workspaceId, 10) : [];
+  const liveAudits = workspace ? await listWorkspaceAudits(workspace.workspaceId, 50) : [];
 
   const params = await searchParams;
   const status = params.status && params.status !== "ALL" ? params.status : "ALL";
   const query = (params.q ?? "").trim().toLowerCase();
 
-  const audits = DEMO_AUDITS.filter((audit) => {
+  const audits = liveAudits.filter((audit) => {
     const matchesStatus = status === "ALL" || audit.status === status;
-    const matchesQuery =
-      query.length === 0 ||
-      audit.title.toLowerCase().includes(query) ||
-      audit.publicId.toLowerCase().includes(query) ||
-      audit.asset.toLowerCase().includes(query);
-    return matchesStatus && matchesQuery;
+    const haystack = [
+      audit.rationale ?? "",
+      audit.publicAuditId,
+      audit.assetId ?? "",
+      audit.symbol ?? "",
+      audit.executionVenue ?? "",
+    ]
+      .join(" ")
+      .toLowerCase();
+    return matchesStatus && (query.length === 0 || haystack.includes(query));
   });
 
   const hasFilters = status !== "ALL" || query.length > 0;
@@ -47,10 +55,10 @@ export default async function AuditsPage({
   return (
     <>
       <PageHeader
-        eyebrow="Audit ledger · preview"
+        eyebrow="Audit ledger"
         title="Every thesis"
         accent="on the record."
-        description="Owner-scoped audit records with explicit lifecycle state. Filters below operate on the deterministic fixture set only."
+        description="Owner-scoped audit records with explicit lifecycle state. The ledger is server-rendered; no cross-tenant data is returned."
         actions={
           <Link href="/app/audits/new" className="button button--primary">
             <Plus size={15} aria-hidden="true" />
@@ -60,68 +68,10 @@ export default async function AuditsPage({
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <FixtureBadge />
-        <span className="tag tag--muted">{audits.length} fixture records</span>
-        {workspace ? <span className="tag tag--ok">{liveAudits.length} live workspace records</span> : null}
+        <span className="tag tag--ok">{liveAudits.length} records</span>
+        {session ? <span className="tag tag--muted">{session.accountId}</span> : null}
+        {hasFilters ? <span className="tag tag--warn">Filtered</span> : null}
       </div>
-
-      {liveAudits.length > 0 ? (
-        <div className="mb-4">
-          <Panel
-            title="Live workspace audits"
-            subtitle="Session-scoped records created through the API or console."
-            action={<span className="tag tag--ok">live</span>}
-            bodyClassName=""
-          >
-            <div className="table-wrap">
-              <table className="data-table">
-                <caption className="sr-only">Live workspace audits</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Audit</th>
-                    <th scope="col">State</th>
-                    <th scope="col">Verdict</th>
-                    <th scope="col">Updated</th>
-                    <th scope="col">Open</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {liveAudits.map((audit) => (
-                    <tr key={audit.id}>
-                      <td data-label="Audit">
-                        <div className="table-primary">
-                          <Link href={`/app/audits/${audit.id}`}>
-                            {(audit.rationale ?? "Untitled audit").slice(0, 70)}
-                          </Link>
-                          <span>
-                            {audit.publicAuditId} · {audit.symbol ?? audit.assetId ?? "NEAR"}
-                          </span>
-                        </div>
-                      </td>
-                      <td data-label="State">
-                        <StatusPill status={audit.status} />
-                      </td>
-                      <td data-label="Verdict">
-                        {audit.verdict ? <StatusPill status={audit.verdict} /> : <span className="mono text-[10px] text-muted-2">Pending</span>}
-                      </td>
-                      <td data-label="Updated">
-                        <span className="mono text-[10px] text-muted-2">
-                          {audit.updatedAt.toISOString().slice(0, 16).replace("T", " ")} UTC
-                        </span>
-                      </td>
-                      <td data-label="Open">
-                        <Link href={`/app/audits/${audit.id}`} className="text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
-                          Open
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Panel>
-        </div>
-      ) : null}
 
       <Panel
         title="Filter the ledger"
@@ -141,7 +91,7 @@ export default async function AuditsPage({
                 name="q"
                 type="search"
                 defaultValue={params.q ?? ""}
-                placeholder="Title, public ID or asset"
+                placeholder="Thesis, public ID, asset or venue"
                 className="input pl-9"
               />
             </div>
@@ -150,8 +100,13 @@ export default async function AuditsPage({
             <label htmlFor="audit-status">Status</label>
             <select id="audit-status" name="status" defaultValue={status} className="select">
               {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
+                <option key={option} value={option}>
+                  {option === "ALL"
+                    ? "All statuses"
+                    : option
+                        .replaceAll("_", " ")
+                        .toLowerCase()
+                        .replace(/^\w/, (letter) => letter.toUpperCase())}
                 </option>
               ))}
             </select>
@@ -176,16 +131,15 @@ export default async function AuditsPage({
           <Panel bodyClassName="">
             <div className="table-wrap">
               <table className="data-table">
-                <caption className="sr-only">Filtered demo audits</caption>
+                <caption className="sr-only">Workspace audit ledger</caption>
                 <thead>
                   <tr>
                     <th scope="col">Audit</th>
-                    <th scope="col">Action</th>
                     <th scope="col">Status</th>
                     <th scope="col">Verdict</th>
-                    <th scope="col">Conditions</th>
+                    <th scope="col">Venue</th>
                     <th scope="col">Updated</th>
-                    <th scope="col" aria-label="Open audit" />
+                    <th scope="col">Open</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -193,14 +147,13 @@ export default async function AuditsPage({
                     <tr key={audit.id}>
                       <td data-label="Audit">
                         <div className="table-primary">
-                          <Link href={`/app/audits/${audit.id}`}>{audit.title}</Link>
+                          <Link href={`/app/audits/${audit.id}`}>
+                            {(audit.rationale ?? "Untitled audit").slice(0, 78)}
+                          </Link>
                           <span>
-                            {audit.publicId} · {audit.asset} · {audit.venue}
+                            {audit.publicAuditId} · {audit.symbol ?? audit.assetId ?? "NEAR"}
                           </span>
                         </div>
-                      </td>
-                      <td data-label="Action">
-                        <span className="mono text-[10px]">{audit.action}</span>
                       </td>
                       <td data-label="Status">
                         <StatusPill status={audit.status} />
@@ -212,21 +165,22 @@ export default async function AuditsPage({
                           <span className="mono text-[10px] text-muted-2">Pending</span>
                         )}
                       </td>
-                      <td data-label="Conditions">
-                        <span className="mono text-[10px]">{audit.conditionCount}</span>
+                      <td data-label="Venue">
+                        <span className="mono text-[10px] text-muted">
+                          {displayVenue(audit.executionVenue)}
+                        </span>
                       </td>
                       <td data-label="Updated">
                         <span className="mono text-[10px] text-muted-2">
-                          {audit.updatedAt.replace("T", " ").replace("Z", " UTC")}
+                          {audit.updatedAt.toISOString().slice(0, 16).replace("T", " ")} UTC
                         </span>
                       </td>
                       <td data-label="Open">
                         <Link
                           href={`/app/audits/${audit.id}`}
-                          className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.1em] text-primary"
+                          className="text-[10px] font-bold uppercase tracking-[0.1em] text-primary"
                         >
-                          Open
-                          <ArrowRight size={12} aria-hidden="true" />
+                          Open <ArrowRight size={11} className="inline" aria-hidden="true" />
                         </Link>
                       </td>
                     </tr>
@@ -239,20 +193,24 @@ export default async function AuditsPage({
           <Panel>
             <div className="empty-state">
               <span className="empty-icon">
-                <Search size={20} aria-hidden="true" />
+                <WalletCards size={20} aria-hidden="true" />
               </span>
-              <h2 className="empty-title">No audits match those filters.</h2>
+              <h2 className="empty-title">
+                {session ? "No audits match this view." : "Connect a wallet to see your audit ledger."}
+              </h2>
               <p className="empty-copy">
-                Clear the filters or create a new audit. A missing result is not treated as a safe
-                thesis.
+                The ledger is scoped to the authenticated workspace. Clear filters or start a new
+                thesis with machine-testable failure conditions.
               </p>
-              <div className="flex flex-wrap justify-center gap-2">
-                <Link href="/app/audits" className="button button--primary">
-                  Clear filters
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <Link href="/app/audits/new" className="button button--primary button--small">
+                  Start an audit
                 </Link>
-                <Link href="/app/audits/new" className="button button--ghost">
-                  New audit
-                </Link>
+                {hasFilters ? (
+                  <Link href="/app/audits" className="button button--ghost button--small">
+                    Clear filters
+                  </Link>
+                ) : null}
               </div>
             </div>
           </Panel>

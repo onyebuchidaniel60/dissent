@@ -5,7 +5,7 @@ import { getSessionCookie } from "./helpers";
 const PUBLIC_ROUTES = [
   "/",
   "/docs",
-  "/verify/DEMO-CERT-001",
+  "/verify/00000000-0000-0000-0000-000000000000",
   "/app",
   "/app/audits",
   "/app/attackers",
@@ -15,8 +15,11 @@ const PUBLIC_ROUTES = [
 ];
 
 test("public routes render without horizontal page overflow", async ({ page }) => {
-  for (const width of [360, 1440]) {
-    await page.setViewportSize({ width, height: 900 });
+  for (const { width, height } of [
+    { width: 390, height: 844 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize({ width, height });
     for (const route of PUBLIC_ROUTES) {
       const response = await page.goto(route, { waitUntil: "domcontentloaded" });
       expect(response?.status(), `${route} at ${width}`).toBe(200);
@@ -61,7 +64,7 @@ test("wallet session sees live audits and can create a session-authenticated dra
   const page = await context.newPage();
 
   await page.goto("/app/audits", { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("heading", { name: "Live workspace audits" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /every thesis/i })).toBeVisible();
 
   await page.goto("/app/audits/new", { waitUntil: "domcontentloaded" });
   const title = `E2E draft ${Date.now()}`;
@@ -76,14 +79,17 @@ test("wallet session sees live audits and can create a session-authenticated dra
   await expect(page.getByText("Public audit ID")).toBeVisible();
 
   await page.goto("/operator", { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("heading", { name: "Live testnet runs" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Recent runs" })).toBeVisible();
   await expect(page.getByText("Operator-only surface").first()).toBeVisible();
 
-  for (const width of [390, 1440]) {
-    await page.setViewportSize({ width, height: 900 });
+  for (const { width, height } of [
+    { width: 390, height: 844 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize({ width, height });
     const response = await page.goto("/operator/proprietary", { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
-    await expect(page.getByRole("heading", { name: /originate, audit/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /originate/i })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Venue precheck" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Execution path" })).toBeVisible();
     await expect(page.getByText(/vault tx:/)).toBeVisible();

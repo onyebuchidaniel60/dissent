@@ -197,3 +197,14 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Preview deployed at `46bf788`; `/healthz`, `/readyz`, `/operator/proprietary`, and both verifier pages 200; preview Playwright 3/3 includes the `EXECUTED` receipt and `vault tx:` panel.
 - Public verifier for the proprietary certificate: `https://dissent-web.onrender.com/verify/0bf3728d-e457-4b2f-8fad-b53be9565498` returns `VERIFIED` with `execution_readiness=EXECUTED` and the Tidepool swap hashes.
 - Demo intentionally not regenerated; operator approval is the next gate.
+
+## Phase 11 — mainnet readiness and production polish
+
+- Network config defaults: `NEAR_NETWORK=mainnet`, `NEXT_PUBLIC_NEAR_NETWORK=mainnet`, mainnet RPC/explorer; no testnet fallback for registry, vault, payout or deployer accounts. Missing accounts fail closed.
+- Execution adapter: 1Click mainnet is primary (`EXECUTION_VENUE=ONECLICK`, `https://1click.chaindefuser.com`). wNEAR `nep141:wrap.near`; USDC asset ID read from the live `/v0/tokens` catalogue (`nep141:17208628…`). Read-only mainnet precheck: 231 tokens and a dry `0.01 wNEAR → 0.034224 USDC` quote; no deposit address, transaction or real funds. Tidepool retained only for `EXECUTION_VENUE=TIDEPOOL` staging.
+- Vault contract audit: `#[init]` replaces `ignore_state`; certificate replay protection added; `set_recipient_until` quote-window allowlist added; 24-decimal wNEAR assertion added. `cargo test` 12/12; mainnet-ready wasm SHA-256 `f8475b3998114e9970e51a6473c6acccdb14517986267f4ef058df747f43f582`. The deployed staging v2 vault is unchanged and is not the mainnet template.
+- UI cleanup: customer-facing `NEAR TESTNET`, `DEMO FIXTURE`, demo-client account labels and fixture-only routes removed. App overview, audit ledger, audit detail, operator, providers, reputation, attackers, settings, docs and verifier use live data or empty states. The historical staging receipt remains on the operator page with a network-neutral label.
+- Typography: Russo One display face added; Orbitron retained as fallback. Hero clamp `2.4rem–6.2rem`; section `1.6rem–2.8rem`; page title `1.8rem–3.1rem`. Verified at 1440×900 and 390×844 with no horizontal overflow.
+- Tests: `pnpm typecheck` PASS; `pnpm lint` PASS; Vitest 13/13 PASS; `pnpm build` PASS; local Playwright 3/3 PASS. Preview deploy and preview Playwright are recorded after the commit.
+- Preview is explicit testnet staging (`NEAR_NETWORK=testnet`, `EXECUTION_VENUE=TIDEPOOL`, testnet accounts, no testnet UI label). Production requires a fresh mainnet database and the mainnet config.
+- No mainnet deployment, mainnet transaction, real-fund transfer or new spend. Demo regeneration remains deferred.

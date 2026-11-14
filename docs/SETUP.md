@@ -1,6 +1,6 @@
 # Setup Guide
 
-This repository is in Phase 1: route-complete skeleton and preview deployment. Application services beyond the shell are labelled and will be wired in later phases. Do not treat fixture data as live output.
+This repository is in Phase 11: mainnet readiness and production polish. The code defaults to mainnet, the execution adapter is 1Click, and execution is disabled by default. The preview remains an explicit testnet staging deployment with a network-neutral UI. Do not treat staging records as mainnet evidence.
 
 ## Prerequisites
 
@@ -53,4 +53,4 @@ Playwright E2E is added with the functional journeys in Phase 6.
 
 ## Deployment
 
-See [`DEPLOYMENT.md`](DEPLOYMENT.md). The preview target is Render free + Neon free. No production or mainnet action is authorized.
+See [`DEPLOYMENT.md`](DEPLOYMENT.md). The preview target is Render free + Neon free. No production deployment or mainnet real-fund action is authorized without a separate operator record.

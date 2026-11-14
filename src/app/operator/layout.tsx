@@ -29,7 +29,7 @@ export default async function OperatorLayout({ children }: { children: React.Rea
             <p className="page-subtitle">
               {session
                 ? `The connected account ${maskAccount(session.accountId)} is not on the server-side operator allowlist. No operator data or privileged action is returned.`
-                : "Connect a NEAR testnet wallet. The server verifies a signed nonce and checks the account against the operator allowlist before rendering any operational data."}
+                : "Connect a NEAR wallet. The server verifies a signed nonce and checks the account against the operator allowlist before rendering any operational data."}
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <WalletConnectButton className="button button--primary" />
@@ -71,9 +71,6 @@ export default async function OperatorLayout({ children }: { children: React.Rea
           </Link>
           <Link href="/operator/proprietary" className="hover:text-ink">
             Proprietary
-          </Link>
-          <Link href="/operator/audits/demo-audit-001" className="hover:text-ink">
-            Audit operations
           </Link>
         </nav>
       </div>
