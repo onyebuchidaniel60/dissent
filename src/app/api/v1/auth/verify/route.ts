@@ -14,6 +14,7 @@ const bodySchema = z
     publicKey: z.string().trim().min(10).max(200),
     signature: z.string().trim().min(10).max(500),
     nonce: z.string().trim().min(10).max(200),
+    recipient: z.string().trim().max(300).optional(),
   })
   .strict();
 
@@ -53,6 +54,18 @@ export async function POST(request: Request) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
     if (code === "NONCE_EXPIRED_OR_USED") {
       return apiError("UNAUTHENTICATED", "The sign-in challenge expired or was already used.", 401, undefined, id);
+    }
+    if (code === "RECIPIENT_MISMATCH") {
+      return apiError("UNAUTHENTICATED", "The wallet signed a different recipient. Reconnect and try again.", 401, undefined, id);
+    }
+    if (code === "FUNCTION_CALL_KEY") {
+      return apiError("UNAUTHENTICATED", "Nightly is using a Function Call key. Please use a wallet with a Full Access key.", 401, undefined, id);
+    }
+    if (code === "WRONG_NETWORK") {
+      return apiError("UNAUTHENTICATED", "This account exists on the other NEAR network. Switch Nightly to Testnet and reconnect.", 401, undefined, id);
+    }
+    if (code === "UNSUPPORTED_KEY_PERMISSION") {
+      return apiError("UNAUTHENTICATED", "This account key cannot be used for operator sign-in.", 401, undefined, id);
     }
     if (code === "INVALID_SIGNATURE_ENCODING") {
       return apiError("UNAUTHENTICATED", "The wallet signature could not be decoded.", 401, undefined, id);

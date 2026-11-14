@@ -207,7 +207,9 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Removed the TEE banner and all TEE/attestation/confidential UI strings, status entries and public API fields; the `TeeWaiverNotice` component was deleted. Rendered scan of 11 routes is clean for TEE/attestation/confidential and for testnet/demo-client/fixture; the workspace account tag is masked.
 - Wallet auth: `AUTH_RECIPIENT` is the app URL; frontend normalizes public-key/signature encodings; backend decodes base64/base64url/array/hex signatures and verifies against the stored recipient. Local API test returned 200 with an admin session.
 - Preview network fallback added in `config/preview-network.json`: testnet RPC/registry/vault, preview URL, and Tidepool when the resolved network is testnet. Mainnet remains opt-in via env.
-- Wallet auth now routes `.testnet` accounts to the testnet RPC and `.near` accounts to mainnet before the access-key lookup. A local `NEAR_RPC_URL=https://rpc.mainnet.near.org` server still authenticated `dissent-demo.testnet` with 200/admin.
+- Wallet auth now routes `.testnet`, `.near` and 64-hex implicit accounts to the correct network RPC before the access-key lookup. A local `NEAR_RPC_URL=https://rpc.mainnet.near.org` server still authenticated `dissent-demo.testnet` with 200/admin.
+- Added `[auth/verify]` logging for account, public key, expected/supplied recipient, exact RPC URL and raw `view_access_key` response; fallback query to the other network with a wrong-network warning; explicit FunctionCall-key error (`Nightly is using a Function Call key...`) verified with a 401 local test.
+- Preview recipient is hardcoded to `https://dissent-web.onrender.com` for the production testnet preview.
 - Demo video generation deferred by operator instruction.
 
 ## Phase 11 UI correction — operator feedback

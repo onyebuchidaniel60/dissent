@@ -8,8 +8,9 @@ import { createHmac, randomBytes, randomUUID } from "node:crypto";
 
 import { getDb } from "@/db";
 import { authNonces, walletSessions } from "@/db/schema";
+import { PREVIEW_AUTH_RECIPIENT } from "@/lib/config";
 import { getAdminAllowlist, getAppBaseUrl } from "@/lib/env";
-import { NEAR_RPC_URL } from "@/lib/network";
+import { NEAR_NETWORK, NEAR_RPC_URL } from "@/lib/network";
 
 export const SESSION_COOKIE = "dissent_session";
 export const SESSION_TTL_SECONDS = 8 * 60 * 60;
@@ -31,7 +32,19 @@ export function isValidAccountId(accountId: string): boolean {
 }
 
 export function authRecipient(): string {
-  return process.env.AUTH_RECIPIENT?.trim() || getAppBaseUrl();
+  const appBase = getAppBaseUrl().replace(/\/+$/, "");
+  // The live preview must use the exact public origin, regardless of a stale
+  // Render AUTH_RECIPIENT value.
+  if (
+    appBase === PREVIEW_AUTH_RECIPIENT ||
+    (process.env.NODE_ENV === "production" && NEAR_NETWORK === "testnet")
+  ) {
+    return PREVIEW_AUTH_RECIPIENT;
+  }
+  return (process.env.AUTH_RECIPIENT?.trim() || appBase || PREVIEW_AUTH_RECIPIENT).replace(
+    /\/+$/,
+    "",
+  );
 }
 
 function normalizePublicKey(publicKey: string): string {
@@ -67,9 +80,50 @@ function decodeNep413Signature(signature: string): Uint8Array {
 
 function rpcUrlForAccount(accountId: string): string {
   const normalized = accountId.toLowerCase();
+  if (/^[0-9a-f]{64}$/i.test(normalized)) {
+    return NEAR_NETWORK === "testnet"
+      ? "https://rpc.testnet.near.org"
+      : "https://rpc.mainnet.near.org";
+  }
   if (normalized.endsWith(".testnet")) return "https://rpc.testnet.near.org";
   if (normalized.endsWith(".near")) return "https://rpc.mainnet.near.org";
   return NEAR_RPC_URL;
+}
+
+type RawAccessKey = {
+  permission?: "FullAccess" | { FunctionCall?: unknown } | string;
+};
+
+async function viewAccessKeyRaw(
+  rpcUrl: string,
+  accountId: string,
+  publicKey: string,
+): Promise<{ ok: true; raw: RawAccessKey } | { ok: false }> {
+  const provider = new JsonRpcProvider({ url: rpcUrl });
+  try {
+    const raw = (await provider.sendJsonRpc("query", {
+      request_type: "view_access_key",
+      finality: "final",
+      account_id: accountId,
+      public_key: publicKey,
+    })) as RawAccessKey;
+    console.log(
+      "[auth/verify] view_access_key",
+      JSON.stringify({ rpcUrl, accountId, publicKey, response: raw }),
+    );
+    return { ok: true, raw };
+  } catch (error) {
+    console.log(
+      "[auth/verify] view_access_key_failed",
+      JSON.stringify({
+        rpcUrl,
+        accountId,
+        publicKey,
+        error: error instanceof Error ? error.message : String(error),
+      }),
+    );
+    return { ok: false };
+  }
 }
 
 export function buildAuthMessage(accountId: string, nonce: string): string {
@@ -122,6 +176,7 @@ export async function verifyWalletSignature(input: {
   publicKey: string;
   signature: string;
   nonce: string;
+  recipient?: string;
 }): Promise<{
   accountId: string;
   isAdmin: boolean;
@@ -151,30 +206,67 @@ export async function verifyWalletSignature(input: {
   const nonceBytes = Buffer.from(input.nonce, "base64");
   const publicKey = normalizePublicKey(input.publicKey);
   const signature = decodeNep413Signature(input.signature);
-  const provider = new JsonRpcProvider({
-    url: rpcUrlForAccount(input.accountId),
-  });
+  const expectedRecipient = challenge.recipient.replace(/\/+$/, "");
+  const suppliedRecipient = input.recipient?.trim().replace(/\/+$/, "");
 
-  try {
-    const accessKey = await provider.viewAccessKey({
+  console.log(
+    "[auth/verify] request",
+    JSON.stringify({
       accountId: input.accountId,
       publicKey,
-    });
-    if (accessKey.permission !== "FullAccess") {
-      throw new Error("FULL_ACCESS_KEY_REQUIRED");
+      expectedRecipient,
+      suppliedRecipient: suppliedRecipient ?? null,
+      appBaseUrl: getAppBaseUrl(),
+      network: NEAR_NETWORK,
+    }),
+  );
+
+  if (suppliedRecipient && suppliedRecipient !== expectedRecipient) {
+    throw new Error("RECIPIENT_MISMATCH");
+  }
+
+  const primaryRpc = rpcUrlForAccount(input.accountId);
+  const fallbackRpc = primaryRpc.includes("testnet")
+    ? "https://rpc.mainnet.near.org"
+    : "https://rpc.testnet.near.org";
+
+  const primary = await viewAccessKeyRaw(primaryRpc, input.accountId, publicKey);
+  if (!primary.ok) {
+    const fallback = await viewAccessKeyRaw(fallbackRpc, input.accountId, publicKey);
+    if (fallback.ok) {
+      console.warn(
+        "[auth/verify] wrong_network",
+        JSON.stringify({
+          accountId: input.accountId,
+          publicKey,
+          primaryRpc,
+          fallbackRpc,
+          warning: "The access key exists on the other NEAR network.",
+        }),
+      );
+      throw new Error("WRONG_NETWORK");
     }
-  } catch (error) {
-    if (error instanceof Error && error.message === "FULL_ACCESS_KEY_REQUIRED") throw error;
     throw new Error("ACCESS_KEY_NOT_FOUND");
   }
 
+  const permission = primary.raw.permission;
+  if (permission && typeof permission === "object" && "FunctionCall" in permission) {
+    console.warn(
+      "[auth/verify] function_call_key",
+      JSON.stringify({ accountId: input.accountId, publicKey, rpcUrl: primaryRpc }),
+    );
+    throw new Error("FUNCTION_CALL_KEY");
+  }
+  if (permission !== "FullAccess") throw new Error("UNSUPPORTED_KEY_PERMISSION");
+
+  const provider = new JsonRpcProvider({ url: primaryRpc });
   try {
     await verifyMessage({
       signerAccountId: input.accountId,
       signerPublicKey: publicKey,
       payload: {
         message: challenge.message,
-        recipient: challenge.recipient,
+        recipient: expectedRecipient,
         nonce: nonceBytes,
         callbackUrl: challenge.callbackUrl ?? undefined,
       },

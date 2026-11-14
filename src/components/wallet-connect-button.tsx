@@ -109,6 +109,7 @@ export function WalletConnectButton({
             publicKey,
             signature,
             nonce: challenge.nonce,
+            recipient: challenge.recipient,
           }),
         });
         const verified = await verifyResponse.json();
