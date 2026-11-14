@@ -46,6 +46,7 @@ type ShimState = {
   asset: string;
   payTo: string;
   priceAtomic: string;
+  rpcUrl: string;
 };
 
 let statePromise: Promise<ShimState> | null = null;
@@ -125,6 +126,11 @@ async function shimState(): Promise<ShimState> {
       const relayerAccountId =
         process.env.X402_RELAYER_ACCOUNT_ID?.trim() || requiredEnv("NEAR_DEPLOYER_ACCOUNT_ID");
       const relayerKey = process.env.X402_RELAYER_KEY?.trim() || requiredEnv("NEAR_DEPLOYER_KEY");
+      const rpcUrl =
+        process.env.NEAR_RPC_URL?.trim() ||
+        (network === "near:mainnet"
+          ? "https://rpc.mainnet.fastnear.com"
+          : "https://rpc.testnet.fastnear.com");
 
       const facilitator = createNearFacilitator({
         registrations: [
@@ -137,7 +143,7 @@ async function shimState(): Promise<ShimState> {
                   secretKey: relayerKey as `ed25519:${string}`,
                 },
               ],
-              rpcUrls: { [network]: process.env.NEAR_RPC_URL?.trim() || undefined },
+              rpcUrls: { [network]: rpcUrl },
             },
           },
         ],
@@ -166,7 +172,7 @@ async function shimState(): Promise<ShimState> {
       const httpServer = new x402HTTPResourceServer(resourceServer, routes);
       await httpServer.initialize();
 
-      return { httpServer, facilitator, network, asset, payTo, priceAtomic };
+      return { httpServer, facilitator, network, asset, payTo, priceAtomic, rpcUrl };
     })().catch((error: unknown) => {
       statePromise = null;
       throw error;
@@ -178,6 +184,8 @@ async function shimState(): Promise<ShimState> {
 /**
  * Public capability document for the self-hosted x402 shim. No secrets: the
  * relayer account is already public on-chain and in the facilitator response.
+ * The `relayerRpc` probe makes outbound-RPC failures visible without exposing
+ * the underlying signer.
  */
 export async function x402ShimCapabilities(): Promise<Record<string, unknown>> {
   const state = await shimState();
@@ -191,7 +199,39 @@ export async function x402ShimCapabilities(): Promise<Record<string, unknown>> {
     routes: X402_ROUTES,
     supported: state.facilitator.getSupported(),
     upstreamFacilitator: process.env.X402_FACILITATOR_URL ?? null,
+    relayerRpc: await probeRpc(state.rpcUrl),
   };
+}
+
+async function probeRpc(url: string): Promise<Record<string, unknown>> {
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "dissent-x402-probe",
+        method: "block",
+        params: { finality: "final" },
+      }),
+      signal: AbortSignal.timeout(10_000),
+      redirect: "error",
+    });
+    if (!response.ok) return { ok: false, error: `HTTP_${response.status}` };
+    const data = (await response.json()) as {
+      result?: { header?: { height?: number } };
+      error?: { message?: string; cause?: { name?: string } };
+    };
+    if (data.error) {
+      return { ok: false, error: data.error.cause?.name ?? data.error.message ?? "RPC_ERROR" };
+    }
+    return { ok: true, height: data.result?.header?.height ?? null };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? `${error.name}:${error.message}` : "RPC_UNREACHABLE",
+    };
+  }
 }
 
 function validateInferenceBody(
@@ -277,7 +317,24 @@ export async function handlePaidInference(
     return Response.json({ error: "X402_CHALLENGE_FAILED" }, { status: 503 });
   }
 
-  if (result.type === "payment-error") return responseFromInstructions(result.response);
+  if (result.type === "payment-error") {
+    if (context.paymentHeader) {
+      let reason = "unknown";
+      try {
+        const header = result.response.headers["payment-required"];
+        if (header) {
+          const decoded = JSON.parse(Buffer.from(header, "base64").toString("utf8")) as {
+            error?: string;
+          };
+          reason = decoded.error ?? reason;
+        }
+      } catch {
+        // Keep the generic reason; never log payment material.
+      }
+      console.warn("[x402] payment rejected", { provider, reason });
+    }
+    return responseFromInstructions(result.response);
+  }
   if (result.type !== "payment-verified") {
     return Response.json({ error: "X402_ROUTE_NOT_PAID" }, { status: 404 });
   }
