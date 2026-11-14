@@ -243,8 +243,20 @@ export async function callAttackerModel(input: ProviderCallInput): Promise<Provi
       };
       if (key) headers.Authorization = `Bearer ${key}`;
 
-      const response = proxy
-        ? (
+      const directRequest = () => {
+        const directKey = credential(provider);
+        return fetch(endpoint(provider), {
+          method: "POST",
+          headers: { ...headers, Authorization: `Bearer ${directKey}` },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+      };
+
+      let response: Response;
+      if (proxy) {
+        try {
+          response = (
             await payAndRequest(
               proxy,
               {
@@ -255,13 +267,36 @@ export async function callAttackerModel(input: ProviderCallInput): Promise<Provi
               },
               { provider, requirePayment: true },
             )
-          ).response
-        : await fetch(endpoint(provider), {
-            method: "POST",
-            headers,
-            body: JSON.stringify(body),
-            signal: controller.signal,
+          ).response;
+        } catch (error) {
+          if (error instanceof Error && error.name === "AbortError") throw error;
+          console.warn("[x402] Payment failed, falling back to direct API key", {
+            provider,
+            code: error instanceof X402PaymentError ? error.code : "PROXY_ERROR",
+            message: error instanceof Error ? error.message : "unknown",
           });
+          response = await directRequest();
+        }
+
+        // A proxy 402/5xx means procurement failed after the paid retry. Do
+        // not let it kill the audit; use the provider credential directly.
+        if (proxy && !response.ok && (response.status === 402 || response.status >= 500)) {
+          const proxyFailure = await response.text().catch(() => "");
+          console.warn("[x402] Payment failed, falling back to direct API key", {
+            provider,
+            status: response.status,
+            body: proxyFailure.slice(0, 180),
+          });
+          response = await directRequest();
+        }
+      } else {
+        response = await fetch(endpoint(provider), {
+          method: "POST",
+          headers,
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+      }
 
       if (!response.ok) {
         const raw = await response.text().catch(() => "");

@@ -18,11 +18,35 @@ export function getNearWalletSelector(): Promise<SelectorBundle> {
       const { setupMyNearWallet } = await import("@near-wallet-selector/my-near-wallet");
       const { setupNightly } = await import("@near-wallet-selector/nightly");
 
-      const network = (process.env.NEXT_PUBLIC_NEAR_NETWORK ??
-        DEFAULT_WALLET_NETWORK) as "mainnet" | "testnet";
+      const network = (process.env.NEXT_PUBLIC_NEAR_NETWORK ?? DEFAULT_WALLET_NETWORK) as
+        "mainnet" | "testnet";
+
+      // The wallet selector wraps these in @near-js FailoverRpcProvider. With a
+      // single URL, one rate-limited RPC surfaces as "Exceeded 1 providers to
+      // execute request" during wallet signing. Always provide independent
+      // fallbacks so a wallet transaction can still reach the chain.
+      const configuredFallbacks = (process.env.NEXT_PUBLIC_NEAR_RPC_URLS ?? "")
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean);
+      const defaultFallbacks =
+        network === "testnet"
+          ? [
+              "https://rpc.testnet.fastnear.com",
+              "https://near-testnet.drpc.org",
+              "https://rpc.testnet.near.org",
+            ]
+          : [
+              "https://rpc.mainnet.fastnear.com",
+              "https://near.drpc.org",
+              "https://rpc.mainnet.near.org",
+            ];
+      const fallbackRpcUrls =
+        configuredFallbacks.length > 0 ? configuredFallbacks : defaultFallbacks;
 
       const selector = await setupWalletSelector({
         network,
+        fallbackRpcUrls,
         modules: [setupMyNearWallet(), setupNightly()],
       });
       const modal = setupModal(selector, {

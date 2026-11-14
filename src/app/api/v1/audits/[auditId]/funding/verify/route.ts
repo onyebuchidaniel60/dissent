@@ -20,10 +20,7 @@ const bodySchema = z
   })
   .strict();
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ auditId: string }> },
-) {
+export async function POST(request: Request, { params }: { params: Promise<{ auditId: string }> }) {
   const id = requestId(request);
   const resolved = await resolveAuditPrincipal(request, "audit:fund");
   if ("status" in resolved) {
@@ -45,7 +42,13 @@ export async function POST(
   }
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) {
-    return apiError("VALIDATION_ERROR", "One or more fields are invalid.", 400, zodDetails(parsed.error), id);
+    return apiError(
+      "VALIDATION_ERROR",
+      "One or more fields are invalid.",
+      400,
+      zodDetails(parsed.error),
+      id,
+    );
   }
 
   const { auditId } = await params;
@@ -72,7 +75,13 @@ export async function POST(
         id,
       );
     }
-    return apiError("CONFLICT", "This audit already has a different funding transaction.", 409, undefined, id);
+    return apiError(
+      "CONFLICT",
+      "This audit already has a different funding transaction.",
+      409,
+      undefined,
+      id,
+    );
   }
 
   if (audit.status !== "COMMITTED") {
@@ -132,11 +141,11 @@ export async function POST(
       });
     });
 
-    // The orchestrator is enqueued after the funding state is committed. The Phase 4
-    // worker claims it; a queue failure is recoverable by the operator.
+    // The orchestrator is enqueued after the funding state is committed. The
+    // worker runs inference asynchronously; this request must never start the
+    // worker or import the AI pipeline. `instrumentation.ts` owns startup.
     try {
-      const { getQueue, startQueue } = await import("@/lib/queue");
-      await startQueue();
+      const { getQueue } = await import("@/lib/queue");
       await getQueue()?.send("audit.dispatch", { auditId: audit.id });
     } catch {
       // State remains FUNDED; the operator recovery path can enqueue dispatch.
@@ -155,7 +164,13 @@ export async function POST(
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
     if (code === "FUNDING_NOT_FINAL") {
-      return apiError("COMMITMENT_NOT_FINAL", "The funding transaction is not final yet.", 409, undefined, id);
+      return apiError(
+        "COMMITMENT_NOT_FINAL",
+        "The funding transaction is not final yet.",
+        409,
+        undefined,
+        id,
+      );
     }
     return apiError(
       "FUNDING_REQUIRED",
