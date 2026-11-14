@@ -8,18 +8,42 @@ import { NEAR_NETWORK, NEAR_RPC_URL } from "@/lib/network";
 export { NEAR_NETWORK, NEAR_RPC_URL };
 
 async function rpc<T>(method: string, params: unknown): Promise<T> {
-  const response = await fetch(NEAR_RPC_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: "dissent", method, params }),
-    signal: AbortSignal.timeout(30_000),
-    redirect: "error",
-  });
-  if (!response.ok) throw new Error(`NEAR RPC returned ${response.status}`);
-  const data = (await response.json()) as { result?: T; error?: { message?: string } };
-  if (data.error) throw new Error(data.error.message ?? "NEAR RPC error");
-  if (!data.result) throw new Error("NEAR RPC returned no result");
-  return data.result;
+  const configured = (process.env.NEAR_RPC_FALLBACK_URLS ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const defaults =
+    NEAR_NETWORK === "testnet"
+      ? ["https://near-testnet.drpc.org", "https://rpc.testnet.near.org"]
+      : ["https://near.drpc.org", "https://rpc.mainnet.near.org"];
+  const urls = [...new Set([NEAR_RPC_URL, ...(configured.length > 0 ? configured : defaults)])];
+
+  let lastError: unknown;
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: "dissent", method, params }),
+        signal: AbortSignal.timeout(30_000),
+        redirect: "error",
+      });
+      if (!response.ok) throw new Error(`NEAR RPC returned ${response.status}`);
+      const data = (await response.json()) as { result?: T; error?: { message?: string } };
+      if (data.error) throw new Error(data.error.message ?? "NEAR RPC error");
+      if (!data.result) throw new Error("NEAR RPC returned no result");
+      return data.result;
+    } catch (error) {
+      lastError = error;
+      console.warn("[rpc] read failed, trying fallback", {
+        host: new URL(url).host,
+        method,
+        message: error instanceof Error ? error.message : "unknown",
+      });
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("NEAR RPC failed");
 }
 
 export function registryAccountId(): string | null {
@@ -41,9 +65,7 @@ function requireRegistryAccountId(): string {
 }
 
 export function canonicalHashHex(value: unknown): string {
-  return createHash("sha256")
-    .update(JSON.stringify(value), "utf8")
-    .digest("hex");
+  return createHash("sha256").update(JSON.stringify(value), "utf8").digest("hex");
 }
 
 function provider(): JsonRpcProvider {
@@ -146,7 +168,10 @@ type TransactionView = {
   status?: { SuccessValue?: string; Failure?: unknown };
 };
 
-export async function fetchTransaction(txHash: string, senderAccountId: string): Promise<TransactionView> {
+export async function fetchTransaction(
+  txHash: string,
+  senderAccountId: string,
+): Promise<TransactionView> {
   return rpc<TransactionView>("tx", {
     tx_hash: txHash,
     sender_account_id: senderAccountId,
@@ -197,11 +222,13 @@ export async function verifyCommitmentTransaction(
   if (!call || call.method !== "commit_audit") throw new Error("WRONG_METHOD");
   if (call.args.audit_id !== expected.auditId) throw new Error("WRONG_AUDIT_ID");
   if (call.args.thesis_hash !== expected.thesisHash) throw new Error("WRONG_THESIS_HASH");
-  if (call.args.conditions_hash !== expected.conditionsHash) throw new Error("WRONG_CONDITIONS_HASH");
+  if (call.args.conditions_hash !== expected.conditionsHash)
+    throw new Error("WRONG_CONDITIONS_HASH");
   if (call.args.canonicalization_version !== expected.canonicalizationVersion) {
     throw new Error("WRONG_CANONICALIZATION");
   }
-  if (call.args.conditions_version !== expected.conditionsVersion) throw new Error("WRONG_CONDITIONS_VERSION");
+  if (call.args.conditions_version !== expected.conditionsVersion)
+    throw new Error("WRONG_CONDITIONS_VERSION");
   if (call.args.policy_hash !== expected.policyHash) throw new Error("WRONG_POLICY_HASH");
 
   const stored = await viewRegistry<{
@@ -215,7 +242,8 @@ export async function verifyCommitmentTransaction(
   if (!stored) throw new Error("COMMITMENT_NOT_STORED");
   if (stored.client_id !== expected.clientAccountId) throw new Error("STORED_CLIENT_MISMATCH");
   if (stored.thesis_hash !== expected.thesisHash) throw new Error("STORED_THESIS_MISMATCH");
-  if (stored.conditions_hash !== expected.conditionsHash) throw new Error("STORED_CONDITIONS_MISMATCH");
+  if (stored.conditions_hash !== expected.conditionsHash)
+    throw new Error("STORED_CONDITIONS_MISMATCH");
   if (stored.policy_hash !== expected.policyHash) throw new Error("STORED_POLICY_MISMATCH");
 
   const blockHash = tx.transaction_outcome?.block_hash ?? null;
