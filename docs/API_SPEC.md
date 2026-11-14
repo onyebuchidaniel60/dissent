@@ -67,7 +67,7 @@ Side effects: insert audit + thesis + conditions + event in one DB transaction. 
 ### `POST /audits/{audit_id}/commitment/verify`
 Purpose: accept a submitted NEAR transaction hash and verify the client's commitment on the configured network.
 
-Auth: `audit:commit` and owner workspace match.
+Auth: `audit:commit` via client API key or authenticated wallet session; owner workspace match.
 
 Request: `{ "transaction_hash": "..." }`.
 
@@ -80,7 +80,7 @@ Side effects: store chain tx and commitment receipt. Never create attacker work 
 ### `POST /audits/{audit_id}/funding/quote`
 Purpose: issue a fixed, quote-bound audit fee/bounty quote.
 
-Auth: owner + `audit:fund`.
+Auth: `audit:fund` via client API key or authenticated wallet session; owner workspace match.
 
 Request: `{}`.
 
@@ -89,7 +89,7 @@ Success: quote ID, quote hash, exact amount in yoctoNEAR string, network, contra
 ### `POST /audits/{audit_id}/funding/verify`
 Purpose: verify the client's exact deposit transaction on the configured network.
 
-Auth: owner + `audit:fund`.
+Auth: `audit:fund` via client API key or authenticated wallet session; owner workspace match.
 
 Request: `{ "transaction_hash": "..." }`.
 
@@ -97,10 +97,30 @@ Success: `FUNDED` only after contract state confirms exact amount, caller, quote
 
 Side effects: one-time funding state update and `audit.dispatch` enqueue. Unique dispatch key prevents duplicates.
 
+
+### `POST /api/v1/ui/audits/{audit_id}/execution/quote`
+Purpose: request a client-owned execution quote for a completed `TRADE` audit.
+
+Auth: signed wallet session; owner workspace match. The route requires a wallet because the client signs the deposit.
+
+Success: `venue` (`ONECLICK` on Mainnet, `TIDEPOOL` on the Testnet preview), the client account, quote deposit address/deadline/amounts, the origin token contract, the exact `ft_transfer` amount, and the storage-deposit requirement. The response never exposes the venue API key.
+
+Side effects: none on-chain. A fresh quote is generated on each request.
+
+### `GET /api/v1/ui/audits/{audit_id}/execution/status?deposit_address=...`
+Purpose: poll the selected venue for the client deposit status.
+
+Auth: signed wallet session; owner workspace match.
+
+Success: venue status and optional swap transaction hashes/amount out. A 404 from the venue is returned as `status: null`.
+
+### Client execution boundary
+The client signs a NEP-141 `storage_deposit` + `ft_transfer` to the quote's deposit address with their own wallet. Dissent does not use its vault, does not receive the client's funds and does not sign the deposit. 1Click is the Mainnet path; the Testnet preview uses Tidepool staging because 1Click has no Testnet deployment.
+
 ### `GET /audits`
 Purpose: list caller-owned audits.
 
-Auth: `audit:read`.
+Auth: `audit:read` via client API key or authenticated wallet session; owner workspace match.
 
 Query: `cursor`, `limit` (1–50), `status`, `created_after`, `created_before`.
 
@@ -109,7 +129,7 @@ Success: cursor page of redacted audit summaries. No cross-workspace search.
 ### `GET /audits/{audit_id}`
 Purpose: retrieve owner-scoped audit state.
 
-Auth: `audit:read`.
+Auth: `audit:read` via client API key or authenticated wallet session; owner workspace match.
 
 Success: status timeline, commitment/funding references, eight run statuses, review stages, verdict if finalized, certificate reference.
 

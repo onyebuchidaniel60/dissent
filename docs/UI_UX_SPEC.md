@@ -54,6 +54,9 @@ Public route:
 - Explain commitment is immutable and a new audit is required to change conditions.
 - Wallet connection/signature failure leaves audit in `AWAITING_COMMITMENT`; no dispatch.
 - After verified commitment, show fixed testnet funding quote and expected fee/bounty allocation. No real-money wording.
+- The client signs `commit_audit` and `fund_audit` with the connected wallet; show each transaction hash, then “Audit Queued” and poll status.
+- On a completed `TRADE` audit, show “Execute Trade”. The client wallet signs the quote deposit; Dissent never uses its vault or holds client funds.
+- Copy: “Dissent audits the thesis. You execute the trade with your own funds via 1Click.” On the Testnet preview, state that the deposit uses Tidepool staging and 1Click is the Mainnet path.
 
 ### Audit detail/progress
 - Timeline states are explicit: validating, commitment, funding, attack, evidence review, sycophancy, reproducibility, adjudication, certificate anchoring.
