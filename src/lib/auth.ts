@@ -220,6 +220,19 @@ export async function verifyWalletSignature(input: {
       network: NEAR_NETWORK,
     }),
   );
+  console.log(
+    "[auth/verify] signature",
+    JSON.stringify({
+      raw: input.signature,
+      prefix: input.signature.match(/^[a-z0-9-]+:/i)?.[0] ?? null,
+      length: input.signature.length,
+      decodedLength: signature.length,
+      message: challenge.message,
+      nonce: input.nonce,
+      recipient: expectedRecipient,
+      callbackUrl: challenge.callbackUrl,
+    }),
+  );
 
   if (suppliedRecipient && suppliedRecipient !== expectedRecipient) {
     throw new Error("RECIPIENT_MISMATCH");
@@ -260,22 +273,57 @@ export async function verifyWalletSignature(input: {
   if (permission !== "FullAccess") throw new Error("UNSUPPORTED_KEY_PERMISSION");
 
   const provider = new JsonRpcProvider({ url: primaryRpc });
-  try {
-    await verifyMessage({
-      signerAccountId: input.accountId,
-      signerPublicKey: publicKey,
-      payload: {
-        message: challenge.message,
-        recipient: expectedRecipient,
-        nonce: nonceBytes,
-        callbackUrl: challenge.callbackUrl ?? undefined,
-      },
-      signature,
-      provider,
-    });
-  } catch {
-    throw new Error("SIGNATURE_MISMATCH");
+  const basePayload = {
+    message: challenge.message,
+    recipient: expectedRecipient,
+    nonce: nonceBytes,
+  };
+  const variants: Array<{
+    label: string;
+    payload: typeof basePayload & { callbackUrl?: string };
+  }> = [
+    ...(challenge.callbackUrl
+      ? [{ label: "callbackUrl", payload: { ...basePayload, callbackUrl: challenge.callbackUrl } }]
+      : []),
+    { label: "no_callbackUrl", payload: basePayload },
+  ];
+  const attempts: Array<{ variant: string; error: string }> = [];
+  let verifiedWith: string | null = null;
+
+  for (const variant of variants) {
+    try {
+      await verifyMessage({
+        signerAccountId: input.accountId,
+        signerPublicKey: publicKey,
+        payload: variant.payload,
+        signature,
+        provider,
+      });
+      verifiedWith = variant.label;
+      break;
+    } catch (error) {
+      attempts.push({
+        variant: variant.label,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
+
+  console.log(
+    "[auth/verify] signature_check",
+    JSON.stringify({
+      accountId: input.accountId,
+      publicKey,
+      verifiedWith,
+      attempts,
+      recipient: expectedRecipient,
+      callbackUrl: challenge.callbackUrl,
+      nonce: input.nonce,
+      message: challenge.message,
+    }),
+  );
+
+  if (!verifiedWith) throw new Error("SIGNATURE_MISMATCH");
 
   const claimed = await db
     .update(authNonces)
