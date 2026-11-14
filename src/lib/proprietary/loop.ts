@@ -475,12 +475,19 @@ async function prepareExecution(audit: Audit, quote: ExecutionVenueQuoteResponse
   );
 }
 
-async function enqueueDispatch(auditId: string): Promise<void> {
+async function enqueueAuditJob(
+  queueName: "audit.dispatch" | "evidence.verify",
+  auditId: string,
+): Promise<void> {
   const { getQueue, startQueue } = await import("@/lib/queue");
   await startQueue();
   const queue = getQueue();
   if (!queue) throw new Error("QUEUE_UNAVAILABLE");
-  await queue.send("audit.dispatch", { auditId });
+  await queue.send(queueName, { auditId });
+}
+
+async function enqueueDispatch(auditId: string): Promise<void> {
+  await enqueueAuditJob("audit.dispatch", auditId);
 }
 
 async function advanceAudit(
@@ -628,11 +635,55 @@ export async function runProprietaryLoop(
   if (autoCommit) {
     const active = await findActiveProprietaryAudit(workspace.id);
     if (active) {
-      if (
-        active.status === "ATTACKING" ||
-        active.status === "EVIDENCE_REVIEW" ||
-        active.status === "CERTIFICATE_PENDING"
-      ) {
+      if (active.status === "ATTACKING") {
+        try {
+          await enqueueAuditJob("audit.dispatch", active.id);
+          console.info(
+            "[proprietary] recovery_dispatch_enqueued",
+            JSON.stringify({ auditId: active.id, publicAuditId: active.publicAuditId }),
+          );
+        } catch (error) {
+          console.warn(
+            "[proprietary] recovery_dispatch_failed",
+            JSON.stringify({
+              auditId: active.id,
+              error: errorMessage(error),
+            }),
+          );
+        }
+        return {
+          status: "BUSY",
+          auditId: active.id,
+          publicAuditId: active.publicAuditId,
+          state: active.status,
+        };
+      }
+
+      if (active.status === "EVIDENCE_REVIEW") {
+        try {
+          await enqueueAuditJob("evidence.verify", active.id);
+          console.info(
+            "[proprietary] recovery_evidence_enqueued",
+            JSON.stringify({ auditId: active.id, publicAuditId: active.publicAuditId }),
+          );
+        } catch (error) {
+          console.warn(
+            "[proprietary] recovery_evidence_failed",
+            JSON.stringify({
+              auditId: active.id,
+              error: errorMessage(error),
+            }),
+          );
+        }
+        return {
+          status: "BUSY",
+          auditId: active.id,
+          publicAuditId: active.publicAuditId,
+          state: active.status,
+        };
+      }
+
+      if (active.status === "CERTIFICATE_PENDING") {
         return {
           status: "BUSY",
           auditId: active.id,

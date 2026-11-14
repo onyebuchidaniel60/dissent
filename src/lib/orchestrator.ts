@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 
 import { getDb } from "@/db";
 import {
@@ -27,6 +27,7 @@ import { MODEL_POLICY } from "@/lib/model-assignments";
 import { callAttackerModel, ProviderError } from "@/lib/providers/openai-compatible";
 
 const MAX_ATTEMPTS = 3;
+const RESUME_RUNNING_AFTER_MS = 5 * 60_000;
 
 function labelEvidence(evidence: Awaited<ReturnType<typeof getAuditEvidence>>): PromptEvidence[] {
   const used = new Set<string>();
@@ -73,11 +74,36 @@ export async function dispatchAudit(auditId: string): Promise<{ status: string; 
   const db = getDb();
   const [audit] = await db.select().from(audits).where(eq(audits.id, auditId)).limit(1);
   if (!audit) throw new Error("AUDIT_NOT_FOUND");
-  if (audit.status === "ATTACKING" || audit.status === "EVIDENCE_REVIEW" || audit.status === "COMPLETED") {
+  if (audit.status === "COMPLETED") {
     return { status: audit.status, runs: 0 };
   }
-  if (audit.status !== "FUNDED" && audit.status !== "QUEUED") {
+  if (
+    audit.status !== "FUNDED" &&
+    audit.status !== "QUEUED" &&
+    audit.status !== "ATTACKING" &&
+    audit.status !== "EVIDENCE_REVIEW"
+  ) {
     throw new Error(`AUDIT_NOT_FUNDED:${audit.status}`);
+  }
+  if (audit.status === "EVIDENCE_REVIEW") {
+    const existingRuns = await db
+      .select()
+      .from(attackerRuns)
+      .where(eq(attackerRuns.auditId, audit.id));
+    const allTerminal =
+      existingRuns.length === 8 &&
+      existingRuns.every((run) =>
+        ["COMPLETED", "INVALID_OUTPUT", "FAILED", "TEE_UNVERIFIED"].includes(run.status),
+      );
+    if (allTerminal) {
+      try {
+        const { getQueue } = await import("@/lib/queue");
+        await getQueue()?.send("evidence.verify", { auditId: audit.id });
+      } catch {
+        // The audit remains recoverable; a later dispatch retries the enqueue.
+      }
+      return { status: "EVIDENCE_REVIEW", runs: 0 };
+    }
   }
 
   const conditions = await db
@@ -94,25 +120,29 @@ export async function dispatchAudit(auditId: string): Promise<{ status: string; 
   }
   if (evidence.length === 0) throw new Error("EVIDENCE_CAPTURE_FAILED");
 
-  const snapshotAt = new Date().toISOString();
-  await db
-    .update(audits)
-    .set({ status: "ATTACKING", marketSnapshotAt: new Date(snapshotAt), updatedAt: new Date() })
-    .where(and(eq(audits.id, audit.id), eq(audits.status, "FUNDED")));
+  const snapshotAt = audit.marketSnapshotAt?.toISOString() ?? new Date().toISOString();
+  if (audit.status === "FUNDED" || audit.status === "QUEUED") {
+    await db
+      .update(audits)
+      .set({ status: "ATTACKING", marketSnapshotAt: new Date(snapshotAt), updatedAt: new Date() })
+      .where(
+        and(eq(audits.id, audit.id), inArray(audits.status, ["FUNDED", "QUEUED"])),
+      );
 
-  await db.insert(auditEvents).values({
-    auditId: audit.id,
-    actorType: "SYSTEM",
-    actorId: "orchestrator",
-    eventType: "ATTACKS_QUEUED",
-    fromStatus: "FUNDED",
-    toStatus: "ATTACKING",
-    metadataRedacted: {
-      attacker_count: 8,
-      evidence_count: evidence.length,
-      max_parallel: MODEL_POLICY.max_parallel_attackers,
-    },
-  });
+    await db.insert(auditEvents).values({
+      auditId: audit.id,
+      actorType: "SYSTEM",
+      actorId: "orchestrator",
+      eventType: "ATTACKS_QUEUED",
+      fromStatus: audit.status,
+      toStatus: "ATTACKING",
+      metadataRedacted: {
+        attacker_count: 8,
+        evidence_count: evidence.length,
+        max_parallel: MODEL_POLICY.max_parallel_attackers,
+      },
+    });
+  }
 
   const existing = await db
     .select()
@@ -150,12 +180,15 @@ export async function dispatchAudit(auditId: string): Promise<{ status: string; 
     severity: condition.severity,
   }));
 
+  const staleBefore = Date.now() - RESUME_RUNNING_AFTER_MS;
   const runnable = runs.filter(
     (run) =>
       run.status === "QUEUED" ||
       run.status === "FAILED" ||
       run.status === "INVALID_OUTPUT" ||
-      run.status === "TEE_UNVERIFIED",
+      run.status === "TEE_UNVERIFIED" ||
+      (run.status === "RUNNING" &&
+        (!run.startedAt || run.startedAt.getTime() < staleBefore)),
   );
 
   if (runnable.length === 0) {
@@ -369,6 +402,23 @@ export async function dispatchAudit(auditId: string): Promise<{ status: string; 
 
     return { runId: run.id, ok: true };
   });
+
+  const refreshedRuns = await db
+    .select()
+    .from(attackerRuns)
+    .where(eq(attackerRuns.auditId, audit.id));
+  const allTerminal =
+    refreshedRuns.length === 8 &&
+    refreshedRuns.every((run) =>
+      ["COMPLETED", "INVALID_OUTPUT", "FAILED", "TEE_UNVERIFIED"].includes(run.status),
+    );
+
+  if (!allTerminal) {
+    return {
+      status: "ATTACKING",
+      runs: results.filter((result) => result.ok).length,
+    };
+  }
 
   await db
     .update(audits)
