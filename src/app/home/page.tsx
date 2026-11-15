@@ -21,12 +21,8 @@ import { MODEL_ASSIGNMENTS } from "@/lib/model-assignments";
 import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Legacy homepage",
-  description: "Fallback copy of the previous Dissent homepage.",
-  robots: {
-    index: false,
-    follow: false,
-  },
+  title: "Home",
+  description: "The Dissent home page for returning visitors.",
 };
 
 const PROFILE_BY_ID = new Map(ATTACKER_PROFILES.map((profile) => [profile.attackerId, profile]));

@@ -9,7 +9,7 @@ export function SiteFooter() {
       <div className="page-width">
         <div className="footer-grid">
           <div>
-            <Link href="/" className="brand" aria-label={`${SITE.name} home`}>
+            <Link href="/" className="brand" aria-label={`${SITE.name} home`} prefetch={false}>
               <BrandMark />
               <Wordmark />
             </Link>

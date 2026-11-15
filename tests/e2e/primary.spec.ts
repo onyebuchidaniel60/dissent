@@ -5,6 +5,7 @@ import { getSessionCookie, getSessionCookieFor } from "./helpers";
 
 const PUBLIC_ROUTES = [
   "/",
+  "/home",
   "/old-home",
   "/landing-v2",
   "/docs",
@@ -253,6 +254,7 @@ test("hero phone is visible at 1440x900 and hidden on mobile", async ({ page }) 
   expect(box!.x).toBeGreaterThan(800);
   await page.screenshot({ path: "test-results/hero-1440.png", fullPage: false });
 
+  await page.context().clearCookies();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await expect(phone).toBeHidden();

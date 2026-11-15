@@ -19,7 +19,7 @@ export default function NotFound() {
             <Link href="/app" className="button button--primary">
               Return to console
             </Link>
-            <Link href="/" className="button button--ghost">
+            <Link href="/" className="button button--ghost" prefetch={false}>
               <ArrowLeft size={14} aria-hidden="true" />
               Home
             </Link>

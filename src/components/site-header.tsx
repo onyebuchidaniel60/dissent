@@ -16,25 +16,25 @@ function isActive(pathname: string, href: string) {
 }
 
 function logoDestination(pathname: string) {
-  if (pathname === "/app" || pathname.startsWith("/app/")) return "/app";
-  if (pathname === "/operator" || pathname.startsWith("/operator/")) return "/app";
-  return "/";
+  if (pathname === "/app" || pathname.startsWith("/app/")) {
+    return { href: "/home", label: `${SITE.name} home` };
+  }
+  if (pathname === "/operator" || pathname.startsWith("/operator/")) {
+    return { href: "/home", label: `${SITE.name} home` };
+  }
+  return { href: "/", label: `${SITE.name} marketing` };
 }
 
 export function SiteHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const brandHref = logoDestination(pathname);
+  const brand = logoDestination(pathname);
 
   return (
     <header className="site-header">
       <div className="page-width">
         <div className="header-inner">
-          <Link
-            href={brandHref}
-            className="brand"
-            aria-label={`${SITE.name} ${brandHref === "/app" ? "app home" : "home"}`}
-          >
+          <Link href={brand.href} className="brand" aria-label={brand.label} prefetch={false}>
             <BrandMark />
             <Wordmark />
           </Link>

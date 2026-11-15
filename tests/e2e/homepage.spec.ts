@@ -61,6 +61,7 @@ test("promoted homepage presents the full marketing page and routes to the app",
   await expect(page.getByRole("heading", { name: /define the failure/i })).toBeVisible();
   await expect(page.getByLabel("Audit title")).toBeVisible();
 
+  await page.context().clearCookies();
   await page.goto("/", { waitUntil: "domcontentloaded" });
   const footer = page.locator(".lv2-footer");
   await expect(footer.getByRole("link", { name: /github/i })).toHaveAttribute(
@@ -107,14 +108,16 @@ test("promoted homepage stacks cleanly on mobile", async ({ page }) => {
   await page.screenshot({ path: "test-results/homepage-390.png", fullPage: true });
 });
 
-test("legacy homepage remains available at /old-home", async ({ page }) => {
-  const response = await page.goto("/old-home", { waitUntil: "domcontentloaded" });
+test("fallback home remains available at /home and is indexable", async ({ page }) => {
+  const response = await page.goto("/home", { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
+  await expect(page).toHaveTitle(/Home · Dissent/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(/don't let/i);
   await expect(page.locator(".site-header")).toHaveCount(1);
   await expect(page.locator(".footer")).toHaveCount(1);
   await expect(page.locator(".lv2-footer")).toHaveCount(0);
   await expect(page.locator(".hero-phone")).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
 });
 
 test("/landing-v2 redirects to the promoted homepage", async ({ page }) => {
