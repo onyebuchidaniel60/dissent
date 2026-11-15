@@ -1,11 +1,20 @@
 # AI_HANDOFF.md — Dissent
 
 **Last updated:** 2026-11-15
-**Current phase:** Phase 20.1 — the marketing page is promoted to `/`. The previous homepage is preserved at `/old-home` as a noindex fallback, and `/landing-v2` permanently redirects to `/`. The live root, legacy fallback, audit console, new-audit route, docs, verifier and API health endpoints are verified.
+**Current phase:** Phase 20.2 — the global header logo is now context-aware. It routes to `/app` on `/app/*` and `/operator/*`, and to `/` on `/docs`, `/verify/*` and the legacy fallback. The change is deployed and verified live.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
 **Preview URL:** `https://dissent-web.onrender.com`; legacy fallback: `https://dissent-web.onrender.com/old-home`
-**Deployed app commit:** `737060b` (`feat: promote landing v2 to root and preserve old home`) is the app-code commit. The previous landing mockup commit was `2cf981e`; the previous original homepage was `01819ac`. A docs-only follow-up commit records this handoff without changing app code.
+**Deployed app commit:** `5a7cc39` (`fix: route header logo by current app surface`). The previous root-promotion commit was `737060b`; the previous original homepage was `01819ac`. A docs-only follow-up commit records this handoff without changing app code.
 **Production/mainnet authority:** **not granted**. No mainnet transaction, production release or external posting is authorized.
+
+## Phase 20.2 — context-aware header logo — 2026-11-15
+
+- **Behavior:** `src/components/site-header.tsx` now computes the brand destination from the current pathname. `/app`, `/app/*`, `/operator` and `/operator/*` route the logo to `/app`; all other global-header surfaces (`/docs`, `/verify/*`, `/old-home`) route to `/`. The marketing root uses its own logo link to `/`.
+- **Accessibility:** the logo label reads “Dissent app home” inside the app and “Dissent home” on marketing surfaces.
+- **Tests:** added `tests/e2e/header.spec.ts` with 2 tests covering href targets across app/operator/marketing routes and actual logo-click navigation for `/app/audits`, `/operator`, `/docs` and `/verify/...`. Both pass locally and live.
+- **Build:** `pnpm typecheck`, `pnpm lint` and `pnpm build` pass.
+- **Deploy:** app-code commit `5a7cc39`; Render deploy `dep-dbsn1rdbedkc73cc93hg` reached `live`. Render events report `build_ended succeeded` and `deploy_ended succeeded`; `/healthz` and `/readyz` are 200.
+- **Scope:** header routing only. No API, verifier, schema, contract, execution, payment or root-page behavior changed.
 
 ## Phase 20.1 — safe root promotion — 2026-11-15
 

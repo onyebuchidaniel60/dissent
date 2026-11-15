@@ -234,6 +234,15 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Loop shutdown: a second loop-originated audit `AUD-F3D9-57A1` (`71563af5-05d3-4bc0-aaa2-94bffd55c094`) was created during the shutdown tick. The first dispatch hit pg-boss's 900s expiry; the retry completed all eight runs after the idempotent-resume fix. Verdict `ABSTAIN`; certificate `b734b045-3f62-485a-b682-471ee1bc45e1`, hash `8fd8fea096646daee641531eaee4c99634b885abe9687fea4f59b50bcb0d4643`, anchor `8oCzZThL82UPKXTpHzDCLTAwqaEWZX7rnGgBovGrJEbY`. `src/lib/queue.ts` now calls `unschedule("proprietary.loop")` and `deleteQueuedJobs("proprietary.loop")` when the flag is false.
 - `pnpm typecheck`, `pnpm lint`, Vitest `16/16`, `pnpm build` and Playwright `7/7` pass after the queue cleanup. The Playwright draft-creation test left `AUD-53CA-0931` (`AWAITING_COMMITMENT`, zero commitments); it was deleted, leaving zero open drafts. The final preview deploy is `c860b17`; `/readyz` and `/api/x402/supported` are healthy and `pgboss.schedule` no longer contains `proprietary.loop`.
 
+## Phase 20.2 — context-aware header logo — 2026-11-15
+
+- **Commit:** `5a7cc39` (`fix: route header logo by current app surface`).
+- **Behavior:** the global header logo routes to `/app` on `/app/*` and `/operator/*`; it routes to `/` on `/docs`, `/verify/*` and `/old-home`. The marketing root keeps its own logo link to `/`. The accessible label changes to “Dissent app home” inside the app.
+- **Tests:** added `tests/e2e/header.spec.ts`; href assertions cover `/app`, `/app/audits`, `/app/audits/new`, `/operator`, `/operator/proprietary`, `/docs`, `/verify/...` and `/old-home`, with click-through navigation for `/app/audits`, `/operator`, `/docs` and `/verify/...`. 2/2 pass locally and live.
+- **Build:** `pnpm typecheck`, `pnpm lint`, `pnpm build` PASS.
+- **Deploy:** `dep-dbsn1rdbedkc73cc93hg` for `5a7cc39` reached `live`; Render events `build_ended succeeded` and `deploy_ended succeeded`; `/healthz` and `/readyz` 200.
+- **Scope:** header routing only; no API, verifier, schema, contract, execution or payment changes.
+
 ## Phase 20.1 — safe root promotion — 2026-11-15
 
 - **Commit:** `737060b` (`feat: promote landing v2 to root and preserve old home`).
