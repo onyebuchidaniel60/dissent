@@ -11,6 +11,15 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   serverExternalPackages: ["pg", "pg-boss", "pino"],
+  async redirects() {
+    return [
+      {
+        source: "/landing-v2",
+        destination: "/",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

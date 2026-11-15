@@ -1,4 +1,4 @@
-/* Phase 20 marketing mockup — scoped to /landing-v2. */
+/* Phase 20 marketing homepage — promoted root design. */
 
 .lv2-page {
   --lv2-border: rgba(255, 255, 255, 0.09);
@@ -1023,17 +1023,134 @@
   font-size: 7px;
 }
 
+.lv2-x402-wallet {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px 18px;
+  margin-top: 18px;
+  border: 1px solid var(--lv2-border);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.026);
+  padding: 11px 12px;
+}
+
+.lv2-x402-wallet-id {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+
+.lv2-x402-wallet-icon {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--lv2-red-line);
+  border-radius: 9px;
+  background: rgba(254, 32, 31, 0.07);
+  color: var(--primary-bright);
+}
+
+.lv2-x402-wallet-id > div {
+  min-width: 0;
+}
+
+.lv2-x402-wallet-id span,
+.lv2-x402-wallet-balance span {
+  display: block;
+  color: var(--muted-2);
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-size: 7px;
+  letter-spacing: 0.11em;
+}
+
+.lv2-x402-wallet-id strong {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 9px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lv2-x402-wallet-balance {
+  min-width: 112px;
+  border-left: 1px solid var(--lv2-border);
+  padding-left: 16px;
+}
+
+.lv2-x402-wallet-balance strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.lv2-x402-wallet-balance small {
+  color: var(--muted-2);
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+.lv2-x402-wallet-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--lv2-border);
+  border-radius: 999px;
+  padding: 6px 9px;
+  color: var(--muted);
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-size: 7px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  transition:
+    border-color 160ms var(--ease),
+    color 160ms var(--ease),
+    background 160ms var(--ease);
+}
+
+.lv2-x402-wallet-link:hover,
+.lv2-x402-wallet-link:focus-visible {
+  border-color: var(--lv2-red-line);
+  background: rgba(254, 32, 31, 0.07);
+  color: var(--ink);
+}
+
+.lv2-x402-updated {
+  position: relative;
+  z-index: 1;
+  margin: 7px 0 0;
+  color: var(--muted-2);
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-size: 8px;
+  letter-spacing: 0.04em;
+}
+
 .lv2-x402-receipt {
   position: relative;
   z-index: 1;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
-  margin-top: 20px;
+  margin-top: 18px;
   border-top: 1px solid var(--lv2-border);
   padding-top: 15px;
 }
-
 .lv2-x402-receipt span {
   display: block;
   color: var(--muted-2);
@@ -1336,6 +1453,151 @@
   text-transform: uppercase;
 }
 
+/* Certificate verification */
+
+.lv2-cert-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.lv2-cert {
+  position: relative;
+  display: flex;
+  min-height: 300px;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--lv2-border);
+  border-radius: 20px;
+  background:
+    radial-gradient(90% 110% at 100% 0%, rgba(254, 32, 31, 0.08), transparent 58%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 30%),
+    rgba(15, 13, 17, 0.62);
+  padding: 20px;
+  transition:
+    border-color 180ms var(--ease),
+    transform 180ms var(--ease);
+}
+
+.lv2-cert:hover {
+  border-color: var(--lv2-red-line);
+  transform: translateY(-2px);
+}
+
+.lv2-cert::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, var(--primary), rgba(254, 32, 31, 0.06) 64%, transparent);
+}
+
+.lv2-cert-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted-2);
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-size: 8px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.lv2-cert-body {
+  display: grid;
+  gap: 8px;
+  margin-top: 26px;
+}
+
+.lv2-cert-verdict {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(2.35rem, 4vw, 3.7rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+
+.lv2-cert-verdict[data-verdict="ABSTAIN"] {
+  color: var(--warn);
+}
+
+.lv2-cert-verdict[data-verdict="EXECUTED"] {
+  color: var(--ok);
+}
+
+.lv2-cert-id {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--muted-2);
+  font-size: 8px;
+  letter-spacing: 0.03em;
+}
+
+.lv2-cert-copy {
+  max-width: 520px;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.lv2-cert-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  border-top: 1px solid var(--lv2-border);
+  padding-top: 13px;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: color 160ms var(--ease);
+}
+
+.lv2-cert-link:hover,
+.lv2-cert-link:focus-visible {
+  color: var(--primary-bright);
+}
+
+.lv2-verify-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 18px;
+  border-top: 1px solid var(--lv2-border);
+  padding-top: 16px;
+  color: var(--muted-2);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.lv2-verify-note > svg {
+  flex: 0 0 auto;
+  color: var(--primary-bright);
+}
+
+.lv2-verify-note a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  color: var(--muted);
+  font-weight: 700;
+  transition: color 160ms var(--ease);
+}
+
+.lv2-verify-note a:hover,
+.lv2-verify-note a:focus-visible {
+  color: var(--ink);
+}
+
 /* Final call to action */
 
 .lv2-final-section {
@@ -1614,6 +1876,19 @@
     grid-template-columns: 1fr;
   }
 
+  .lv2-cert-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lv2-x402-wallet {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .lv2-x402-wallet-link {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
   .lv2-x402-flow {
     grid-template-columns: 1fr;
     gap: 8px;
@@ -1725,6 +2000,33 @@
 
   .lv2-x402-head {
     align-items: flex-start;
+  }
+
+  .lv2-x402-wallet {
+    grid-template-columns: 1fr;
+  }
+
+  .lv2-x402-wallet-balance {
+    border-top: 1px solid var(--lv2-border);
+    border-left: 0;
+    padding-top: 9px;
+    padding-left: 0;
+  }
+
+  .lv2-x402-wallet-link {
+    grid-column: auto;
+  }
+
+  .lv2-cert {
+    min-height: 270px;
+  }
+
+  .lv2-verify-note {
+    align-items: flex-start;
+  }
+
+  .lv2-verify-note a {
+    margin-left: 22px;
   }
 
   .lv2-x402-receipt {

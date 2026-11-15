@@ -5,11 +5,13 @@ import { getSessionCookie, getSessionCookieFor } from "./helpers";
 
 const PUBLIC_ROUTES = [
   "/",
+  "/old-home",
   "/landing-v2",
   "/docs",
   "/verify/00000000-0000-0000-0000-000000000000",
   "/app",
   "/app/audits",
+  "/app/audits/new",
   "/app/attackers",
   "/app/reputation",
   "/app/settings/api-keys",
