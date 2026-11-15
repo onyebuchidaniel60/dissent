@@ -1,11 +1,23 @@
 # AI_HANDOFF.md — Dissent
 
 **Last updated:** 2026-11-15
-**Current phase:** Phase 20.2 — the global header logo is now context-aware. It routes to `/app` on `/app/*` and `/operator/*`, and to `/` on `/docs`, `/verify/*` and the legacy fallback. The change is deployed and verified live.
+**Current phase:** Phase 21 — smart root routing, the `/home` fallback, and context-aware header links are deployed and verified. `/` uses the `dissent_visited` cookie, `/old-home` permanently redirects to `/home`, and the app/operator logo mapping points to `/home`.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
-**Preview URL:** `https://dissent-web.onrender.com`; legacy fallback: `https://dissent-web.onrender.com/old-home`
-**Deployed app commit:** `5a7cc39` (`fix: route header logo by current app surface`). The previous root-promotion commit was `737060b`; the previous original homepage was `01819ac`. A docs-only follow-up commit records this handoff without changing app code.
+**Preview URL:** `https://dissent-web.onrender.com`; fallback home: `https://dissent-web.onrender.com/home`
+**Deployed app commit:** `96acafd` (`feat: add smart root routing and fallback home`). The previous header-logo commit was `5a7cc39`; the previous original homepage was `01819ac`. A docs-only follow-up commit records this handoff without changing app code.
 **Production/mainnet authority:** **not granted**. No mainnet transaction, production release or external posting is authorized.
+
+## Phase 21 — smart root routing and /home fallback — 2026-11-15
+
+- **Fallback home:** renamed `/old-home` to `/home`; metadata is now `Home` with no `robots: noindex`. `/old-home` returns a 308 permanent redirect to `/home`.
+- **Logo mapping:** `src/components/site-header.tsx` routes `/app/*` and `/operator/*` to `/home`; `/`, `/docs`, `/verify/*` and `/home` route to `/`. Labels are exactly `Dissent home` when targeting `/home` and `Dissent marketing` when targeting `/`.
+- **Prefetch guard:** global header/footer brand links that target `/` now use `prefetch={false}`. Without this, Next.js prefetched `/` in the background and the middleware set `dissent_visited` before a real click, causing unexpected `/home` redirects.
+- **Smart root middleware:** `src/middleware.ts` uses `matcher: ["/"]` only. Without the cookie it allows `/` and sets `dissent_visited=true` for 30 days at `path=/` (Secure on HTTPS); with the cookie it returns a 307 redirect to `/home`.
+- **Next 16 warning:** the build logs `The "middleware" file convention is deprecated. Please use "proxy" instead.` The middleware is present and verified live; this is a naming deprecation, not a failure. A future migration can rename it to `proxy.ts` without changing the matcher or cookie logic.
+- **Regression coverage:** new `tests/e2e/routing.spec.ts` verifies first-root cookie set, 307 on the second root visit, exact-root matcher isolation, `/api/v1/audits` still returning its 401 JSON, `/api/v1/auth/session`, `/api/x402/supported`, `/healthz`, `/readyz`, `/app`, `/app/audits/new`, the verifier and the `/old-home` 308. `header.spec.ts` verifies logo destinations, labels and click-through.
+- **Tests:** `pnpm typecheck`, `pnpm lint`, `pnpm build` pass. Full Playwright `16/16` local and `16/16` live. One first live attempt hit a transient timeout in the existing new-audit form test; the retry passed and the final full live suite passed. Test drafts were deleted.
+- **Live checks:** `/healthz` 200 `ok`; `/readyz` 200 `ready` (database ok, network `testnet`, venue `TIDEPOOL`); `/` first visit 200 and sets the cookie; second visit 307 `/home`; `/old-home` 308 `/home`; `/app`, `/verify/0bf3728d…`, APIs and health routes 200 with the cookie present.
+- **Render:** deploy `dep-dbsp4nm7bikc73fahu5g` for `96acafd`; `build_ended succeeded`, `deploy_ended succeeded`; no rollback. No API, verifier, schema, contract, execution or payment logic changed.
 
 ## Phase 20.2 — context-aware header logo — 2026-11-15
 

@@ -234,6 +234,18 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Loop shutdown: a second loop-originated audit `AUD-F3D9-57A1` (`71563af5-05d3-4bc0-aaa2-94bffd55c094`) was created during the shutdown tick. The first dispatch hit pg-boss's 900s expiry; the retry completed all eight runs after the idempotent-resume fix. Verdict `ABSTAIN`; certificate `b734b045-3f62-485a-b682-471ee1bc45e1`, hash `8fd8fea096646daee641531eaee4c99634b885abe9687fea4f59b50bcb0d4643`, anchor `8oCzZThL82UPKXTpHzDCLTAwqaEWZX7rnGgBovGrJEbY`. `src/lib/queue.ts` now calls `unschedule("proprietary.loop")` and `deleteQueuedJobs("proprietary.loop")` when the flag is false.
 - `pnpm typecheck`, `pnpm lint`, Vitest `16/16`, `pnpm build` and Playwright `7/7` pass after the queue cleanup. The Playwright draft-creation test left `AUD-53CA-0931` (`AWAITING_COMMITMENT`, zero commitments); it was deleted, leaving zero open drafts. The final preview deploy is `c860b17`; `/readyz` and `/api/x402/supported` are healthy and `pgboss.schedule` no longer contains `proprietary.loop`.
 
+## Phase 21 — smart root routing and /home fallback — 2026-11-15
+
+- **Commit:** `96acafd` (`feat: add smart root routing and fallback home`).
+- **Fallback home:** moved `src/app/old-home/page.tsx` to `src/app/home/page.tsx`; metadata is `Home` and the `noindex` metadata was removed. `/old-home` → `/home` is a 308 permanent redirect in `next.config.ts`.
+- **Logo mapping:** `/app/*` and `/operator/*` → `/home`; `/`, `/docs`, `/verify/*`, `/home` → `/`. Accessible labels are `Dissent home` and `Dissent marketing`.
+- **Prefetch fix:** set `prefetch={false}` on global header/footer brand links targeting `/`; this prevents Next prefetch from setting the visited cookie before a real root visit.
+- **Middleware:** `src/middleware.ts` with `matcher: ["/"]` only. Missing cookie → continue and set `dissent_visited=true`, `Max-Age=2592000`, `Path=/`, `SameSite=Lax`, `Secure` on HTTPS. Existing cookie → 307 to `/home`.
+- **Next 16 note:** build logs the `middleware` → `proxy` naming deprecation. The route is built as `ƒ Proxy (Middleware)` and verified; no failure. Future migration can rename the file and export to `proxy.ts`.
+- **Tests:** `pnpm typecheck`, `pnpm lint`, `pnpm build` PASS. Full Playwright `16/16` local and `16/16` live. The live suite covers root cookie set/redirect, matcher isolation for APIs/health/verifier/app, logo click mapping, `/home` indexability, `/old-home` 308, app health and the existing audit journey. One transient live timeout in the new-audit form test passed on retry; the final full live suite passed. Test drafts were deleted.
+- **Live checks:** `/healthz` 200 ok; `/readyz` 200 ready; first `/` 200 + cookie; second `/` 307 `/home`; `/old-home` 308 `/home`; `/app`, `/verify/0bf3728d…`, `/api/v1/auth/session`, `/api/x402/supported` 200 with the cookie set.
+- **Render:** `dep-dbsp4nm7bikc73fahu5g` for `96acafd` succeeded on first deploy; no rollback. No backend or verifier code changed.
+
 ## Phase 20.2 — context-aware header logo — 2026-11-15
 
 - **Commit:** `5a7cc39` (`fix: route header logo by current app surface`).
