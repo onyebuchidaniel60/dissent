@@ -15,15 +15,26 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+function logoDestination(pathname: string) {
+  if (pathname === "/app" || pathname.startsWith("/app/")) return "/app";
+  if (pathname === "/operator" || pathname.startsWith("/operator/")) return "/app";
+  return "/";
+}
+
 export function SiteHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const brandHref = logoDestination(pathname);
 
   return (
     <header className="site-header">
       <div className="page-width">
         <div className="header-inner">
-          <Link href="/" className="brand" aria-label={`${SITE.name} home`}>
+          <Link
+            href={brandHref}
+            className="brand"
+            aria-label={`${SITE.name} ${brandHref === "/app" ? "app home" : "home"}`}
+          >
             <BrandMark />
             <Wordmark />
           </Link>
