@@ -1,11 +1,26 @@
 # AI_HANDOFF.md — Dissent
 
-**Last updated:** 2026-11-14
-**Current phase:** Phase 18 — repository declutter and public README overhaul is **complete**. All internal planning, spec and handoff documents now live under `docs/`; the root contains only the public README and project configuration. The public README has no phase checkpoints, budget state, handoff links or commit hashes, and includes the live demo, verification, hackathon tracks, economic model, quickstart, usage and certificate-verification guidance. The deployed testnet preview is unchanged. No mainnet contract or real-fund transaction is claimed or authorized.
+**Last updated:** 2026-11-15
+**Current phase:** Phase 20 — a long-form marketing landing page mockup is built and deployed at `/landing-v2`. The root `/` homepage is unchanged and remains the live entry point pending operator review. The preview deploy is live and verified.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
-**Preview URL:** `https://dissent-web.onrender.com`
-**Deployed app commit:** `79e5029` (`feat: final Phase 17 demo video and README submission polish`; code base `bc25b65` includes Phase 16 x402 compute procurement, the wallet RPC failover list, asynchronous dispatch and the direct-provider fallback). The final video was captured against `bc25b65` and the live testnet database.
+**Preview URL:** `https://dissent-web.onrender.com`; landing mockup: `https://dissent-web.onrender.com/landing-v2`
+**Deployed app commit:** `2cf981e` (`feat: add long-form landing v2 marketing mockup`) is the app-code commit. The previous live app was `01819ac`. A docs-only follow-up commit records this handoff without changing app code.
 **Production/mainnet authority:** **not granted**. No mainnet transaction, production release or external posting is authorized.
+
+## Phase 20 — marketing landing page mockup — 2026-11-15
+
+- Built a static, scrollable marketing route at `/landing-v2` without changing `/`. The homepage still renders the existing hero and console preview.
+- **Hero:** keeps the “Don’t let the agent grade itself” headline and the CSS phone animation, adds `Launch App` → `/app` and `Read the Docs` → `/docs`, plus the protocol trace and model-diversity stats.
+- **Problem:** exact supplied copy, with a self-grading loop diagram, zero independent checks and a confidence-is-not-evidence note.
+- **Solution:** an eight-card A01–A08 grid generated from `config/model_assignments.json` and `ATTACKER_PROFILES`, with role, method, family and provider. It also states evidence re-fetch, preserved minority dissent and no majority voting.
+- **Autonomous economy:** an x402 flow diagram from Agent wallet → Facilitator → OpenRouter/Groq, with scheme/network/settlement metadata and the exact supplied copy.
+- **How it works:** three steps for Connect wallet, The audit and The verdict, including TRADE / REFUSE / ABSTAIN certificate states.
+- **Footer:** GitHub, Documentation, Public verifier (a live certificate verifier route) and X (Twitter). The X link is a share-intent URL because no official Dissent X handle is configured in the repository; it should be swapped for the project profile when supplied.
+- **Chrome gating:** `src/components/site-chrome.tsx` gates the global header/footer at render time. `/landing-v2` does not mount the wallet header and makes no `/api/v1/auth/session` request; all other routes keep the existing chrome.
+- **SEO:** `/landing-v2` is `noindex, nofollow` until it is approved and swapped in.
+- **Verification:** `pnpm typecheck`, `pnpm lint` and `pnpm build` pass. Playwright `tests/e2e/landing-v2.spec.ts` passes 2/2 at 1440×900 and 390×844. The route is also included in the public-route overflow sweep. Tests assert the two hero CTAs, eight attacker cards, all five required footer links, no `href="#"`, no horizontal overflow, the phone visible at 1440 and hidden at 390.
+- **Deploy:** app-code commit `2cf981e`; preview deploy `dep-dbsjfl15efls73erpsb0` reached `live`. The live route returned HTTP 200 at 1440×900 and 390×844 with title `Don't let the agent grade itself · Dissent`, eight attacker cards, no global wallet header/footer, no horizontal overflow and the phone hidden on mobile. The root `/` returned HTTP 200 with its original header/footer and no link to the mockup. No API, schema, contract, execution, payment or model-assignment behavior changed. No new spend.
+
 
 ## Live testnet artifacts
 

@@ -234,6 +234,17 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Loop shutdown: a second loop-originated audit `AUD-F3D9-57A1` (`71563af5-05d3-4bc0-aaa2-94bffd55c094`) was created during the shutdown tick. The first dispatch hit pg-boss's 900s expiry; the retry completed all eight runs after the idempotent-resume fix. Verdict `ABSTAIN`; certificate `b734b045-3f62-485a-b682-471ee1bc45e1`, hash `8fd8fea096646daee641531eaee4c99634b885abe9687fea4f59b50bcb0d4643`, anchor `8oCzZThL82UPKXTpHzDCLTAwqaEWZX7rnGgBovGrJEbY`. `src/lib/queue.ts` now calls `unschedule("proprietary.loop")` and `deleteQueuedJobs("proprietary.loop")` when the flag is false.
 - `pnpm typecheck`, `pnpm lint`, Vitest `16/16`, `pnpm build` and Playwright `7/7` pass after the queue cleanup. The Playwright draft-creation test left `AUD-53CA-0931` (`AWAITING_COMMITMENT`, zero commitments); it was deleted, leaving zero open drafts. The final preview deploy is `c860b17`; `/readyz` and `/api/x402/supported` are healthy and `pgboss.schedule` no longer contains `proprietary.loop`.
 
+## Phase 20 — marketing landing page mockup — 2026-11-15
+
+- **Commit:** `2cf981e` (`feat: add long-form landing v2 marketing mockup`).
+- **Scope:** new static route `/landing-v2`; `/` intentionally untouched. Long-form hero, problem, eight-attacker solution grid, x402 economy flow, three-step audit flow, final CTA and marketing footer.
+- **Chrome:** added render-time header/footer gates in `src/components/site-chrome.tsx`; the marketing route no longer mounts the wallet header or calls the auth-session endpoint. Existing routes keep the global header/footer.
+- **Required links:** `Launch App` → `/app`; `Read the Docs` → `/docs`; footer → GitHub, `/docs`, a live `/verify/...` certificate and `x.com` (share intent, because no project handle is configured).
+- **Tests:** `pnpm typecheck` PASS; `pnpm lint` PASS; `pnpm build` PASS; Playwright `tests/e2e/landing-v2.spec.ts` 2/2 at 1440×900 and 390×844; route added to the public-route overflow sweep. No horizontal overflow, no `href="#"`, eight attacker cards and all required footer destinations present.
+- **Visual evidence:** `test-results/landing-v2-1440.png`, `test-results/landing-v2-390.png`; reviewed at 1440×900 and 390×844 with the phone visible on desktop and hidden on mobile.
+- **Preview:** `https://dissent-web.onrender.com/landing-v2`; deploy `dep-dbsjfl15efls73erpsb0` for commit `2cf981e` reached `live`. Live verification: HTTP 200 at 1440×900 and 390×844, eight attacker cards, 0 global header/footer nodes, 0 `href="#"`, no horizontal overflow, phone visible at 1440 and hidden at 390. Root `/` remains HTTP 200 with its original chrome and no link to `/landing-v2`.
+- **Cost/authority:** no model calls, no payment, no contract or mainnet action, no production release.
+
 ## Phase 18 — repository declutter and public README — 2026-11-14
 
 - Moved the root planning/spec/handoff documents into `docs/` with `git mv`; root Markdown is now only `README.md`. Removed the generated `SHA256SUMS.txt` and the duplicate `demo/DEMO_VIDEO_PLAN.md`.
