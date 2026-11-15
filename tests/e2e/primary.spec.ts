@@ -5,6 +5,7 @@ import { getSessionCookie, getSessionCookieFor } from "./helpers";
 
 const PUBLIC_ROUTES = [
   "/",
+  "/landing-v2",
   "/docs",
   "/verify/00000000-0000-0000-0000-000000000000",
   "/app",

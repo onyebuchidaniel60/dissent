@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Manrope, Orbitron } from "next/font/google";
 
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
+import { SiteFooterGate, SiteHeaderGate } from "@/components/site-chrome";
 import { SITE } from "@/lib/site";
 
 import "@near-wallet-selector/modal-ui/styles.css";
@@ -73,9 +72,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <a className="skip-link" href="#main">
           Skip to content
         </a>
-        <SiteHeader />
+        <SiteHeaderGate />
         <main id="main">{children}</main>
-        <SiteFooter />
+        <SiteFooterGate />
       </body>
     </html>
   );
