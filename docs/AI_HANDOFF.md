@@ -1,13 +1,28 @@
 # AI_HANDOFF.md — Dissent
 
 **Last updated:** 2026-11-15
-**Current phase:** Phase 20 — a long-form marketing landing page mockup is built and deployed at `/landing-v2`. The root `/` homepage is unchanged and remains the live entry point pending operator review. The preview deploy is live and verified.
+**Current phase:** Phase 20.1 — the marketing page is promoted to `/`. The previous homepage is preserved at `/old-home` as a noindex fallback, and `/landing-v2` permanently redirects to `/`. The live root, legacy fallback, audit console, new-audit route, docs, verifier and API health endpoints are verified.
 **Repository:** `https://github.com/onyebuchidaniel60/dissent` (public, `main`, MIT)
-**Preview URL:** `https://dissent-web.onrender.com`; landing mockup: `https://dissent-web.onrender.com/landing-v2`
-**Deployed app commit:** `2cf981e` (`feat: add long-form landing v2 marketing mockup`) is the app-code commit. The previous live app was `01819ac`. A docs-only follow-up commit records this handoff without changing app code.
+**Preview URL:** `https://dissent-web.onrender.com`; legacy fallback: `https://dissent-web.onrender.com/old-home`
+**Deployed app commit:** `737060b` (`feat: promote landing v2 to root and preserve old home`) is the app-code commit. The previous landing mockup commit was `2cf981e`; the previous original homepage was `01819ac`. A docs-only follow-up commit records this handoff without changing app code.
 **Production/mainnet authority:** **not granted**. No mainnet transaction, production release or external posting is authorized.
 
-## Phase 20 — marketing landing page mockup — 2026-11-15
+## Phase 20.1 — safe root promotion — 2026-11-15
+
+- **Promotion:** moved the long-form marketing page to `src/app/page.tsx`; moved the previous homepage to `src/app/old-home/page.tsx` with `noindex, nofollow`. `/` now serves the marketing page and `/old-home` serves the previous design as a fallback.
+- **Chrome:** `src/components/site-chrome.tsx` hides the global wallet header/footer on `/` only. `/old-home`, `/app`, `/docs`, `/operator` and the verifier keep the global chrome. The marketing root makes no `/api/v1/auth/session` request.
+- **Redirects:** `/landing-v2` returns a 308 to `/` via `next.config.ts`. There is no `middleware.ts`. The only existing app redirect remains `/app/audits/[auditId]/results` → `/app/audits/[auditId]`.
+- **Tweaks:** added the hero **Watch the demo** link (`demo/dissent-demo.mp4` on GitHub), a **Verify a certificate** section linking both live certificates, a live x402 agent-wallet balance with a NEAR explorer link, the evidence re-fetch sentence in Step 2, and kept the X footer link as a share intent.
+- **Untouched surfaces:** all `/api/v1/*` routes, `/api/x402/*` routes, `/verify/[certificateId]`, data schema, contracts, execution and model assignments are unchanged.
+- **Build:** `pnpm typecheck`, `pnpm lint` and `pnpm build` pass. Next reports `/` as ISR (5-minute revalidate), `/old-home` static, and `landing-v2` absent from the route table because of the redirect.
+- **Tests:** local Playwright `11/11` and live Playwright `11/11` against `https://dissent-web.onrender.com`. The live suite verifies the new root, mobile overflow, the legacy fallback, the `/landing-v2` redirect, both verifier links, the `Launch App` click path to `/app`, `/app/audits/new`, the eight attacker cards, the x402 wallet/explorer and the footer destinations. The first live attempt hit one cold-start timeout on the draft-created heading; the retry and the final full suite passed, and the test draft was deleted.
+- **Health:** `/healthz` 200 (`status: ok`); `/readyz` 200 (`status: ready`, database ok, network `testnet`, venue `TIDEPOOL`); `/`, `/old-home`, `/app`, `/app/audits/new`, `/docs`, both verifier certificates, `/api/v1/auth/session` and `/api/x402/supported` all 200.
+- **Render:** deploy `dep-dbsmdjajnfac73celqog` for `737060b`; Render events report `build_ended succeeded` and `deploy_ended succeeded` with no failure reason. No rollback was required.
+- **Cost/authority:** no model inference, payment, contract, mainnet or production-release action. Test drafts were removed afterward.
+
+## Phase 20 — marketing landing page mockup (superseded) — 2026-11-15
+
+**Superseded by Phase 20.1.** The mockup below was promoted to `/`; the old root is now `/old-home`; `/landing-v2` redirects to `/`.
 
 - Built a static, scrollable marketing route at `/landing-v2` without changing `/`. The homepage still renders the existing hero and console preview.
 - **Hero:** keeps the “Don’t let the agent grade itself” headline and the CSS phone animation, adds `Launch App` → `/app` and `Read the Docs` → `/docs`, plus the protocol trace and model-diversity stats.

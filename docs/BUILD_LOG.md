@@ -234,6 +234,17 @@ Append a dated entry at each agent checkpoint with commit SHA, phase, deployed p
 - Loop shutdown: a second loop-originated audit `AUD-F3D9-57A1` (`71563af5-05d3-4bc0-aaa2-94bffd55c094`) was created during the shutdown tick. The first dispatch hit pg-boss's 900s expiry; the retry completed all eight runs after the idempotent-resume fix. Verdict `ABSTAIN`; certificate `b734b045-3f62-485a-b682-471ee1bc45e1`, hash `8fd8fea096646daee641531eaee4c99634b885abe9687fea4f59b50bcb0d4643`, anchor `8oCzZThL82UPKXTpHzDCLTAwqaEWZX7rnGgBovGrJEbY`. `src/lib/queue.ts` now calls `unschedule("proprietary.loop")` and `deleteQueuedJobs("proprietary.loop")` when the flag is false.
 - `pnpm typecheck`, `pnpm lint`, Vitest `16/16`, `pnpm build` and Playwright `7/7` pass after the queue cleanup. The Playwright draft-creation test left `AUD-53CA-0931` (`AWAITING_COMMITMENT`, zero commitments); it was deleted, leaving zero open drafts. The final preview deploy is `c860b17`; `/readyz` and `/api/x402/supported` are healthy and `pgboss.schedule` no longer contains `proprietary.loop`.
 
+## Phase 20.1 — safe root promotion — 2026-11-15
+
+- **Commit:** `737060b` (`feat: promote landing v2 to root and preserve old home`).
+- **Promotion:** moved the marketing page to `src/app/page.tsx`; moved the previous homepage to `src/app/old-home/page.tsx` with `noindex, nofollow`. `/landing-v2` permanently redirects (308) to `/` via `next.config.ts`. No `middleware.ts` exists; the existing audit-results redirect is unchanged.
+- **Chrome and APIs:** `site-chrome.tsx` hides the global header/footer on `/` only. `/old-home`, `/app`, `/docs`, `/operator` and `/verify/*` keep the global chrome. No API, schema, contract, execution, payment or verifier route was modified.
+- **Content tweaks:** hero **Watch the demo** links to `demo/dissent-demo.mp4`; new **Verify a certificate** section links both live verifier records; the x402 card shows the live `x402-agent.testnet` USDC balance with a NEAR explorer link; Step 2 includes the evidence re-fetch sentence; X remains a share-intent link.
+- **Verification:** `pnpm typecheck` PASS; `pnpm lint` PASS; `pnpm build` PASS (root ISR 5m, `/old-home` static, `/landing-v2` redirected). Playwright `11/11` local and `11/11` live. One first live attempt hit a transient cold-start timeout on the draft-created heading; the retry and final full suite passed. Test drafts were deleted.
+- **Live checks:** `/healthz` 200 `ok`; `/readyz` 200 `ready` with database ok, network `testnet`, venue `TIDEPOOL`; `/`, `/old-home`, `/app`, `/app/audits/new`, `/docs`, both verifier certificates, `/api/v1/auth/session` and `/api/x402/supported` all 200; `/landing-v2` 308 → `/`.
+- **Render:** deploy `dep-dbsmdjajnfac73celqog` for `737060b`; events `build_ended succeeded`, `deploy_ended succeeded`; no rollback needed.
+- **Cost/authority:** no model inference, payment, contract, mainnet or production-release action.
+
 ## Phase 20 — marketing landing page mockup — 2026-11-15
 
 - **Commit:** `2cf981e` (`feat: add long-form landing v2 marketing mockup`).
